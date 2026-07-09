@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
 import { supabase } from '@/shared/api/supabase.client';
 import { applyTenantTheme } from '@/app/plugins/vuetify';
-import type { Tenant } from '@/shared/types';
+import type { Database, Json } from '@/shared/types/supabase.gen';
+
+type Tenant = Omit<Database['public']['Tables']['tenants']['Row'], 'modules' | 'config'> & {
+  modules: { appointments: boolean; digital_menu: boolean; crm: boolean };
+  config: Record<string, unknown>;
+};
 
 interface TenantStoreState {
   tenant: Tenant | null;
@@ -15,8 +20,10 @@ export const useTenantStore = defineStore('tenant', {
   }),
 
   getters: {
-    activeModules: (state) =>
-      state.tenant?.modules ?? { appointments: false, digital_menu: false, crm: false },
+    activeModules: (state) => {
+      const t: any = state.tenant;
+      return { appointments: !!t?.modules?.appointments, digital_menu: !!t?.modules?.digital_menu, crm: !!t?.modules?.crm };
+    },
     primaryColor: (state) => state.tenant?.primary_color ?? '#1976D2',
     secondaryColor: (state) => state.tenant?.secondary_color ?? '#424242',
   },
@@ -26,11 +33,10 @@ export const useTenantStore = defineStore('tenant', {
       this.isLoading = true;
       const { data } = await supabase.from('tenants').select('*').eq('id', tenantId).single();
       if (data) {
-        const tenant = data as unknown as Tenant;
-        this.tenant = tenant;
+        this.tenant = data as unknown as Tenant;
         applyTenantTheme({
-          primary: tenant.primary_color,
-          secondary: tenant.secondary_color,
+          primary: data.primary_color ?? undefined,
+          secondary: data.secondary_color ?? undefined,
         });
       }
       this.isLoading = false;
@@ -40,11 +46,10 @@ export const useTenantStore = defineStore('tenant', {
       this.isLoading = true;
       const { data } = await supabase.from('tenants').select('*').eq('slug', slug).single();
       if (data) {
-        const tenant = data as unknown as Tenant;
-        this.tenant = tenant;
+        this.tenant = data as unknown as Tenant;
         applyTenantTheme({
-          primary: tenant.primary_color,
-          secondary: tenant.secondary_color,
+          primary: data.primary_color ?? undefined,
+          secondary: data.secondary_color ?? undefined,
         });
       }
       this.isLoading = false;
@@ -55,13 +60,13 @@ export const useTenantStore = defineStore('tenant', {
       if (!this.tenant) return;
       const { error } = await supabase
         .from('tenants')
-        .update(payload as Record<string, unknown>)
+        .update(payload as any)
         .eq('id', this.tenant.id);
       if (error) throw error;
       if (payload.primary_color || payload.secondary_color) {
         applyTenantTheme({
-          primary: payload.primary_color,
-          secondary: payload.secondary_color,
+          primary: payload.primary_color ?? undefined,
+          secondary: payload.secondary_color ?? undefined,
         });
       }
     },

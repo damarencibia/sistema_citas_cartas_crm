@@ -18,7 +18,7 @@ CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id),
   table_id UUID REFERENCES tables(id),
-  customer_id UUID REFERENCES customers(id),
+  customer_id UUID,
   customer_name VARCHAR(200),
   customer_email VARCHAR(255),
   customer_phone VARCHAR(20),

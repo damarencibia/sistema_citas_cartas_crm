@@ -91,8 +91,8 @@ onMounted(() => {
     form.email = tenantStore.tenant.email || '';
     form.phone = tenantStore.tenant.phone || '';
     form.address = tenantStore.tenant.address || '';
-    form.primary_color = tenantStore.tenant.primary_color;
-    form.secondary_color = tenantStore.tenant.secondary_color;
+    form.primary_color = tenantStore.tenant.primary_color || '#1976D2';
+    form.secondary_color = tenantStore.tenant.secondary_color || '#424242';
   }
 });
 

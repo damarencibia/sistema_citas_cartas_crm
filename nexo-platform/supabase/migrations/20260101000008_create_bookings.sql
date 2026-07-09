@@ -1,7 +1,7 @@
 CREATE TABLE bookings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id),
-  customer_id UUID REFERENCES customers(id),
+  customer_id UUID,
   service_id UUID NOT NULL REFERENCES services(id),
   employee_id UUID NOT NULL REFERENCES employees(id),
   date DATE NOT NULL,

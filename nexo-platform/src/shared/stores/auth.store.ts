@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { supabase } from '@/shared/api/supabase.client';
-import type { User } from '@/shared/types';
+import type { Database } from '@/shared/types/supabase.gen';
+
+type User = Database['public']['Tables']['users']['Row'];
 
 interface AuthStoreState {
   user: User | null;
@@ -49,7 +51,7 @@ export const useAuthStore = defineStore('auth', {
         .select('*')
         .eq('supabase_user_id', supabaseUserId)
         .single();
-      if (data) this.user = data as unknown as User;
+      if (data) this.user = data;
     },
 
     async login(email: string, password: string) {
