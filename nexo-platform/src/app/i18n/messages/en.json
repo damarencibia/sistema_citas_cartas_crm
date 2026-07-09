@@ -1,0 +1,52 @@
+{
+  "app": {
+    "name": "Nexo Platform",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "noResults": "No results",
+    "required": "Required field"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "createAccount": "Create Account",
+    "invalidCredentials": "Invalid credentials",
+    "sessionExpired": "Session expired"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "appointments": "Appointments",
+    "agenda": "Agenda",
+    "services": "Services",
+    "employees": "Employees",
+    "schedules": "Schedules",
+    "bookings": "Bookings",
+    "history": "History",
+    "digitalMenu": "Digital Menu",
+    "categories": "Categories",
+    "products": "Products",
+    "tables": "Tables",
+    "orders": "Orders",
+    "crm": "CRM",
+    "customers": "Customers",
+    "tags": "Tags",
+    "loyalty": "Loyalty",
+    "settings": "Settings",
+    "business": "My Business",
+    "team": "Team",
+    "modules": "Modules"
+  }
+}

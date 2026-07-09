@@ -1,0 +1,18 @@
+<template>
+  <div class="d-flex align-center justify-space-between mb-6">
+    <div>
+      <h2 class="text-h5 font-weight-bold">{{ title }}</h2>
+      <p v-if="subtitle" class="text-body-2 text-medium-emphasis mt-1">{{ subtitle }}</p>
+    </div>
+    <div class="d-flex ga-2">
+      <slot name="actions" />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+defineProps<{
+  title: string;
+  subtitle?: string;
+}>();
+</script>

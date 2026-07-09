@@ -1,0 +1,31 @@
+[project]
+name = "nexo-platform"
+plan = "free"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["https://*.vercel.app"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_confirmations = false
+enable_autoconfirm = true
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "auth", "storage"]
+
+[db]
+enabled = true
+port = 54322
+migration_dir = "supabase/migrations"
+
+[storage]
+enabled = true
+
+[edge-runtime]
+enabled = true
+policy_area = "per_worker"

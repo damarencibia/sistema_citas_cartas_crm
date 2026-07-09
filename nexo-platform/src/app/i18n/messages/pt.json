@@ -1,0 +1,52 @@
+{
+  "app": {
+    "name": "Nexo Platform",
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "search": "Pesquisar",
+    "noResults": "Sem resultados",
+    "required": "Campo obrigatório"
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "logout": "Sair",
+    "email": "E-mail",
+    "password": "Senha",
+    "forgotPassword": "Esqueceu a senha?",
+    "resetPassword": "Redefinir Senha",
+    "noAccount": "Não tem conta?",
+    "hasAccount": "Já tem conta?",
+    "createAccount": "Criar Conta",
+    "invalidCredentials": "Credenciais inválidas",
+    "sessionExpired": "Sessão expirada"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "appointments": "Agendamentos",
+    "agenda": "Agenda",
+    "services": "Serviços",
+    "employees": "Funcionários",
+    "schedules": "Horários",
+    "bookings": "Reservas",
+    "history": "Histórico",
+    "digitalMenu": "Cardápio Digital",
+    "categories": "Categorias",
+    "products": "Produtos",
+    "tables": "Mesas",
+    "orders": "Pedidos",
+    "crm": "CRM",
+    "customers": "Clientes",
+    "tags": "Etiquetas",
+    "loyalty": "Fidelidade",
+    "settings": "Configurações",
+    "business": "Meu Negócio",
+    "team": "Equipe",
+    "modules": "Módulos"
+  }
+}
