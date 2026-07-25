@@ -14,6 +14,7 @@ export interface CreateResourceDTO {
   type?: Resource['type'];
   capacity?: number;
   description?: string;
+  is_active?: boolean;
 }
 
 export type UpdateResourceDTO = Partial<CreateResourceDTO>;

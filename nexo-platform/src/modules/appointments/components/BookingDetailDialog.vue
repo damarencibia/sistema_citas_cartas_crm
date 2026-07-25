@@ -23,6 +23,9 @@
             :title="`${booking.employee.first_name} ${booking.employee.last_name}`"
           />
           <v-list-item v-if="booking.notes" prepend-icon="mdi-note-text" :title="booking.notes" />
+          <v-list-item v-if="booking.source === 'walk_in'" prepend-icon="mdi-walk">
+            <v-chip size="x-small" color="teal" variant="tonal">Walk-in</v-chip>
+          </v-list-item>
         </v-list>
       </v-card-text>
       <v-card-actions v-if="showActions && canUpdate" class="pa-4 pt-0">

@@ -123,6 +123,14 @@
             </v-col>
           </v-row>
           <v-textarea v-model="form.notes" label="Notas (opcional)" rows="2" />
+
+          <v-divider class="my-4" />
+          <v-switch v-model="showRecurrence" label="Cita recurrente" color="primary" hide-details class="mb-2" />
+          <RecurrencePicker
+            v-if="showRecurrence"
+            v-model="recurrenceData"
+            :min-date="form.date || minDate"
+          />
         </v-form>
       </v-card-text>
       <v-card-actions class="pa-4 pt-0">
@@ -162,7 +170,8 @@ import EmployeeSelect from './EmployeeSelect.vue';
 import TimeSlotPicker from './TimeSlotPicker.vue';
 import ResourceSelect from './ResourceSelect.vue';
 import WaitlistDialog from './WaitlistDialog.vue';
-import type { Booking, CreateBookingDTO, ClientBlockCheck } from '../types/booking.types';
+import RecurrencePicker from './RecurrencePicker.vue';
+import type { Booking, CreateBookingDTO, ClientBlockCheck, RecurrenceData } from '../types/booking.types';
 
 const props = defineProps<{
   visible: boolean;
@@ -185,6 +194,16 @@ const submitting = ref(false);
 const slotsLoading = computed(() => availability.loading.value);
 const minDate = new Date().toISOString().split('T')[0];
 const showWaitlistDialog = ref(false);
+const showRecurrence = ref(false);
+const recurrenceData = ref<RecurrenceData>({
+  enabled: false,
+  frequency: 'weekly',
+  day_of_week: null,
+  day_of_month: null,
+  preferred_time: '09:00',
+  start_date: '',
+  end_date: '',
+});
 const noSlotsAvailable = computed<boolean>(() =>
   availability.slots.value.length === 0 && !availability.loading.value && form.date !== '' && form.start_time === '',
 );
@@ -332,6 +351,8 @@ watch(
       clientBlock.is_blocked = false;
       clientBlock.blocked_until = null;
       clientBlock.no_show_count = 0;
+      showRecurrence.value = false;
+      recurrenceData.value = { enabled: false, frequency: 'weekly', day_of_week: null, day_of_month: null, preferred_time: '09:00', start_date: '', end_date: '' };
     } else {
       resourceStore.fetchResources();
     }
@@ -343,7 +364,11 @@ async function onSubmit() {
   if (!valid) return;
   if (clientBlock.is_blocked) return;
   submitting.value = true;
-  emit('save', { ...form, resource_id: form.resource_id ?? undefined });
+  const payload: any = { ...form, resource_id: form.resource_id ?? undefined };
+  if (showRecurrence.value && recurrenceData.value.enabled) {
+    payload.recurrence = { ...recurrenceData.value };
+  }
+  emit('save', payload);
   submitting.value = false;
 }
 

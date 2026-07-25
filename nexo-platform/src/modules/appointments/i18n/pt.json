@@ -82,7 +82,44 @@
       "cancel": "Cancelar",
       "reschedule": "Reagendar"
     },
-    "empty": "Nenhum agendamento para esta data"
+    "empty": "Nenhum agendamento para esta data",
+    "approval": {
+      "title": "Pendente de Aprovação",
+      "subtitle": "Agendamentos que requerem aprovação manual",
+      "approve": "Aprovar",
+      "reject": "Rejeitar",
+      "approved": "Agendamento aprovado",
+      "rejected": "Agendamento rejeitado",
+      "rejectReason": "Motivo da rejeição",
+      "rejectReasonRequired": "O motivo é obrigatório",
+      "empty": "Nenhum agendamento pendente de aprovação",
+      "confirmApprove": "Aprovar este agendamento?",
+      "confirmReject": "Rejeitar este agendamento?",
+      "pendingCount": "{count} pendente(s)"
+    },
+    "statusLabels": {
+      "confirmed": "Confirmado",
+      "in_progress": "Em Andamento",
+      "completed": "Concluído",
+      "no_show": "Não Compareceu",
+      "cancelled": "Cancelado",
+      "pending_approval": "Pendente de Aprovação"
+    },
+    "walkIn": {
+      "title": "Fila de Walk-in",
+      "add": "Adicionar Walk-in",
+      "name": "Nome do cliente",
+      "phone": "Telefone",
+      "service": "Serviço",
+      "employee": "Funcionário",
+      "addToQueue": "Adicionar à Fila",
+      "startServing": "Iniciar Atendimento",
+      "complete": "Concluir",
+      "cancel": "Cancelar",
+      "empty": "Nenhum walk-in na fila",
+      "serving": "Atendendo...",
+      "waiting": "Aguardando"
+    }
   },
   "agenda": {
     "title": "Agenda",

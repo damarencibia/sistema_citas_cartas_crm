@@ -82,7 +82,44 @@
       "cancel": "Cancel",
       "reschedule": "Reschedule"
     },
-    "empty": "No bookings for this date"
+    "empty": "No bookings for this date",
+    "approval": {
+      "title": "Pending Approval",
+      "subtitle": "Bookings that require manual approval",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approved": "Booking approved",
+      "rejected": "Booking rejected",
+      "rejectReason": "Rejection reason",
+      "rejectReasonRequired": "Reason is required",
+      "empty": "No pending approval bookings",
+      "confirmApprove": "Approve this booking?",
+      "confirmReject": "Reject this booking?",
+      "pendingCount": "{count} pending"
+    },
+    "statusLabels": {
+      "confirmed": "Confirmed",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "no_show": "No Show",
+      "cancelled": "Cancelled",
+      "pending_approval": "Pending Approval"
+    },
+    "walkIn": {
+      "title": "Walk-in Queue",
+      "add": "Add Walk-in",
+      "name": "Customer name",
+      "phone": "Phone",
+      "service": "Service",
+      "employee": "Employee",
+      "addToQueue": "Add to Queue",
+      "startServing": "Start Serving",
+      "complete": "Complete",
+      "cancel": "Cancel",
+      "empty": "No walk-ins in queue",
+      "serving": "Serving...",
+      "waiting": "Waiting"
+    }
   },
   "agenda": {
     "title": "Agenda",

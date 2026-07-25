@@ -19,6 +19,13 @@ export const BOOKING_STATUS = {
   PENDING_APPROVAL: 'pending_approval',
 } as const;
 
+export const BOOKING_SOURCE = {
+  ONLINE: 'online',
+  MANUAL: 'manual',
+  PHONE: 'phone',
+  WALK_IN: 'walk_in',
+} as const;
+
 export const ORDER_STATUS = {
   PENDING: 'pending',
   PREPARING: 'preparing',

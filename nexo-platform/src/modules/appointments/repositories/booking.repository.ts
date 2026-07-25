@@ -1,5 +1,5 @@
 import { supabase } from '@/shared/api/supabase.client';
-import type { Booking, CreateBookingDTO, BookingFilters, AvailableSlot, ClientBlockCheck, StatusChangedBy, BookingWindow, CreateBookingWindowDTO, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance } from '../types/booking.types';
+import type { Booking, CreateBookingDTO, BookingFilters, AvailableSlot, ClientBlockCheck, StatusChangedBy, BookingWindow, CreateBookingWindowDTO, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance, WalkInEntry, CreateWalkInDTO } from '../types/booking.types';
 
 const TABLE = 'bookings' as const;
 
@@ -513,6 +513,61 @@ export const bookingRepository = {
       .from('recurring_booking_instances')
       .update({ status: 'skipped' })
       .eq('id', instanceId);
+    if (error) throw error;
+  },
+
+  // --- Walk-in Queue ---
+
+  async getWalkInQueue(tenantId: string): Promise<WalkInEntry[]> {
+    const { data, error } = await (supabase as any)
+      .from('walkin_queue')
+      .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
+      .eq('tenant_id', tenantId)
+      .in('status', ['waiting', 'serving'])
+      .order('position', { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as unknown as WalkInEntry[];
+  },
+
+  async createWalkIn(tenantId: string, dto: CreateWalkInDTO): Promise<WalkInEntry> {
+    const { count } = await (supabase as any)
+      .from('walkin_queue')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('status', 'waiting');
+
+    const position = (count ?? 0) + 1;
+
+    const { data, error } = await (supabase as any)
+      .from('walkin_queue')
+      .insert({
+        tenant_id: tenantId,
+        customer_name: dto.customer_name,
+        customer_phone: dto.customer_phone ?? null,
+        service_id: dto.service_id ?? null,
+        employee_id: dto.employee_id ?? null,
+        position,
+        status: 'waiting',
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as WalkInEntry;
+  },
+
+  async updateWalkInStatus(id: string, status: WalkInEntry['status']): Promise<void> {
+    const update: Record<string, unknown> = { status };
+    if (status === 'serving') update.started_serving_at = new Date().toISOString();
+    if (status === 'completed' || status === 'cancelled' || status === 'no_show') update.completed_at = new Date().toISOString();
+    const { error } = await (supabase as any)
+      .from('walkin_queue')
+      .update(update)
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async removeWalkIn(id: string): Promise<void> {
+    const { error } = await (supabase as any).from('walkin_queue').delete().eq('id', id);
     if (error) throw error;
   },
 };

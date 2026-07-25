@@ -160,6 +160,58 @@
       @save="onWindowSave"
     />
 
+    <!-- Resources Section -->
+    <v-card class="pa-6 mt-4">
+      <div class="d-flex align-center ga-3 mb-4">
+        <v-icon color="primary" size="small">mdi-office-building</v-icon>
+        <div>
+          <div class="text-subtitle-1 font-weight-medium">Recursos</div>
+          <div class="text-caption text-medium-emphasis">
+            Habitaciones, equipos y vehículos disponibles para las reservas.
+          </div>
+        </div>
+        <v-spacer />
+        <v-btn color="primary" variant="tonal" size="small" prepend-icon="mdi-plus" @click="openResourceForm()">
+          Agregar recurso
+        </v-btn>
+      </div>
+
+      <v-alert v-if="resources.length === 0" type="info" variant="tonal" density="compact">
+        No hay recursos configurados. Los recursos se asignan a servicios para controlar disponibilidad.
+      </v-alert>
+
+      <v-list v-else density="compact" lines="two">
+        <v-list-item
+          v-for="resource in resources"
+          :key="resource.id"
+          :title="resource.name"
+          :subtitle="`${resource.type} — Cap: ${resource.capacity}`"
+        >
+          <template #append>
+            <v-btn icon="mdi-pencil" size="x-small" variant="text" @click="openResourceForm(resource)" />
+            <v-btn icon="mdi-delete" size="x-small" variant="text" color="error" @click="deleteResource(resource)" />
+          </template>
+        </v-list-item>
+      </v-list>
+    </v-card>
+
+    <v-dialog v-model="showResourceDialog" max-width="400" persistent>
+      <v-card>
+        <v-card-title class="text-h6">{{ editingResource ? 'Editar' : 'Nuevo' }} Recurso</v-card-title>
+        <v-card-text>
+          <v-text-field v-model="resourceForm.name" label="Nombre *" :rules="[v => !!v || 'Requerido']" class="mb-2" />
+          <v-select v-model="resourceForm.type" :items="resourceTypes" label="Tipo *" class="mb-2" />
+          <v-text-field v-model.number="resourceForm.capacity" label="Capacidad" type="number" min="1" class="mb-2" />
+          <v-textarea v-model="resourceForm.description" label="Descripción" rows="2" />
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showResourceDialog = false">Cancelar</v-btn>
+          <v-btn color="primary" variant="flat" :loading="savingResource" @click="saveResource">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
       {{ snackbarText }}
     </v-snackbar>
@@ -170,14 +222,17 @@
 import { reactive, ref, onMounted } from 'vue';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { bookingRepository } from '@/modules/appointments/repositories/booking.repository';
+import { useResourceStore } from '@/modules/appointments/stores/resource.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import FormSection from '@/shared/components/FormSection.vue';
 import BookingWindowsDialog from '@/modules/appointments/components/BookingWindowsDialog.vue';
 import type { BookingWindow } from '@/modules/appointments/types/booking.types';
+import type { Resource } from '@/modules/appointments/types/resource.types';
 
 const tenantStore = useTenantStore();
 const authStore = useAuthStore();
+const resourceStore = useResourceStore();
 const saving = ref(false);
 const snackbar = ref(false);
 const snackbarText = ref('');
@@ -242,6 +297,74 @@ async function deleteWindow(bw: BookingWindow) {
   }
 }
 
+// --- Resources ---
+const resources = ref<Resource[]>([]);
+const showResourceDialog = ref(false);
+const editingResource = ref<Resource | null>(null);
+const savingResource = ref(false);
+const resourceTypes = [
+  { value: 'room', text: 'Habitación/Sala' },
+  { value: 'equipment', text: 'Equipo' },
+  { value: 'vehicle', text: 'Vehículo' },
+  { value: 'other', text: 'Otro' },
+];
+const resourceForm = reactive({
+  name: '',
+  type: 'room' as Resource['type'],
+  capacity: 1,
+  description: '',
+});
+
+async function loadResources() {
+  await resourceStore.fetchResources();
+  resources.value = resourceStore.resources;
+}
+
+function openResourceForm(resource?: Resource) {
+  editingResource.value = resource ?? null;
+  if (resource) {
+    resourceForm.name = resource.name;
+    resourceForm.type = resource.type;
+    resourceForm.capacity = resource.capacity;
+    resourceForm.description = resource.description ?? '';
+  } else {
+    resourceForm.name = '';
+    resourceForm.type = 'room';
+    resourceForm.capacity = 1;
+    resourceForm.description = '';
+  }
+  showResourceDialog.value = true;
+}
+
+async function saveResource() {
+  if (!resourceForm.name) return;
+  savingResource.value = true;
+  try {
+    if (editingResource.value) {
+      await resourceStore.updateResource(editingResource.value.id, { ...resourceForm });
+    } else {
+      await resourceStore.createResource({ ...resourceForm, is_active: true });
+    }
+    await loadResources();
+    showResourceDialog.value = false;
+    notify(editingResource.value ? 'Recurso actualizado' : 'Recurso creado', 'success');
+  } catch {
+    notify('Error al guardar recurso', 'error');
+  } finally {
+    savingResource.value = false;
+  }
+}
+
+async function deleteResource(resource: Resource) {
+  try {
+    await resourceStore.removeResource(resource.id);
+    await loadResources();
+    notify('Recurso eliminado', 'success');
+  } catch {
+    notify('Error al eliminar recurso', 'error');
+  }
+}
+
 function notify(text: string, color: string) {
   snackbarText.value = text;
   snackbarColor.value = color;
@@ -263,6 +386,7 @@ onMounted(async () => {
     form.allow_reschedule = config.allow_reschedule ?? true;
   }
   await loadBookingWindows();
+  await loadResources();
 });
 
 async function save() {

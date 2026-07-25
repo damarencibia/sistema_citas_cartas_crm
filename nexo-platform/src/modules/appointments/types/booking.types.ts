@@ -1,7 +1,7 @@
 import type { BaseEntity } from '@/shared/types';
 
 export type BookingStatus = 'confirmed' | 'in_progress' | 'completed' | 'no_show' | 'cancelled' | 'pending_approval';
-export type BookingSource = 'online' | 'manual' | 'phone';
+export type BookingSource = 'online' | 'manual' | 'phone' | 'walk_in';
 export type CancelledBy = 'customer' | 'employee' | 'system';
 export type StatusChangedBy = 'employee' | 'system' | 'customer';
 
@@ -202,4 +202,39 @@ export interface RecurringInstance {
   scheduled_date: string;
   status: 'scheduled' | 'booked' | 'skipped' | 'cancelled';
   created_at: string;
+}
+
+export interface RecurrenceData {
+  enabled: boolean;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  day_of_week: number | null;
+  day_of_month: number | null;
+  preferred_time: string;
+  start_date: string;
+  end_date: string;
+}
+
+export interface WalkInEntry {
+  id: string;
+  tenant_id: string;
+  customer_name: string;
+  customer_phone: string | null;
+  service_id: string | null;
+  employee_id: string | null;
+  position: number;
+  status: 'waiting' | 'serving' | 'completed' | 'cancelled' | 'no_show';
+  estimated_wait_minutes: number | null;
+  checked_in_at: string;
+  started_serving_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  service?: { name: string; duration_minutes: number; color: string };
+  employee?: { first_name: string; last_name: string; color: string };
+}
+
+export interface CreateWalkInDTO {
+  customer_name: string;
+  customer_phone?: string;
+  service_id?: string;
+  employee_id?: string;
 }
