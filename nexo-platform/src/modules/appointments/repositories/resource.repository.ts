@@ -6,7 +6,7 @@ const JUNCTION_TABLE = 'service_resources' as const;
 
 export const resourceRepository = {
   async getAll(tenantId: string): Promise<Resource[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from(TABLE)
       .select('*')
       .eq('tenant_id', tenantId)
@@ -16,7 +16,7 @@ export const resourceRepository = {
   },
 
   async getActive(tenantId: string): Promise<Resource[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from(TABLE)
       .select('*')
       .eq('tenant_id', tenantId)
@@ -27,7 +27,7 @@ export const resourceRepository = {
   },
 
   async create(tenantId: string, dto: CreateResourceDTO): Promise<Resource> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from(TABLE)
       .insert({
         tenant_id: tenantId,
@@ -44,7 +44,7 @@ export const resourceRepository = {
   },
 
   async update(id: string, dto: Partial<CreateResourceDTO & { is_active: boolean }>): Promise<Resource> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from(TABLE)
       .update({ ...dto, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -55,14 +55,14 @@ export const resourceRepository = {
   },
 
   async remove(id: string): Promise<void> {
-    const { error } = await (supabase as any).from(TABLE).delete().eq('id', id);
+    const { error } = await supabase.from(TABLE).delete().eq('id', id);
     if (error) throw error;
   },
 
   // --- Service-Resource junction ---
 
   async getServiceResources(tenantId: string, serviceId?: string): Promise<ServiceResource[]> {
-    let query = (supabase as any)
+    let query = supabase
       .from(JUNCTION_TABLE)
       .select('*')
       .eq('tenant_id', tenantId);
@@ -73,7 +73,7 @@ export const resourceRepository = {
   },
 
   async assignResource(tenantId: string, dto: CreateServiceResourceDTO): Promise<ServiceResource> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from(JUNCTION_TABLE)
       .insert({
         tenant_id: tenantId,
@@ -88,7 +88,7 @@ export const resourceRepository = {
   },
 
   async removeServiceResource(id: string): Promise<void> {
-    const { error } = await (supabase as any).from(JUNCTION_TABLE).delete().eq('id', id);
+    const { error } = await supabase.from(JUNCTION_TABLE).delete().eq('id', id);
     if (error) throw error;
   },
 };

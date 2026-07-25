@@ -1,7 +1,11 @@
 import { supabase } from '@/shared/api/supabase.client';
+import type { Database } from '@/shared/types/supabase.gen';
 import type { Booking, CreateBookingDTO, BookingFilters, AvailableSlot, ClientBlockCheck, StatusChangedBy, BookingWindow, CreateBookingWindowDTO, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance, WalkInEntry, CreateWalkInDTO } from '../types/booking.types';
 
 const TABLE = 'bookings' as const;
+
+type BookingUpdate = Database['public']['Tables']['bookings']['Update'];
+type BookingInsert = Database['public']['Tables']['bookings']['Insert'];
 
 export const bookingRepository = {
   async getByFilters(filters: BookingFilters): Promise<Booking[]> {
@@ -44,7 +48,7 @@ export const bookingRepository = {
   },
 
   async create(dto: CreateBookingDTO, tenantId: string): Promise<Booking> {
-    const { data: serviceData, error: serviceError } = await (supabase as any)
+    const { data: serviceData, error: serviceError } = await supabase
       .from('services')
       .select('duration_minutes, requires_approval')
       .eq('id', dto.service_id)
@@ -55,26 +59,28 @@ export const bookingRepository = {
     const endDate = new Date(2000, 0, 1, hours, minutes + serviceData.duration_minutes);
     const endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
 
-    const initialStatus = (serviceData as any).requires_approval ? 'pending_approval' : 'confirmed';
+    const initialStatus = serviceData.requires_approval ? 'pending_approval' : 'confirmed';
+
+    const insertPayload: BookingInsert = {
+      tenant_id: tenantId,
+      service_id: dto.service_id,
+      employee_id: dto.employee_id,
+      date: dto.date,
+      start_time: dto.start_time,
+      end_time: endTime,
+      customer_name: dto.customer_name ?? null,
+      customer_email: dto.customer_email ?? null,
+      customer_phone: dto.customer_phone ?? null,
+      notes: dto.notes ?? null,
+      source: dto.source ?? 'manual',
+      status: initialStatus,
+      participant_count: dto.participant_count ?? 1,
+      resource_id: dto.resource_id ?? null,
+    };
 
     const { data, error } = await supabase
       .from(TABLE)
-      .insert({
-        tenant_id: tenantId,
-        service_id: dto.service_id,
-        employee_id: dto.employee_id,
-        date: dto.date,
-        start_time: dto.start_time,
-        end_time: endTime,
-        customer_name: dto.customer_name ?? null,
-        customer_email: dto.customer_email ?? null,
-        customer_phone: dto.customer_phone ?? null,
-        notes: dto.notes ?? null,
-        source: dto.source ?? 'manual',
-        status: initialStatus,
-        participant_count: dto.participant_count ?? 1,
-        resource_id: dto.resource_id ?? null,
-      } as any)
+      .insert(insertPayload)
       .select()
       .single();
     if (error) throw error;
@@ -87,7 +93,7 @@ export const bookingRepository = {
     reason?: string,
     cancelledBy: 'customer' | 'employee' | 'system' = 'employee',
   ): Promise<Booking> {
-    const updatePayload: Record<string, unknown> = {
+    const updatePayload: BookingUpdate = {
       status,
       updated_at: new Date().toISOString(),
     };
@@ -101,7 +107,7 @@ export const bookingRepository = {
     }
     const { data, error } = await supabase
       .from(TABLE)
-      .update(updatePayload as any)
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
@@ -118,7 +124,7 @@ export const bookingRepository = {
     changedByName?: string,
     reason?: string,
   ): Promise<void> {
-    const { error } = await (supabase as any).from('booking_status_log').insert({
+    const { error } = await supabase.from('booking_status_log').insert({
       tenant_id: tenantId,
       booking_id: bookingId,
       old_status: oldStatus,
@@ -126,18 +132,18 @@ export const bookingRepository = {
       changed_by: changedBy,
       changed_by_name: changedByName ?? null,
       reason: reason ?? null,
-    } as any);
+    });
     if (error) throw error;
   },
 
   async checkClientBlock(tenantId: string, customerEmail: string): Promise<ClientBlockCheck> {
     if (!customerEmail) return { is_blocked: false, blocked_until: null, no_show_count: 0 };
-    const { data, error } = await supabase.rpc('is_client_blocked' as any, {
+    const { data, error } = await supabase.rpc('is_client_blocked', {
       p_tenant_id: tenantId,
       p_customer_email: customerEmail,
     });
     if (error) throw error;
-    const result = (data as any[])?.[0];
+    const result = data?.[0];
     return {
       is_blocked: result?.is_blocked ?? false,
       blocked_until: result?.blocked_until ?? null,
@@ -147,7 +153,7 @@ export const bookingRepository = {
 
   async countRecentNoShows(tenantId: string, customerEmail: string, days: number = 30): Promise<number> {
     if (!customerEmail) return 0;
-    const { data, error } = await supabase.rpc('count_recent_no_shows' as any, {
+    const { data, error } = await supabase.rpc('count_recent_no_shows', {
       p_tenant_id: tenantId,
       p_customer_email: customerEmail,
       p_days: days,
@@ -174,8 +180,8 @@ export const bookingRepository = {
       .eq('id', tenantId)
       .single();
     if (error) throw error;
-    const config = (data as any)?.config?.appointments;
-    return config ?? null;
+    const config = (data as { config: Record<string, unknown> | null })?.config?.appointments as Record<string, unknown> | undefined;
+    return config as { auto_start: boolean; grace_period_minutes: number; max_no_shows: number; block_duration_days: number } | null;
   },
 
   async createClientBlock(
@@ -185,7 +191,7 @@ export const bookingRepository = {
     reason: string,
     noShowCount: number,
   ): Promise<void> {
-    const { error } = await (supabase as any).from('client_blocks').upsert({
+    const { error } = await supabase.from('client_blocks').upsert({
       tenant_id: tenantId,
       customer_email: customerEmail,
       blocked_until: blockedUntil,
@@ -207,13 +213,13 @@ export const bookingRepository = {
       .update({
         status: 'confirmed',
         updated_at: new Date().toISOString(),
-      } as any)
+      } as BookingUpdate)
       .eq('id', bookingId)
       .select()
       .single();
     if (error) throw error;
 
-    await (supabase as any).from('booking_approvals').insert({
+    await supabase.from('booking_approvals').insert({
       booking_id: bookingId,
       tenant_id: data.tenant_id,
       action: 'approved',
@@ -237,13 +243,13 @@ export const bookingRepository = {
         cancelled_by: 'employee',
         cancelled_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as any)
+      } as BookingUpdate)
       .eq('id', bookingId)
       .select()
       .single();
     if (error) throw error;
 
-    await (supabase as any).from('booking_approvals').insert({
+    await supabase.from('booking_approvals').insert({
       booking_id: bookingId,
       tenant_id: data.tenant_id,
       action: 'rejected',
@@ -261,12 +267,12 @@ export const bookingRepository = {
     serviceDuration: number,
     serviceId?: string,
   ): Promise<AvailableSlot[]> {
-    const { data, error } = await supabase.rpc('get_available_slots' as any, {
+    const { data, error } = await supabase.rpc('get_available_slots', {
       p_tenant_id: tenantId,
       p_employee_id: employeeId,
       p_date: date,
       p_service_duration: serviceDuration,
-      p_service_id: serviceId ?? null,
+      p_service_id: serviceId ?? undefined,
     });
     if (error) throw error;
     return (data ?? []) as AvailableSlot[];
@@ -302,7 +308,7 @@ export const bookingRepository = {
         start_time: newStartTime,
         end_time: endTime,
         updated_at: new Date().toISOString(),
-      } as any)
+      } as BookingUpdate)
       .eq('id', bookingId)
       .select()
       .single();
@@ -313,7 +319,7 @@ export const bookingRepository = {
   // --- Booking Windows ---
 
   async getBookingWindows(tenantId: string): Promise<BookingWindow[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('booking_windows')
       .select('*')
       .eq('tenant_id', tenantId)
@@ -323,7 +329,7 @@ export const bookingRepository = {
   },
 
   async createBookingWindow(tenantId: string, dto: CreateBookingWindowDTO): Promise<BookingWindow> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('booking_windows')
       .insert({
         tenant_id: tenantId,
@@ -346,14 +352,14 @@ export const bookingRepository = {
   },
 
   async deleteBookingWindow(id: string): Promise<void> {
-    const { error } = await (supabase as any).from('booking_windows').delete().eq('id', id);
+    const { error } = await supabase.from('booking_windows').delete().eq('id', id);
     if (error) throw error;
   },
 
   // --- Waitlist ---
 
   async getWaitlist(tenantId: string): Promise<WaitlistEntry[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('waitlist')
       .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
       .eq('tenant_id', tenantId)
@@ -363,7 +369,7 @@ export const bookingRepository = {
   },
 
   async joinWaitlist(tenantId: string, dto: CreateWaitlistDTO): Promise<WaitlistEntry> {
-    const { count } = await (supabase as any)
+    const { count } = await supabase
       .from('waitlist')
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
@@ -373,7 +379,7 @@ export const bookingRepository = {
 
     const position = (count ?? 0) + 1;
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('waitlist')
       .insert({
         tenant_id: tenantId,
@@ -395,7 +401,7 @@ export const bookingRepository = {
   },
 
   async cancelWaitlistEntry(id: string): Promise<void> {
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('waitlist')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', id);
@@ -403,7 +409,7 @@ export const bookingRepository = {
   },
 
   async removeWaitlistEntry(id: string): Promise<void> {
-    const { error } = await (supabase as any).from('waitlist').delete().eq('id', id);
+    const { error } = await supabase.from('waitlist').delete().eq('id', id);
     if (error) throw error;
   },
 
@@ -415,7 +421,7 @@ export const bookingRepository = {
     slotStart: string,
     slotEnd: string,
   ): Promise<WaitlistEntry | null> {
-    const { data, error } = await (supabase as any).rpc('promote_from_waitlist', {
+    const { data, error } = await supabase.rpc('promote_from_waitlist', {
       p_tenant_id: tenantId,
       p_service_id: serviceId,
       p_employee_id: employeeId,
@@ -424,8 +430,8 @@ export const bookingRepository = {
       p_slot_end: slotEnd,
     });
     if (error) throw error;
-    const entry = (data as any[])?.[0];
-    return entry ? (entry as WaitlistEntry) : null;
+    const entry = data?.[0];
+    return entry ? (entry as unknown as WaitlistEntry) : null;
   },
 
   async getWaitlistCount(
@@ -434,7 +440,7 @@ export const bookingRepository = {
     employeeId: string,
     date: string,
   ): Promise<number> {
-    const { data, error } = await (supabase as any).rpc('get_waitlist_count', {
+    const { data, error } = await supabase.rpc('get_waitlist_count', {
       p_tenant_id: tenantId,
       p_service_id: serviceId,
       p_employee_id: employeeId,
@@ -447,7 +453,7 @@ export const bookingRepository = {
   // --- Recurring Bookings ---
 
   async getRecurringPatterns(tenantId: string): Promise<RecurringPattern[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('recurring_booking_patterns')
       .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
       .eq('tenant_id', tenantId)
@@ -457,7 +463,7 @@ export const bookingRepository = {
   },
 
   async createRecurringPattern(tenantId: string, dto: CreateRecurringDTO): Promise<RecurringPattern> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('recurring_booking_patterns')
       .insert({
         tenant_id: tenantId,
@@ -483,7 +489,7 @@ export const bookingRepository = {
   },
 
   async generateRecurringInstances(patternId: string): Promise<number> {
-    const { data, error } = await (supabase as any).rpc('generate_recurring_instances', {
+    const { data, error } = await supabase.rpc('generate_recurring_instances', {
       p_pattern_id: patternId,
     });
     if (error) throw error;
@@ -491,7 +497,7 @@ export const bookingRepository = {
   },
 
   async getRecurringInstances(patternId: string): Promise<RecurringInstance[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('recurring_booking_instances')
       .select('*')
       .eq('pattern_id', patternId)
@@ -501,7 +507,7 @@ export const bookingRepository = {
   },
 
   async cancelRecurringPattern(patternId: string): Promise<void> {
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('recurring_booking_patterns')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', patternId);
@@ -509,7 +515,7 @@ export const bookingRepository = {
   },
 
   async skipRecurringInstance(instanceId: string): Promise<void> {
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('recurring_booking_instances')
       .update({ status: 'skipped' })
       .eq('id', instanceId);
@@ -519,7 +525,7 @@ export const bookingRepository = {
   // --- Walk-in Queue ---
 
   async getWalkInQueue(tenantId: string): Promise<WalkInEntry[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('walkin_queue')
       .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
       .eq('tenant_id', tenantId)
@@ -530,7 +536,7 @@ export const bookingRepository = {
   },
 
   async createWalkIn(tenantId: string, dto: CreateWalkInDTO): Promise<WalkInEntry> {
-    const { count } = await (supabase as any)
+    const { count } = await supabase
       .from('walkin_queue')
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
@@ -538,7 +544,7 @@ export const bookingRepository = {
 
     const position = (count ?? 0) + 1;
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('walkin_queue')
       .insert({
         tenant_id: tenantId,
@@ -556,10 +562,10 @@ export const bookingRepository = {
   },
 
   async updateWalkInStatus(id: string, status: WalkInEntry['status']): Promise<void> {
-    const update: Record<string, unknown> = { status };
+    const update: Database['public']['Tables']['walkin_queue']['Update'] = { status };
     if (status === 'serving') update.started_serving_at = new Date().toISOString();
     if (status === 'completed' || status === 'cancelled' || status === 'no_show') update.completed_at = new Date().toISOString();
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('walkin_queue')
       .update(update)
       .eq('id', id);
@@ -567,7 +573,7 @@ export const bookingRepository = {
   },
 
   async removeWalkIn(id: string): Promise<void> {
-    const { error } = await (supabase as any).from('walkin_queue').delete().eq('id', id);
+    const { error } = await supabase.from('walkin_queue').delete().eq('id', id);
     if (error) throw error;
   },
 };
