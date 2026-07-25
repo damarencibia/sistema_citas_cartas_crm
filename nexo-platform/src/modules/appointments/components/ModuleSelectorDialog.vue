@@ -2,51 +2,80 @@
   <v-dialog
     :model-value="modelValue"
     persistent
-    width="560"
+    width="640"
     no-click-animation
   >
     <template #default>
       <v-card class="pa-6" rounded="xl">
         <div class="text-center mb-6">
-          <v-icon size="56" color="primary">mdi-apps</v-icon>
-          <h2 class="text-h5 font-weight-bold mt-3">Selecciona un módulo</h2>
+          <h2 class="text-h5 font-weight-bold">Selecciona un módulo</h2>
           <p class="text-body-2 text-medium-emphasis mt-1">
             Elige el módulo al que deseas acceder
           </p>
         </div>
 
         <v-row dense>
-          <v-col
-            v-for="mod in modules"
-            :key="mod.id"
-            cols="12"
-          >
+          <v-col cols="6">
             <v-card
-              :variant="selected === mod.id ? 'tonal' : 'outlined'"
-              :color="selected === mod.id ? 'primary' : undefined"
-              class="module-card d-flex align-center pa-4"
+              :variant="selected === 'appointments' ? 'tonal' : 'outlined'"
+              :color="selected === 'appointments' ? 'primary' : undefined"
+              class="module-card d-flex flex-column align-center text-center pa-6"
               rounded="lg"
               hover
-              :style="{ cursor: 'pointer', transition: 'all 0.2s ease' }"
-              @click="selected = mod.id"
+              :style="{ cursor: 'pointer', transition: 'all 0.2s ease', minHeight: '220px' }"
+              @click="selected = 'appointments'"
               @dblclick="confirm"
             >
-              <v-avatar :color="selected === mod.id ? 'primary' : 'grey-lighten-3'" size="56" class="mr-4">
-                <v-icon :color="selected === mod.id ? 'white' : 'primary'" size="28">
-                  {{ mod.icon }}
+              <v-avatar
+                :color="selected === 'appointments' ? 'primary' : 'grey-lighten-3'"
+                size="72"
+                class="mb-4"
+              >
+                <v-icon
+                  :color="selected === 'appointments' ? 'white' : 'primary'"
+                  size="36"
+                >
+                  mdi-calendar-clock
                 </v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-subtitle-1 font-weight-bold">{{ mod.title }}</div>
-                <div class="text-body-2 text-medium-emphasis">{{ mod.description }}</div>
+              <div class="text-subtitle-1 font-weight-bold">Sistema de Citas</div>
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                Agenda, reservas, servicios y gestión de citas
               </div>
               <v-icon
-                v-if="selected === mod.id"
+                v-if="selected === 'appointments'"
                 color="primary"
                 size="24"
+                class="mt-3"
               >
                 mdi-check-circle
               </v-icon>
+            </v-card>
+          </v-col>
+
+          <v-col cols="6">
+            <v-card
+              variant="outlined"
+              disabled
+              class="module-card d-flex flex-column align-center text-center pa-6"
+              rounded="lg"
+              :style="{ minHeight: '220px', opacity: 0.55 }"
+            >
+              <v-avatar color="grey-lighten-3" size="72" class="mb-4">
+                <v-icon color="grey" size="36">mdi-silverware-fork-knife</v-icon>
+              </v-avatar>
+              <div class="text-subtitle-1 font-weight-bold">Carta Digital</div>
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                Menú digital, productos, categorías y pedidos
+              </div>
+              <v-chip
+                size="small"
+                variant="tonal"
+                color="grey"
+                class="mt-3"
+              >
+                Próximamente
+              </v-chip>
             </v-card>
           </v-col>
         </v-row>
@@ -68,10 +97,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useTenantStore } from '@/shared/stores/tenant.store';
+import { ref } from 'vue';
 
-const props = defineProps<{
+defineProps<{
   modelValue: boolean;
 }>();
 
@@ -80,40 +108,7 @@ const emit = defineEmits<{
   select: [moduleId: string];
 }>();
 
-const tenantStore = useTenantStore();
 const selected = ref<string | null>(null);
-
-const modules = computed(() => {
-  const mods = tenantStore.activeModules;
-  const list: { id: string; icon: string; title: string; description: string }[] = [];
-
-  if (mods.appointments) {
-    list.push({
-      id: 'appointments',
-      icon: 'mdi-calendar-clock',
-      title: 'Sistema de Citas',
-      description: 'Agenda, reservas, servicios y gestión de citas',
-    });
-  }
-  if (mods.digital_menu) {
-    list.push({
-      id: 'digital_menu',
-      icon: 'mdi-silverware-fork-knife',
-      title: 'Carta Digital',
-      description: 'Menú digital, productos, categorías y pedidos',
-    });
-  }
-  if (mods.crm) {
-    list.push({
-      id: 'crm',
-      icon: 'mdi-account-group',
-      title: 'CRM',
-      description: 'Clientes, etiquetas, fidelización y notas',
-    });
-  }
-
-  return list;
-});
 
 function confirm() {
   if (!selected.value) return;
