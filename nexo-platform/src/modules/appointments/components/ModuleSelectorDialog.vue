@@ -19,10 +19,10 @@
             <v-card
               :variant="selected === 'appointments' ? 'tonal' : 'outlined'"
               :color="selected === 'appointments' ? 'primary' : undefined"
-              class="module-card d-flex flex-column align-center text-center pa-6"
+              class="module-card d-flex flex-column align-center text-center justify-center pa-6"
               rounded="lg"
               hover
-              :style="{ cursor: 'pointer', transition: 'all 0.2s ease', minHeight: '220px' }"
+              :style="{ cursor: 'pointer', transition: 'all 0.2s ease', height: '240px' }"
               @click="selected = 'appointments'"
               @dblclick="confirm"
             >
@@ -42,14 +42,15 @@
               <div class="text-body-2 text-medium-emphasis mt-1">
                 Agenda, reservas, servicios y gestión de citas
               </div>
-              <v-icon
-                v-if="selected === 'appointments'"
-                color="primary"
-                size="24"
-                class="mt-3"
-              >
-                mdi-check-circle
-              </v-icon>
+              <div class="mt-3" style="height: 24px;">
+                <v-icon
+                  v-if="selected === 'appointments'"
+                  color="primary"
+                  size="24"
+                >
+                  mdi-check-circle
+                </v-icon>
+              </div>
             </v-card>
           </v-col>
 
@@ -57,9 +58,9 @@
             <v-card
               variant="outlined"
               disabled
-              class="module-card d-flex flex-column align-center text-center pa-6"
+              class="module-card d-flex flex-column align-center text-center justify-center pa-6"
               rounded="lg"
-              :style="{ minHeight: '220px', opacity: 0.55 }"
+              :style="{ height: '240px', opacity: 0.55 }"
             >
               <v-avatar color="grey-lighten-3" size="72" class="mb-4">
                 <v-icon color="grey" size="36">mdi-silverware-fork-knife</v-icon>
@@ -68,19 +69,20 @@
               <div class="text-body-2 text-medium-emphasis mt-1">
                 Menú digital, productos, categorías y pedidos
               </div>
-              <v-chip
-                size="small"
-                variant="tonal"
-                color="grey"
-                class="mt-3"
-              >
-                Próximamente
-              </v-chip>
+              <div class="mt-3" style="height: 24px;">
+                <v-chip
+                  size="small"
+                  variant="tonal"
+                  color="grey"
+                >
+                  Próximamente
+                </v-chip>
+              </div>
             </v-card>
           </v-col>
         </v-row>
 
-        <v-card-actions class="justify-end mt-4">
+        <v-card-actions class="justify-center mt-4">
           <v-btn
             color="primary"
             variant="flat"
