@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { supabase } from '@/shared/api/supabase.client';
 import { applyTenantTheme } from '@/app/plugins/vuetify';
-import type { Database, Json } from '@/shared/types/supabase.gen';
+import type { Database } from '@/shared/types/supabase.gen';
 
 type Tenant = Omit<Database['public']['Tables']['tenants']['Row'], 'modules' | 'config'> & {
   modules: { appointments: boolean; digital_menu: boolean; crm: boolean };

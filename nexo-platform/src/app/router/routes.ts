@@ -136,6 +136,12 @@ export const routes: RouteRecordRaw[] = [
             component: () => import('@/modules/admin/views/ModulesConfigView.vue'),
             meta: { title: 'Módulos' },
           },
+          {
+            path: 'appointments-config',
+            name: 'appointments-config',
+            component: () => import('@/modules/admin/views/AppointmentSettingsView.vue'),
+            meta: { title: 'Config. Citas' },
+          },
         ],
       },
     ],

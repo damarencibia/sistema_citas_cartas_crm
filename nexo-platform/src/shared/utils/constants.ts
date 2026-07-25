@@ -16,6 +16,7 @@ export const BOOKING_STATUS = {
   COMPLETED: 'completed',
   NO_SHOW: 'no_show',
   CANCELLED: 'cancelled',
+  PENDING_APPROVAL: 'pending_approval',
 } as const;
 
 export const ORDER_STATUS = {

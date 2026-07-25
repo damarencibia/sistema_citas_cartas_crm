@@ -79,23 +79,31 @@ const baseNavItems = [{ title: 'Dashboard', icon: 'mdi-view-dashboard', to: '/' 
 const moduleNavItems = computed(() => {
   const items: any[] = [];
   const modules = tenantStore.activeModules;
+  const isAdmin = authStore.isAdmin;
 
   if (modules.appointments) {
-    items.push({
-      title: 'Citas',
-      icon: 'mdi-calendar-clock',
-      children: [
-        { title: 'Agenda', icon: 'mdi-calendar', to: '/appointments/agenda' },
+    const appointmentChildren = [
+      { title: 'Agenda', icon: 'mdi-calendar', to: '/appointments/agenda' },
+      { title: 'Reservas', icon: 'mdi-book-check', to: '/appointments/bookings' },
+      { title: 'Historial', icon: 'mdi-history', to: '/appointments/history' },
+    ];
+
+    if (isAdmin) {
+      appointmentChildren.splice(1, 0,
         { title: 'Servicios', icon: 'mdi-content-cut', to: '/appointments/services' },
         { title: 'Empleados', icon: 'mdi-account-group', to: '/appointments/employees' },
         { title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' },
-        { title: 'Reservas', icon: 'mdi-book-check', to: '/appointments/bookings' },
-        { title: 'Historial', icon: 'mdi-history', to: '/appointments/history' },
-      ],
+      );
+    }
+
+    items.push({
+      title: 'Citas',
+      icon: 'mdi-calendar-clock',
+      children: appointmentChildren,
     });
   }
 
-  if (modules.digital_menu) {
+  if (modules.digital_menu && isAdmin) {
     items.push({
       title: 'Carta Digital',
       icon: 'mdi-menu',
@@ -108,7 +116,7 @@ const moduleNavItems = computed(() => {
     });
   }
 
-  if (modules.crm) {
+  if (modules.crm && isAdmin) {
     items.push({
       title: 'CRM',
       icon: 'mdi-account-group',
@@ -123,17 +131,21 @@ const moduleNavItems = computed(() => {
   return items;
 });
 
-const settingsNav = [
-  {
-    title: 'Configuración',
-    icon: 'mdi-cog',
-    children: [
-      { title: 'Mi Negocio', icon: 'mdi-store', to: '/settings/business' },
-      { title: 'Equipo', icon: 'mdi-account-group', to: '/settings/team' },
-      { title: 'Módulos', icon: 'mdi-puzzle', to: '/settings/modules' },
-    ],
-  },
-];
+const settingsNav = computed(() => {
+  if (!authStore.isAdmin) return [];
+  return [
+    {
+      title: 'Configuración',
+      icon: 'mdi-cog',
+      children: [
+        { title: 'Mi Negocio', icon: 'mdi-store', to: '/settings/business' },
+        { title: 'Equipo', icon: 'mdi-account-group', to: '/settings/team' },
+        { title: 'Módulos', icon: 'mdi-puzzle', to: '/settings/modules' },
+        { title: 'Config. Citas', icon: 'mdi-calendar-cog', to: '/settings/appointments-config' },
+      ],
+    },
+  ];
+});
 
-const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...settingsNav]);
+const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...settingsNav.value]);
 </script>

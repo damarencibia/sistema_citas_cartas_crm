@@ -1,3 +1,17 @@
+export interface NoShowPolicy {
+  grace_period_minutes: number;
+  max_no_shows: number;
+  block_duration_days: number;
+}
+
+export interface AppointmentConfig {
+  auto_start: boolean;
+  no_show_policy: NoShowPolicy;
+  cancellation_policy_hours: number;
+  require_reason_cancel: boolean;
+  allow_reschedule: boolean;
+}
+
 export interface Tenant {
   id: string;
   name: string;
@@ -17,7 +31,10 @@ export interface Tenant {
   };
   timezone: string;
   locale: string;
-  config: Record<string, any>;
+  config: {
+    appointments?: AppointmentConfig;
+    [key: string]: unknown;
+  };
   created_at: string;
 }
 
