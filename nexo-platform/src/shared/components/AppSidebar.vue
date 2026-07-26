@@ -77,30 +77,20 @@ const drawer = ref(true);
 const baseNavItems = [{ title: 'Dashboard', icon: 'mdi-view-dashboard', to: '/' }];
 
 const moduleNavItems = computed(() => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const items: any[] = [];
   const modules = tenantStore.activeModules;
   const isAdmin = authStore.isAdmin;
 
   if (modules.appointments) {
-    const appointmentChildren = [
-      { title: 'Agenda', icon: 'mdi-calendar', to: '/appointments/agenda' },
-      { title: 'Reservas', icon: 'mdi-book-check', to: '/appointments/bookings' },
-      { title: 'Historial', icon: 'mdi-history', to: '/appointments/history' },
-    ];
-
+    items.push({ title: 'Agenda', icon: 'mdi-calendar', to: '/appointments/agenda' });
     if (isAdmin) {
-      appointmentChildren.splice(1, 0,
-        { title: 'Servicios', icon: 'mdi-content-cut', to: '/appointments/services' },
-        { title: 'Empleados', icon: 'mdi-account-group', to: '/appointments/employees' },
-        { title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' },
-      );
+      items.push({ title: 'Servicios', icon: 'mdi-content-cut', to: '/appointments/services' });
+      items.push({ title: 'Empleados', icon: 'mdi-account-group', to: '/appointments/employees' });
+      items.push({ title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' });
     }
-
-    items.push({
-      title: 'Citas',
-      icon: 'mdi-calendar-clock',
-      children: appointmentChildren,
-    });
+    items.push({ title: 'Reservas', icon: 'mdi-book-check', to: '/appointments/bookings' });
+    items.push({ title: 'Historial', icon: 'mdi-history', to: '/appointments/history' });
   }
 
   if (modules.digital_menu && isAdmin) {
