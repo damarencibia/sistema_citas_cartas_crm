@@ -77,8 +77,8 @@ export const vuetify = createVuetify({
 
 export function applyTenantTheme(colors: { primary?: string; secondary?: string }) {
   const theme = vuetify.theme;
-  if (colors.primary) theme.themes.value.supabaseLight.colors.primary = colors.primary;
-  if (colors.secondary) theme.themes.value.supabaseLight.colors.secondary = colors.secondary;
-  if (colors.primary) theme.themes.value.supabaseDark.colors.primary = colors.primary;
-  if (colors.secondary) theme.themes.value.supabaseDark.colors.secondary = colors.secondary;
+  if (colors.primary) theme.themes.value.light.colors.primary = colors.primary;
+  if (colors.secondary) theme.themes.value.light.colors.secondary = colors.secondary;
+  if (colors.primary) theme.themes.value.dark.colors.primary = colors.primary;
+  if (colors.secondary) theme.themes.value.dark.colors.secondary = colors.secondary;
 }
