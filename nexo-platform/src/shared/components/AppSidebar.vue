@@ -1,62 +1,72 @@
 <template>
   <v-navigation-drawer
-    v-model="drawer"
+    v-model="uiStore.sidebar"
     :rail="rail"
     permanent
-    app
+    :width="240"
+    :rail-width="60"
+    class="app-sidebar"
   >
     <template #prepend>
-      <v-list-item
-        class="pa-4"
-        :title="tenantStore.tenant?.name || 'Nexo Platform'"
-        :subtitle="authStore.userRole"
-        nav
-      >
-        <template #append>
-          <v-btn
-            icon
-            variant="text"
-            size="small"
-            @click.stop="rail = !rail"
-          >
-            <v-icon>{{ rail ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
-          </v-btn>
-        </template>
-      </v-list-item>
+      <div class="d-flex align-center pa-3" :class="rail ? 'justify-center' : 'justify-space-between'">
+        <div v-if="!rail" class="d-flex align-center ga-2 overflow-hidden">
+          <v-avatar color="primary" size="32" variant="flat">
+            <span class="text-white font-weight-bold text-body-2">N</span>
+          </v-avatar>
+          <div class="overflow-hidden">
+            <div class="text-body-2 font-weight-semibold text-truncate" style="line-height: 1.2;">
+              {{ tenantStore.tenant?.name || 'Nexo' }}
+            </div>
+            <div class="text-caption" style="color: var(--text-faint); line-height: 1.2;">
+              {{ authStore.userRole }}
+            </div>
+          </div>
+        </div>
+        <v-btn
+          icon
+          variant="text"
+          size="x-small"
+          class="sidebar-toggle"
+          @click.stop="rail = !rail"
+        >
+          <v-icon size="18">{{ rail ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
+        </v-btn>
+      </div>
     </template>
 
-    <v-divider />
+    <v-divider class="mx-3" />
 
-    <v-list density="compact" nav>
+    <v-list density="compact" nav class="pa-2">
       <template v-for="item in navItems" :key="item.title">
         <v-list-item
           v-if="!item.children"
           :to="item.to"
-          :title="item.title"
           :prepend-icon="item.icon"
+          :title="item.title"
           :value="item.title"
           color="primary"
-          rounded="lg"
-          class="ma-1"
+          rounded="md"
+          class="sidebar-item mb-1"
+          :class="{ 'sidebar-item--active': isActive(item.to) }"
         />
         <v-list-group v-else :value="item.title" :prepend-icon="item.icon">
           <template #activator="{ props }">
             <v-list-item
               v-bind="props"
               :title="item.title"
-              rounded="lg"
-              class="ma-1"
+              rounded="md"
+              class="sidebar-item mb-1"
             />
           </template>
           <v-list-item
             v-for="child in item.children"
             :key="child.title"
             :to="child.to"
-            :title="child.title"
             :prepend-icon="child.icon"
+            :title="child.title"
             color="primary"
-            rounded="lg"
-            class="ma-1 ml-4"
+            rounded="md"
+            class="sidebar-item sidebar-item--child mb-1"
           />
         </v-list-group>
       </template>
@@ -66,42 +76,50 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
+import { useUiStore } from '@/shared/stores/ui.store';
 
 const authStore = useAuthStore();
 const tenantStore = useTenantStore();
+const uiStore = useUiStore();
+const route = useRoute();
 const rail = ref(false);
-const drawer = ref(true);
 
-const baseNavItems = [{ title: 'Dashboard', icon: 'mdi-view-dashboard', to: '/' }];
+function isActive(to?: string) {
+  if (!to) return false;
+  return route.path === to;
+}
+
+const baseNavItems = [{ title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/' }];
 
 const moduleNavItems = computed(() => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const items: any[] = [];
   const modules = tenantStore.activeModules;
   const isAdmin = authStore.isAdmin;
 
   if (modules.appointments) {
-    items.push({ title: 'Agenda', icon: 'mdi-calendar', to: '/appointments/agenda' });
+    items.push({ title: 'Agenda', icon: 'mdi-calendar-outline', to: '/appointments/agenda' });
     if (isAdmin) {
       items.push({ title: 'Servicios', icon: 'mdi-content-cut', to: '/appointments/services' });
-      items.push({ title: 'Empleados', icon: 'mdi-account-group', to: '/appointments/employees' });
+      items.push({ title: 'Empleados', icon: 'mdi-account-group-outline', to: '/appointments/employees' });
       items.push({ title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' });
     }
-    items.push({ title: 'Reservas', icon: 'mdi-book-check', to: '/appointments/bookings' });
+    items.push({ title: 'Reservas', icon: 'mdi-book-check-outline', to: '/appointments/bookings' });
     items.push({ title: 'Historial', icon: 'mdi-history', to: '/appointments/history' });
   }
 
   if (modules.digital_menu && isAdmin) {
     items.push({
       title: 'Carta Digital',
-      icon: 'mdi-menu',
+      icon: 'mdi-silverware-fork-knife',
       children: [
-        { title: 'Categorías', icon: 'mdi-shape', to: '/menu/categories' },
-        { title: 'Productos', icon: 'mdi-food', to: '/menu/products' },
+        { title: 'Categorías', icon: 'mdi-shape-outline', to: '/menu/categories' },
+        { title: 'Productos', icon: 'mdi-food-outline', to: '/menu/products' },
         { title: 'Mesas', icon: 'mdi-table', to: '/menu/tables' },
-        { title: 'Pedidos', icon: 'mdi-clipboard-list', to: '/menu/orders' },
+        { title: 'Pedidos', icon: 'mdi-clipboard-list-outline', to: '/menu/orders' },
       ],
     });
   }
@@ -109,11 +127,11 @@ const moduleNavItems = computed(() => {
   if (modules.crm && isAdmin) {
     items.push({
       title: 'CRM',
-      icon: 'mdi-account-group',
+      icon: 'mdi-account-group-outline',
       children: [
-        { title: 'Clientes', icon: 'mdi-account', to: '/crm/customers' },
-        { title: 'Etiquetas', icon: 'mdi-tag', to: '/crm/tags' },
-        { title: 'Fidelización', icon: 'mdi-star', to: '/crm/loyalty' },
+        { title: 'Clientes', icon: 'mdi-account-outline', to: '/crm/customers' },
+        { title: 'Etiquetas', icon: 'mdi-tag-outline', to: '/crm/tags' },
+        { title: 'Fidelización', icon: 'mdi-star-outline', to: '/crm/loyalty' },
       ],
     });
   }
@@ -126,12 +144,12 @@ const settingsNav = computed(() => {
   return [
     {
       title: 'Configuración',
-      icon: 'mdi-cog',
+      icon: 'mdi-cog-outline',
       children: [
-        { title: 'Mi Negocio', icon: 'mdi-store', to: '/settings/business' },
-        { title: 'Equipo', icon: 'mdi-account-group', to: '/settings/team' },
-        { title: 'Módulos', icon: 'mdi-puzzle', to: '/settings/modules' },
-        { title: 'Config. Citas', icon: 'mdi-calendar-cog', to: '/settings/appointments-config' },
+        { title: 'Mi Negocio', icon: 'mdi-store-outline', to: '/settings/business' },
+        { title: 'Equipo', icon: 'mdi-account-group-outline', to: '/settings/team' },
+        { title: 'Módulos', icon: 'mdi-puzzle-outline', to: '/settings/modules' },
+        { title: 'Config. Citas', icon: 'mdi-calendar-cog-outline', to: '/settings/appointments-config' },
       ],
     },
   ];
@@ -139,3 +157,34 @@ const settingsNav = computed(() => {
 
 const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...settingsNav.value]);
 </script>
+
+<style scoped>
+.app-sidebar {
+  border-right: 1px solid rgb(var(--v-border)) !important;
+  background-color: rgb(var(--v-theme-surface)) !important;
+}
+
+.sidebar-toggle {
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+  opacity: 1;
+}
+
+.sidebar-item {
+  font-size: 13px;
+  font-weight: 450;
+  letter-spacing: 0;
+  min-height: 36px;
+}
+
+.sidebar-item--child {
+  padding-left: 16px !important;
+}
+
+.v-list-group__items .sidebar-item--child {
+  padding-left: 16px !important;
+}
+</style>

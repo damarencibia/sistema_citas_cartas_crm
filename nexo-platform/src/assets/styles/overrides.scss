@@ -1,12 +1,129 @@
-.v-data-table {
-  border-radius: 8px;
-}
+// Border-first depth overrides (Supabase style)
+// Uses theme('colors.surface') via CSS custom properties set in main.scss
 
+// --- Cards ---
 .v-card {
-  border-radius: 12px;
+  border: 1px solid rgb(var(--v-border)) !important;
+  box-shadow: none !important;
+  background-color: rgb(var(--v-theme-surface)) !important;
+  transition: border-color 0.15s ease;
 }
 
+.v-card:hover {
+  border-color: rgb(var(--v-border-strong, var(--v-border))) !important;
+}
+
+// --- Buttons ---
 .v-btn {
-  text-transform: none;
-  font-weight: 500;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  box-shadow: none !important;
+}
+
+.v-btn--variant-flat {
+  box-shadow: none !important;
+}
+
+// --- Text Fields / Selects / Inputs ---
+.v-field {
+  border-radius: 8px !important;
+  border: 1px solid rgb(var(--v-border)) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.v-field:hover {
+  border-color: rgb(var(--v-border-strong)) !important;
+}
+
+.v-field.v-field--focused {
+  border-color: rgb(var(--v-primary)) !important;
+  box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.15) !important;
+}
+
+// --- Tables ---
+.v-data-table {
+  border: 1px solid rgb(var(--v-border)) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.v-data-table .v-data-table-header {
+  background-color: rgb(var(--v-theme-surface-variant)) !important;
+}
+
+.v-data-table .v-data-table-header th {
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: rgb(var(--v-theme-secondary)) !important;
+}
+
+.v-data-table tbody tr {
+  transition: background-color 0.1s ease;
+}
+
+.v-data-table tbody tr:hover {
+  background-color: rgb(var(--v-theme-surface-bright)) !important;
+}
+
+// --- Dialogs ---
+.v-dialog .v-card {
+  border: none !important;
+}
+
+// --- Chips ---
+.v-chip {
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+
+// --- Navigation Drawer ---
+.v-navigation-drawer {
+  border-right: 1px solid rgb(var(--v-border)) !important;
+}
+
+// --- List Items ---
+.v-list-item--active {
+  background-color: rgba(var(--v-primary), 0.08) !important;
+}
+
+// --- Expansion Panels ---
+.v-expansion-panel {
+  border: 1px solid rgb(var(--v-border)) !important;
+}
+
+// --- Dividers ---
+.v-divider {
+  border-color: rgb(var(--v-border)) !important;
+}
+
+// --- Alerts ---
+.v-alert {
+  border: 1px solid currentColor !important;
+}
+
+// --- Tooltips ---
+.v-tooltip .v-overlay__content {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+// --- Badges ---
+.v-badge .v-badge__badge {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+
+// --- App Bar ---
+.v-app-bar {
+  border-bottom: 1px solid rgb(var(--v-border)) !important;
+}
+
+// --- Tabs ---
+.v-tabs .v-tab {
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
 }

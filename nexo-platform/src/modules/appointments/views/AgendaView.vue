@@ -2,13 +2,22 @@
   <div>
     <PageHeader title="Agenda" subtitle="Gestiona las citas del día">
       <template #actions>
-        <v-btn variant="tonal" class="mr-2" @click="showWalkInDialog = true">
-          <v-icon start>mdi-walk</v-icon>
+        <v-btn variant="tonal" size="small" class="mr-2 d-none-mobile" @click="showWalkInDialog = true">
+          <v-icon start size="18">mdi-walk</v-icon>
           Walk-in
         </v-btn>
-        <v-btn color="primary" @click="showForm = true">
-          <v-icon start>mdi-plus</v-icon>
-          Nueva Cita
+        <v-btn
+          variant="tonal"
+          size="small"
+          icon
+          class="d-md-none"
+          @click="showWalkInDialog = true"
+        >
+          <v-icon size="18">mdi-walk</v-icon>
+        </v-btn>
+        <v-btn color="primary" size="small" @click="showForm = true">
+          <v-icon start size="18">mdi-plus</v-icon>
+          <span class="d-none-mobile">Nueva Cita</span>
         </v-btn>
       </template>
     </PageHeader>
@@ -16,7 +25,7 @@
     <v-row>
       <v-col cols="12" md="9">
         <v-card class="pa-4 mb-4">
-          <div class="d-flex align-center ga-2 mb-4">
+          <div class="d-flex align-center ga-2 mb-4 flex-wrap">
             <v-select
               v-model="agenda.selectedEmployeeId.value"
               :items="employeeOptions"
@@ -26,8 +35,10 @@
               density="compact"
               hide-details
               clearable
-              style="max-width: 250px"
+              class="flex-grow-0"
+              style="max-width: 250px;"
             />
+            <v-spacer class="d-none-mobile" />
             <v-btn-toggle
               v-model="agenda.viewMode.value"
               mandatory

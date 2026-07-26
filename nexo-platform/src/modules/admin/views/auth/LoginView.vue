@@ -19,7 +19,7 @@
       <v-text-field
         v-model="form.email"
         label="Correo electrónico"
-        prepend-inner-icon="mdi-email"
+        prepend-inner-icon="mdi-email-outline"
         type="email"
         :rules="[required]"
         autocomplete="email"
@@ -28,14 +28,14 @@
       <v-text-field
         v-model="form.password"
         label="Contraseña"
-        prepend-inner-icon="mdi-lock"
+        prepend-inner-icon="mdi-lock-outline"
         type="password"
         :rules="[required]"
         autocomplete="current-password"
       />
 
       <div class="text-right mb-4">
-        <router-link to="/auth/forgot-password" class="text-body-2 text-primary">
+        <router-link to="/auth/forgot-password" class="text-body-2 text-primary" style="text-decoration: none;">
           ¿Olvidaste tu contraseña?
         </router-link>
       </div>
@@ -56,6 +56,7 @@
       <router-link
         to="/auth/register"
         class="text-primary font-weight-medium"
+        style="text-decoration: none;"
       >
         Registrarse
       </router-link>
@@ -101,8 +102,9 @@ async function handleLogin() {
   try {
     await authStore.login(form.email, form.password);
     showModuleDialog.value = true;
-  } catch (e: any) {
-    authError.value = e.message || 'Error al iniciar sesión';
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Error al iniciar sesión';
+    authError.value = message;
   } finally {
     loading.value = false;
   }

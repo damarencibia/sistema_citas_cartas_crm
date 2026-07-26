@@ -1,27 +1,54 @@
 <template>
-  <v-app-bar elevation="0" border class="px-4">
-    <v-app-bar-nav-icon @click="uiStore.toggleSidebar()" />
+  <v-app-bar height="48" class="app-topbar" flat>
+    <v-app-bar-nav-icon
+      size="small"
+      class="d-md-none"
+      @click="uiStore.toggleSidebar()"
+    />
+
     <v-spacer />
-    <v-btn icon @click="uiStore.toggleTheme()">
-      <v-icon>{{ uiStore.theme === 'light' ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+
+    <v-btn
+      icon
+      size="x-small"
+      variant="text"
+      class="mr-1"
+      @click="uiStore.toggleTheme()"
+    >
+      <v-icon size="18">{{ uiStore.theme === 'light' ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
     </v-btn>
-    <v-menu>
+
+    <v-menu offset-y="4" :close-on-content-click="true">
       <template #activator="{ props }">
-        <v-btn icon v-bind="props">
-          <v-avatar size="36" color="primary">
-            <span class="text-white text-body-2">{{ initials }}</span>
+        <v-btn
+          v-bind="props"
+          icon
+          size="x-small"
+          variant="text"
+        >
+          <v-avatar size="28" color="primary" variant="flat">
+            <span class="text-white font-weight-medium" style="font-size: 11px;">{{ initials }}</span>
           </v-avatar>
         </v-btn>
       </template>
-      <v-list density="compact" nav>
+      <v-list density="compact" nav class="py-1" style="min-width: 200px;">
+        <v-list-item class="px-3 py-2">
+          <div class="text-body-2 font-weight-medium">{{ authStore.userName }}</div>
+          <div class="text-caption" style="color: var(--text-muted);">{{ authStore.user?.email }}</div>
+        </v-list-item>
+        <v-divider class="my-1" />
         <v-list-item
-          :title="authStore.userName"
-          :subtitle="authStore.user?.email"
-          class="px-4 py-2"
+          prepend-icon="mdi-cog-outline"
+          title="Configuración"
+          to="/settings/business"
+          class="px-3"
         />
-        <v-divider />
-        <v-list-item prepend-icon="mdi-cog" title="Configuración" to="/settings/business" />
-        <v-list-item prepend-icon="mdi-logout" title="Cerrar Sesión" @click="handleLogout" />
+        <v-list-item
+          prepend-icon="mdi-logout"
+          title="Cerrar Sesión"
+          class="px-3"
+          @click="handleLogout"
+        />
       </v-list>
     </v-menu>
   </v-app-bar>
@@ -48,3 +75,10 @@ async function handleLogout() {
   router.push('/auth/login');
 }
 </script>
+
+<style scoped>
+.app-topbar {
+  border-bottom: 1px solid rgb(var(--v-border)) !important;
+  background-color: rgb(var(--v-theme-surface)) !important;
+}
+</style>

@@ -6,10 +6,10 @@
     no-click-animation
   >
     <template #default>
-      <v-card class="pa-6" rounded="xl">
+      <v-card class="module-dialog pa-6">
         <div class="text-center mb-6">
-          <h2 class="text-h5 font-weight-bold">Selecciona un módulo</h2>
-          <p class="text-body-2 text-medium-emphasis mt-1">
+          <h2 class="text-h6 font-weight-semibold">Selecciona un módulo</h2>
+          <p class="text-body-2 mt-1" style="color: var(--text-muted);">
             Elige el módulo al que deseas acceder
           </p>
         </div>
@@ -20,27 +20,32 @@
               :variant="selected === 'appointments' ? 'tonal' : 'outlined'"
               :color="selected === 'appointments' ? 'primary' : undefined"
               class="module-card d-flex flex-column align-center text-center justify-center pa-6"
-              rounded="lg"
               hover
-              :style="{ cursor: 'pointer', transition: 'all 0.2s ease', height: '240px' }"
+              :style="{
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                height: '240px',
+                borderWidth: selected === 'appointments' ? '2px' : '1px',
+              }"
               @click="selected = 'appointments'"
               @dblclick="confirm"
             >
               <v-avatar
                 :color="selected === 'appointments' ? 'primary' : 'grey-lighten-3'"
-                size="72"
+                size="64"
                 class="mb-4"
+                variant="tonal"
               >
                 <v-icon
                   :color="selected === 'appointments' ? 'white' : 'primary'"
-                  size="36"
+                  size="32"
                 >
                   mdi-calendar-clock
                 </v-icon>
               </v-avatar>
-              <div class="text-subtitle-1 font-weight-bold">Sistema de Citas</div>
-              <div class="text-body-2 text-medium-emphasis mt-1">
-                Agenda, reservas, servicios y gestión de citas
+              <div class="text-subtitle-1 font-weight-semibold">Sistema de Citas</div>
+              <div class="text-body-2 mt-1" style="color: var(--text-muted);">
+                Agenda, reservas, servicios y gestión
               </div>
               <div class="mt-3" style="height: 24px;">
                 <v-icon
@@ -59,22 +64,17 @@
               variant="outlined"
               disabled
               class="module-card d-flex flex-column align-center text-center justify-center pa-6"
-              rounded="lg"
               :style="{ height: '240px', opacity: 0.55 }"
             >
-              <v-avatar color="grey-lighten-3" size="72" class="mb-4">
-                <v-icon color="grey" size="36">mdi-silverware-fork-knife</v-icon>
+              <v-avatar color="grey-lighten-3" size="64" class="mb-4" variant="tonal">
+                <v-icon color="grey" size="32">mdi-silverware-fork-knife</v-icon>
               </v-avatar>
-              <div class="text-subtitle-1 font-weight-bold">Carta Digital</div>
-              <div class="text-body-2 text-medium-emphasis mt-1">
-                Menú digital, productos, categorías y pedidos
+              <div class="text-subtitle-1 font-weight-semibold">Carta Digital</div>
+              <div class="text-body-2 mt-1" style="color: var(--text-muted);">
+                Menú digital, productos y pedidos
               </div>
               <div class="mt-3" style="height: 24px;">
-                <v-chip
-                  size="small"
-                  variant="tonal"
-                  color="grey"
-                >
+                <v-chip size="small" variant="tonal" color="grey" class="font-weight-medium">
                   Próximamente
                 </v-chip>
               </div>
@@ -82,7 +82,7 @@
           </v-col>
         </v-row>
 
-        <v-card-actions class="justify-center mt-4">
+        <div class="d-flex justify-center mt-5">
           <v-btn
             color="primary"
             variant="flat"
@@ -92,7 +92,7 @@
           >
             OK
           </v-btn>
-        </v-card-actions>
+        </div>
       </v-card>
     </template>
   </v-dialog>
@@ -120,8 +120,11 @@ function confirm() {
 </script>
 
 <style scoped>
+.module-dialog {
+  border: none !important;
+}
+
 .module-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 </style>

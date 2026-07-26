@@ -1,9 +1,9 @@
 <template>
   <v-chip
     :color="color"
-    :text-color="textColor"
     size="small"
-    label
+    variant="tonal"
+    class="font-weight-medium status-badge"
   >
     <v-icon v-if="icon" start :size="14">{{ icon }}</v-icon>
     {{ label }}
@@ -18,18 +18,18 @@ const props = defineProps<{
 }>();
 
 const statusMap: Record<string, { label: string; color: string; icon: string }> = {
-  active: { label: 'Activo', color: 'success', icon: 'mdi-check-circle' },
-  inactive: { label: 'Inactivo', color: 'grey', icon: 'mdi-minus-circle' },
-  confirmed: { label: 'Confirmada', color: 'info', icon: 'mdi-check-circle' },
+  active: { label: 'Activo', color: 'success', icon: 'mdi-check-circle-outline' },
+  inactive: { label: 'Inactivo', color: 'grey', icon: 'mdi-minus-circle-outline' },
+  confirmed: { label: 'Confirmada', color: 'info', icon: 'mdi-check-circle-outline' },
   in_progress: { label: 'En Progreso', color: 'warning', icon: 'mdi-progress-clock' },
   completed: { label: 'Completada', color: 'success', icon: 'mdi-check-all' },
   no_show: { label: 'No Asistió', color: 'error', icon: 'mdi-cancel' },
-  cancelled: { label: 'Cancelada', color: 'grey', icon: 'mdi-close-circle' },
+  cancelled: { label: 'Cancelada', color: 'grey', icon: 'mdi-close-circle-outline' },
   pending: { label: 'Pendiente', color: 'warning', icon: 'mdi-clock-outline' },
-  preparing: { label: 'Preparando', color: 'info', icon: 'mdi-food' },
+  preparing: { label: 'Preparando', color: 'info', icon: 'mdi-food-outline' },
   ready: { label: 'Listo', color: 'success', icon: 'mdi-check' },
   delivered: { label: 'Entregado', color: 'success', icon: 'mdi-check-all' },
-  trial: { label: 'Prueba', color: 'info', icon: 'mdi-star' },
+  trial: { label: 'Prueba', color: 'info', icon: 'mdi-star-outline' },
   suspended: { label: 'Suspendido', color: 'error', icon: 'mdi-block-helper' },
 };
 
@@ -39,5 +39,4 @@ const config = computed(
 const label = computed(() => config.value.label);
 const color = computed(() => config.value.color);
 const icon = computed(() => config.value.icon);
-const textColor = computed(() => 'white');
 </script>
