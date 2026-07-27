@@ -25,29 +25,18 @@
     <v-row>
       <v-col cols="12" md="9">
         <v-card class="pa-4 mb-4">
-          <div class="d-flex align-center ga-2 mb-4 flex-wrap">
+          <div class="d-flex align-center ga-3 mb-4 flex-wrap">
             <v-select
               v-model="agenda.selectedEmployeeId.value"
               :items="employeeOptions"
               item-title="text"
               item-value="value"
               label="Empleado"
-              density="compact"
+              density="comfortable"
               hide-details
               clearable
-              class="flex-grow-0"
-              style="max-width: 250px;"
+              style="min-width: 220px; max-width: 300px;"
             />
-            <v-spacer class="d-none-mobile" />
-            <v-btn-toggle
-              v-model="agenda.viewMode.value"
-              mandatory
-              density="compact"
-              color="primary"
-            >
-              <v-btn value="day" size="small">Día</v-btn>
-              <v-btn value="week" size="small">Semana</v-btn>
-            </v-btn-toggle>
           </div>
 
           <BookingCalendar
