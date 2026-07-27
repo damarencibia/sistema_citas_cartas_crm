@@ -82,6 +82,18 @@ export const routes: RouteRecordRaw[] = [
             component: () => import('@/modules/digital-menu/views/OrdersPanelView.vue'),
             meta: { title: 'Pedidos' },
           },
+          {
+            path: 'kitchen',
+            name: 'menu-kitchen',
+            component: () => import('@/modules/digital-menu/views/KitchenPanelView.vue'),
+            meta: { title: 'Panel Cocina' },
+          },
+          {
+            path: 'settings',
+            name: 'menu-settings',
+            component: () => import('@/modules/digital-menu/views/MenuSettingsView.vue'),
+            meta: { title: 'Configuración Carta' },
+          },
         ],
       },
       {

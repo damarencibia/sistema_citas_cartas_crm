@@ -7,10 +7,12 @@
         <router-view />
       </v-container>
     </v-main>
+    <NotificationCenter />
   </v-layout>
 </template>
 
 <script setup lang="ts">
 import AppSidebar from '@/shared/components/AppSidebar.vue';
 import AppTopbar from '@/shared/components/AppTopbar.vue';
+import NotificationCenter from '@/modules/digital-menu/components/NotificationCenter.vue';
 </script>

@@ -3,15 +3,24 @@
     <PageHeader title="Panel de Pedidos" subtitle="Gestiona los pedidos en tiempo real" />
     <v-row>
       <v-col
-        v-for="col in statusColumns"
-        :key="col.status"
+        v-for="column in columns"
+        :key="column.status"
         cols="12"
         md="3"
       >
-        <v-card :color="col.color" class="pa-4" :title="col.label">
-          <v-card-text>
-            <p class="text-body-2 text-medium-emphasis">Pedidos {{ col.label }} apareceran aqui</p>
-          </v-card-text>
+        <v-card class="pa-4" elevation="1">
+          <div class="d-flex justify-space-between align-center mb-4">
+            <div>
+              <div class="text-subtitle-1 font-weight-medium">{{ column.label }}</div>
+              <div class="text-caption text-medium-emphasis">{{ column.orders.length }} pedidos</div>
+            </div>
+          </div>
+          <OrderCard
+            v-for="order in column.orders"
+            :key="order.id"
+            :order="order"
+            @change-status="(status) => updateStatus(order.id, status)"
+          />
         </v-card>
       </v-col>
     </v-row>
@@ -19,12 +28,25 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, computed } from 'vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
+import OrderCard from '../components/OrderCard.vue';
+import { useOrderStore } from '../stores/order.store';
 
-const statusColumns = [
-  { status: 'pending', label: 'Pendientes', color: 'warning' },
-  { status: 'preparing', label: 'Preparando', color: 'info' },
-  { status: 'ready', label: 'Listos', color: 'success' },
-  { status: 'delivered', label: 'Entregados', color: 'grey' },
-];
+const orderStore = useOrderStore();
+
+onMounted(async () => {
+  await orderStore.fetchOrders();
+});
+
+const columns = computed(() => [
+  { status: 'pending', label: 'Pendientes', orders: orderStore.orders.filter((order) => order.status === 'pending') },
+  { status: 'preparing', label: 'Preparando', orders: orderStore.orders.filter((order) => order.status === 'preparing') },
+  { status: 'ready', label: 'Listos', orders: orderStore.orders.filter((order) => order.status === 'ready') },
+  { status: 'delivered', label: 'Entregados', orders: orderStore.orders.filter((order) => order.status === 'delivered') },
+]);
+
+function updateStatus(orderId: string, status: string) {
+  orderStore.updateOrderStatus(orderId, status as any);
+}
 </script>
