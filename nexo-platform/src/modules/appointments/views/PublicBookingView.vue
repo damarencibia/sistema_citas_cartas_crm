@@ -7,7 +7,11 @@
         <p class="text-body-1 text-medium-emphasis">Selecciona el servicio, empleado y horario</p>
       </div>
 
-      <v-stepper v-model="step" :items="steps" alt-labels>
+      <v-alert v-if="bookingError" type="error" variant="tonal" class="mb-4" closable @click:close="bookingError = null">
+        {{ bookingError }}
+      </v-alert>
+
+      <v-stepper v-model="step" :items="steps" alt-labels non-linear>
         <template #item.1>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona un servicio</h3>
@@ -48,7 +52,7 @@
               <v-card-text class="d-flex align-center ga-3">
                 <v-avatar :color="employee.color" size="40">
                   <span class="text-white text-body-2">
-                    {{ employee.first_name[0] }}{{ employee.last_name[0] }}
+                    {{ (employee.first_name || '')[0] }}{{ (employee.last_name || '')[0] }}
                   </span>
                 </v-avatar>
                 <div>{{ employee.first_name }} {{ employee.last_name }}</div>
@@ -75,7 +79,9 @@
               v-model="selectedTime"
               :slots="availability.slots.value"
               :date="selectedDate"
+              :show-waitlist="true"
               label="Horarios disponibles"
+              @join-waitlist="onJoinWaitlist"
             />
           </div>
         </template>
@@ -87,20 +93,20 @@
               <v-text-field
                 v-model="customerName"
                 label="Nombre completo *"
-                :rules="[(v) => !!v || 'Requerido']"
+                :rules="[rules.required]"
                 class="mb-2"
               />
               <v-text-field
                 v-model="customerEmail"
                 label="Email *"
                 type="email"
-                :rules="[(v) => !!v || 'Requerido']"
+                :rules="[rules.required, rules.email]"
                 class="mb-2"
               />
               <v-text-field
                 v-model="customerPhone"
                 label="Teléfono *"
-                :rules="[(v) => !!v || 'Requerido']"
+                :rules="[rules.required, rules.phone]"
                 class="mb-2"
               />
               <v-textarea v-model="customerNotes" label="Notas (opcional)" rows="2" />
@@ -108,12 +114,61 @@
           </div>
         </template>
 
+        <template #item.6>
+          <div class="pa-4">
+            <h3 class="text-subtitle-1 font-weight-medium mb-4">Confirma tu reserva</h3>
+            <v-card variant="outlined" class="pa-4 mb-4">
+              <div class="d-flex flex-column ga-2">
+                <div class="d-flex justify-space-between">
+                  <span class="text-body-2 text-medium-emphasis">Servicio</span>
+                  <span class="text-body-2 font-weight-medium">{{ selectedService?.name }}</span>
+                </div>
+                <v-divider />
+                <div class="d-flex justify-space-between">
+                  <span class="text-body-2 text-medium-emphasis">Empleado</span>
+                  <span class="text-body-2 font-weight-medium">{{ selectedEmployee?.first_name }} {{ selectedEmployee?.last_name }}</span>
+                </div>
+                <v-divider />
+                <div class="d-flex justify-space-between">
+                  <span class="text-body-2 text-medium-emphasis">Fecha</span>
+                  <span class="text-body-2 font-weight-medium">{{ formatDate(selectedDate) }}</span>
+                </div>
+                <v-divider />
+                <div class="d-flex justify-space-between">
+                  <span class="text-body-2 text-medium-emphasis">Hora</span>
+                  <span class="text-body-2 font-weight-medium">{{ selectedTime?.slice(0, 5) }}</span>
+                </div>
+                <v-divider />
+                <div class="d-flex justify-space-between">
+                  <span class="text-body-2 text-medium-emphasis">Duración</span>
+                  <span class="text-body-2 font-weight-medium">{{ selectedService?.duration_minutes }} min</span>
+                </div>
+                <v-divider />
+                <div class="d-flex justify-space-between">
+                  <span class="text-body-2 text-medium-emphasis">Nombre</span>
+                  <span class="text-body-2 font-weight-medium">{{ customerName }}</span>
+                </div>
+                <v-divider />
+                <div class="d-flex justify-space-between">
+                  <span class="text-body-2 text-medium-emphasis">Email</span>
+                  <span class="text-body-2 font-weight-medium">{{ customerEmail }}</span>
+                </div>
+                <v-divider />
+                <div class="d-flex justify-space-between">
+                  <span class="text-body-2 text-medium-emphasis">Teléfono</span>
+                  <span class="text-body-2 font-weight-medium">{{ customerPhone }}</span>
+                </div>
+              </div>
+            </v-card>
+          </div>
+        </template>
+
         <template #actions>
           <div class="d-flex justify-space-between pa-4">
-            <v-btn v-if="step > 1" variant="text" @click="step--">Atrás</v-btn>
+            <v-btn v-if="step > 1 && !confirmed" variant="text" @click="goBack">Atrás</v-btn>
             <v-spacer />
             <v-btn
-              v-if="step < 5"
+              v-if="step < 6 && !confirmed"
               color="primary"
               variant="flat"
               :disabled="!canProceed"
@@ -122,14 +177,22 @@
               Siguiente
             </v-btn>
             <v-btn
-              v-else
+              v-if="step === 6 && !confirmed"
               color="success"
               variant="flat"
               :loading="submitting"
-              :disabled="!customerName || !customerEmail || !customerPhone"
+              :disabled="submitting"
               @click="onConfirm"
             >
               Confirmar Reserva
+            </v-btn>
+            <v-btn
+              v-if="confirmed"
+              color="primary"
+              variant="flat"
+              @click="resetForm"
+            >
+              Reservar otra cita
             </v-btn>
           </div>
         </template>
@@ -165,6 +228,7 @@ const step = ref(1);
 const loading = ref(false);
 const submitting = ref(false);
 const confirmed = ref(false);
+const bookingError = ref<string | null>(null);
 const formRef = ref();
 
 const selectedService = ref<Service | null>(null);
@@ -176,7 +240,7 @@ const customerEmail = ref('');
 const customerPhone = ref('');
 const customerNotes = ref('');
 
-const steps = ['Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos'];
+const steps = ['Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
 
 const minDate = new Date().toISOString().split('T')[0];
 
@@ -186,11 +250,22 @@ const employeesForService = ref<Employee[]>([]);
 
 const slotsLoading = computed(() => availability.loading.value);
 
+const rules = {
+  required: (v: string) => !!v?.trim() || 'Campo requerido',
+  email: (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email inválido',
+  phone: (v: string) => /^\+?[\d\s\-()]{7,15}$/.test(v) || 'Teléfono inválido',
+};
+
 const canProceed = computed(() => {
   if (step.value === 1) return !!selectedService.value;
   if (step.value === 2) return !!selectedEmployee.value;
   if (step.value === 3) return !!selectedDate.value;
   if (step.value === 4) return !!selectedTime.value;
+  if (step.value === 5) {
+    return !!customerName.value?.trim() &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.value) &&
+      /^\+?[\d\s\-()]{7,15}$/.test(customerPhone.value);
+  }
   return true;
 });
 
@@ -217,17 +292,31 @@ watch(selectedDate, async () => {
 async function selectService(service: Service) {
   selectedService.value = service;
   selectedEmployee.value = null;
+  selectedTime.value = '';
   employeesForService.value = await employeeStore.getEmployeesByService(service.id);
   step.value = 2;
 }
 
 function selectEmployee(employee: Employee) {
   selectedEmployee.value = employee;
+  selectedTime.value = '';
   step.value = 3;
+}
+
+function goBack() {
+  if (step.value === 4) selectedTime.value = '';
+  if (step.value === 5) {
+    customerName.value = '';
+    customerEmail.value = '';
+    customerPhone.value = '';
+    customerNotes.value = '';
+  }
+  step.value--;
 }
 
 async function onConfirm() {
   submitting.value = true;
+  bookingError.value = null;
   try {
     await bookingStore.createBooking({
       service_id: selectedService.value!.id,
@@ -241,15 +330,52 @@ async function onConfirm() {
       source: 'online',
     });
     confirmed.value = true;
-  } catch {
-    // Error handled by store
+  } catch (e: unknown) {
+    bookingError.value = e instanceof Error ? e.message : 'Error al crear la reserva. Intenta de nuevo.';
   } finally {
     submitting.value = false;
   }
 }
 
+function resetForm() {
+  step.value = 1;
+  confirmed.value = false;
+  bookingError.value = null;
+  selectedService.value = null;
+  selectedEmployee.value = null;
+  selectedTime.value = '';
+  customerName.value = '';
+  customerEmail.value = '';
+  customerPhone.value = '';
+  customerNotes.value = '';
+  employeesForService.value = [];
+}
+
+async function onJoinWaitlist() {
+  if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
+  try {
+    await bookingStore.joinWaitlist({
+      service_id: selectedService.value.id,
+      employee_id: selectedEmployee.value.id,
+      preferred_date: selectedDate.value,
+      customer_name: customerName.value || 'Sin nombre',
+      customer_email: customerEmail.value || 'sin@email.com',
+      customer_phone: customerPhone.value || undefined,
+    });
+    bookingError.value = null;
+    alert('Te has unido a la lista de espera. Te notificaremos cuando haya un espacio disponible.');
+  } catch (e: unknown) {
+    bookingError.value = e instanceof Error ? e.message : 'Error al unirse a la lista de espera.';
+  }
+}
+
 function formatPrice(centavos: number): string {
   return `$${(centavos / 100).toFixed(2)}`;
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 </script>
 

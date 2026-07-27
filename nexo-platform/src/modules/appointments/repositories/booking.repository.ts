@@ -1,11 +1,31 @@
 import { supabase } from '@/shared/api/supabase.client';
 import type { Database } from '@/shared/types/supabase.gen';
-import type { Booking, CreateBookingDTO, BookingFilters, AvailableSlot, ClientBlockCheck, StatusChangedBy, BookingWindow, CreateBookingWindowDTO, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance, WalkInEntry, CreateWalkInDTO } from '../types/booking.types';
+import type { Booking, CreateBookingDTO, BookingFilters, AvailableSlot, ClientBlockCheck, StatusChangedBy, BookingWindow, CreateBookingWindowDTO, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance, WalkInEntry, CreateWalkInDTO, BookingStatus } from '../types/booking.types';
 
 const TABLE = 'bookings' as const;
 
 type BookingUpdate = Database['public']['Tables']['bookings']['Update'];
 type BookingInsert = Database['public']['Tables']['bookings']['Insert'];
+
+const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+  pending_approval: ['confirmed', 'cancelled'],
+  confirmed: ['in_progress', 'cancelled', 'no_show'],
+  in_progress: ['completed', 'cancelled', 'no_show'],
+  completed: [],
+  no_show: [],
+  cancelled: [],
+};
+
+function computeEndTime(startTime: string, durationMinutes: number): string {
+  const [hours, minutes] = startTime.split(':').map(Number);
+  const totalMinutes = hours * 60 + minutes + durationMinutes;
+  if (totalMinutes >= 24 * 60) {
+    throw new Error('El servicio excede el horario laboral (cruza medianoche).');
+  }
+  const endH = Math.floor(totalMinutes / 60);
+  const endM = totalMinutes % 60;
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+}
 
 export const bookingRepository = {
   async getByFilters(filters: BookingFilters): Promise<Booking[]> {
@@ -55,9 +75,8 @@ export const bookingRepository = {
       .single();
     if (serviceError) throw serviceError;
 
-    const [hours, minutes] = dto.start_time.split(':').map(Number);
-    const endDate = new Date(2000, 0, 1, hours, minutes + serviceData.duration_minutes);
-    const endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+    const duration = dto.custom_duration_minutes ?? serviceData.duration_minutes;
+    const endTime = computeEndTime(dto.start_time, duration);
 
     const initialStatus = serviceData.requires_approval ? 'pending_approval' : 'confirmed';
 
@@ -76,6 +95,7 @@ export const bookingRepository = {
       status: initialStatus,
       participant_count: dto.participant_count ?? 1,
       resource_id: dto.resource_id ?? null,
+      custom_duration_minutes: dto.custom_duration_minutes ?? null,
     };
 
     const { data, error } = await supabase
@@ -83,16 +103,34 @@ export const bookingRepository = {
       .insert(insertPayload)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      if (error.message?.includes('check') || error.message?.includes('overlap')) {
+        throw new Error('El empleado ya tiene una cita en ese horario.');
+      }
+      throw error;
+    }
     return data as Booking;
   },
 
   async updateStatus(
     id: string,
-    status: string,
+    status: BookingStatus,
     reason?: string,
     cancelledBy: 'customer' | 'employee' | 'system' = 'employee',
   ): Promise<Booking> {
+    const { data: current, error: fetchError } = await supabase
+      .from(TABLE)
+      .select('status')
+      .eq('id', id)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const currentStatus = current.status as BookingStatus;
+    const allowed = VALID_TRANSITIONS[currentStatus];
+    if (allowed && !allowed.includes(status)) {
+      throw new Error(`No se puede transicionar de "${currentStatus}" a "${status}".`);
+    }
+
     const updatePayload: BookingUpdate = {
       status,
       updated_at: new Date().toISOString(),
@@ -180,8 +218,19 @@ export const bookingRepository = {
       .eq('id', tenantId)
       .single();
     if (error) throw error;
-    const config = (data as { config: Record<string, unknown> | null })?.config?.appointments as Record<string, unknown> | undefined;
-    return config as { auto_start: boolean; grace_period_minutes: number; max_no_shows: number; block_duration_days: number } | null;
+    const rawConfig = (data as { config: Record<string, unknown> | null })?.config;
+    if (!rawConfig) return null;
+    const appointments = rawConfig.appointments as Record<string, unknown> | undefined;
+    if (!appointments) return null;
+
+    const noShowPolicy = (appointments.no_show_policy ?? appointments) as Record<string, unknown>;
+
+    return {
+      auto_start: (appointments.auto_start as boolean) ?? false,
+      grace_period_minutes: (noShowPolicy.grace_period_minutes as number) ?? 15,
+      max_no_shows: (noShowPolicy.max_no_shows as number) ?? 2,
+      block_duration_days: (noShowPolicy.block_duration_days as number) ?? 30,
+    };
   },
 
   async createClientBlock(
@@ -297,9 +346,7 @@ export const bookingRepository = {
     newStartTime: string,
     serviceDuration: number,
   ): Promise<Booking> {
-    const [h, m] = newStartTime.split(':').map(Number);
-    const endDate = new Date(2000, 0, 1, h, m + serviceDuration);
-    const endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+    const endTime = computeEndTime(newStartTime, serviceDuration);
 
     const { data, error } = await supabase
       .from(TABLE)

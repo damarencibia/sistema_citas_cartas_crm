@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { bookingRepository } from '../repositories/booking.repository';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useTenantStore } from '@/shared/stores/tenant.store';
 import type { Booking, CreateBookingDTO, BookingFilters, BookingStatus, ClientBlockCheck, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance, WalkInEntry, CreateWalkInDTO } from '../types/booking.types';
 
 interface BookingStoreState {
@@ -15,6 +16,13 @@ interface BookingStoreState {
   recurringLoading: boolean;
   walkInQueue: WalkInEntry[];
   walkInLoading: boolean;
+}
+
+function resolveTenantId(): string | null {
+  const authStore = useAuthStore();
+  if (authStore.user?.tenant_id) return authStore.user.tenant_id;
+  const tenantStore = useTenantStore();
+  return tenantStore.tenant?.id ?? null;
 }
 
 export const useBookingStore = defineStore('appointments/bookings', {
@@ -77,8 +85,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async createBooking(dto: CreateBookingDTO): Promise<Booking> {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
+      const tenantId = resolveTenantId();
       if (!tenantId) throw new Error('No tenant ID available');
 
       if (dto.customer_email) {
@@ -96,8 +103,8 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async updateStatus(id: string, status: BookingStatus, reason?: string, cancelledBy?: 'customer' | 'employee' | 'system'): Promise<Booking> {
+      const tenantId = resolveTenantId();
       const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
       const booking = this.bookings.find((b) => b.id === id) ?? this.currentBooking;
       const oldStatus = booking?.status ?? null;
 
@@ -114,13 +121,17 @@ export const useBookingStore = defineStore('appointments/bookings', {
           id,
           oldStatus,
           status,
-          changedBy as any,
+          changedBy as 'customer' | 'employee' | 'system',
           userName,
           reason,
         );
 
         if (status === 'no_show' && booking?.customer_email) {
           await this.handleNoShowBlock(tenantId, booking.customer_email);
+        }
+
+        if (status === 'cancelled' && booking) {
+          await this.promoteWaitlistForBooking(tenantId, booking);
         }
       }
 
@@ -136,33 +147,66 @@ export const useBookingStore = defineStore('appointments/bookings', {
         const blockedUntil = new Date();
         blockedUntil.setDate(blockedUntil.getDate() + config.block_duration_days);
 
+        const existingBlock = await bookingRepository.checkClientBlock(tenantId, customerEmail);
+        const newBlockDate = blockedUntil.toISOString().split('T')[0];
+        if (existingBlock.blocked_until && existingBlock.blocked_until >= newBlockDate) {
+          return;
+        }
+
         await bookingRepository.createClientBlock(
           tenantId,
           customerEmail,
-          blockedUntil.toISOString().split('T')[0],
+          newBlockDate,
           `${noShowCount} no-show(s) en los últimos ${config.block_duration_days} días`,
           noShowCount,
         );
       }
     },
 
+    async promoteWaitlistForBooking(tenantId: string, booking: Booking) {
+      try {
+        const entry = await bookingRepository.promoteFromWaitlist(
+          tenantId,
+          booking.service_id,
+          booking.employee_id,
+          booking.date,
+          booking.start_time,
+          booking.end_time,
+        );
+        if (entry) {
+          await bookingRepository.create(
+            {
+              service_id: booking.service_id,
+              employee_id: booking.employee_id,
+              date: booking.date,
+              start_time: booking.start_time,
+              customer_name: entry.customer_name,
+              customer_email: entry.customer_email,
+              customer_phone: entry.customer_phone ?? undefined,
+              source: 'online',
+            },
+            tenantId,
+          );
+        }
+      } catch {
+        // Waitlist promotion is best-effort
+      }
+    },
+
     async checkClientBlock(customerEmail: string): Promise<ClientBlockCheck> {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
+      const tenantId = resolveTenantId();
       if (!tenantId) return { is_blocked: false, blocked_until: null, no_show_count: 0 };
       return bookingRepository.checkClientBlock(tenantId, customerEmail);
     },
 
     async countRecentNoShows(customerEmail: string): Promise<number> {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
+      const tenantId = resolveTenantId();
       if (!tenantId) return 0;
       return bookingRepository.getNoShowCount(tenantId, customerEmail);
     },
 
     async getAvailableSlots(employeeId: string, date: string, serviceDuration: number, serviceId?: string) {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
+      const tenantId = resolveTenantId();
       if (!tenantId) throw new Error('No tenant ID available');
       return bookingRepository.getAvailableSlots(tenantId, employeeId, date, serviceDuration, serviceId);
     },
@@ -172,11 +216,21 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async reassignBooking(bookingId: string, newDate: string, newStartTime: string, serviceDuration: number): Promise<Booking> {
+      const tenantId = resolveTenantId();
       const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
       const booking = this.bookings.find((b) => b.id === bookingId) ?? this.currentBooking;
       const oldDate = booking?.date;
       const oldTime = booking?.start_time;
+
+      if (tenantId) {
+        const slots = await bookingRepository.getAvailableSlots(
+          tenantId, booking!.employee_id, newDate, serviceDuration, booking!.service_id,
+        );
+        const slotAvailable = slots.some((s) => s.start_time === newStartTime);
+        if (!slotAvailable) {
+          throw new Error('El empleado ya tiene una cita en ese horario.');
+        }
+      }
 
       const updated = await bookingRepository.reassign(bookingId, newDate, newStartTime, serviceDuration);
       const index = this.bookings.findIndex((b) => b.id === bookingId);
@@ -199,10 +253,14 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async approveBooking(bookingId: string, reason?: string): Promise<Booking> {
+      const tenantId = resolveTenantId();
       const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
       const booking = this.bookings.find((b) => b.id === bookingId) ?? this.currentBooking;
       const oldStatus = booking?.status ?? null;
+
+      if (oldStatus !== 'pending_approval') {
+        throw new Error('Solo se pueden aprobar reservas pendientes de aprobación.');
+      }
 
       const updated = await bookingRepository.approveBooking(bookingId, authStore.user?.id ?? '', reason);
       const index = this.bookings.findIndex((b) => b.id === bookingId);
@@ -225,10 +283,14 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async rejectBooking(bookingId: string, reason?: string): Promise<Booking> {
+      const tenantId = resolveTenantId();
       const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
       const booking = this.bookings.find((b) => b.id === bookingId) ?? this.currentBooking;
       const oldStatus = booking?.status ?? null;
+
+      if (oldStatus !== 'pending_approval') {
+        throw new Error('Solo se pueden rechazar reservas pendientes de aprobación.');
+      }
 
       const updated = await bookingRepository.rejectBooking(bookingId, authStore.user?.id ?? '', reason);
       const index = this.bookings.findIndex((b) => b.id === bookingId);
@@ -255,8 +317,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
     async fetchWaitlist() {
       this.waitlistLoading = true;
       try {
-        const authStore = useAuthStore();
-        const tenantId = authStore.user?.tenant_id;
+        const tenantId = resolveTenantId();
         if (!tenantId) return;
         this.waitlist = await bookingRepository.getWaitlist(tenantId);
       } finally {
@@ -265,8 +326,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async joinWaitlist(dto: CreateWaitlistDTO): Promise<WaitlistEntry> {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
+      const tenantId = resolveTenantId();
       if (!tenantId) throw new Error('No tenant ID available');
       const entry = await bookingRepository.joinWaitlist(tenantId, dto);
       this.waitlist.push(entry);
@@ -291,8 +351,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
     async fetchRecurringPatterns() {
       this.recurringLoading = true;
       try {
-        const authStore = useAuthStore();
-        const tenantId = authStore.user?.tenant_id;
+        const tenantId = resolveTenantId();
         if (!tenantId) return;
         this.recurringPatterns = await bookingRepository.getRecurringPatterns(tenantId);
       } finally {
@@ -301,8 +360,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async createRecurringPattern(dto: CreateRecurringDTO): Promise<RecurringPattern> {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
+      const tenantId = resolveTenantId();
       if (!tenantId) throw new Error('No tenant ID available');
       const pattern = await bookingRepository.createRecurringPattern(tenantId, dto);
       this.recurringPatterns.unshift(pattern);
@@ -339,8 +397,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
     async fetchWalkInQueue() {
       this.walkInLoading = true;
       try {
-        const authStore = useAuthStore();
-        const tenantId = authStore.user?.tenant_id;
+        const tenantId = resolveTenantId();
         if (!tenantId) return;
         this.walkInQueue = await bookingRepository.getWalkInQueue(tenantId);
       } finally {
@@ -349,8 +406,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async createWalkIn(dto: CreateWalkInDTO): Promise<WalkInEntry> {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
+      const tenantId = resolveTenantId();
       if (!tenantId) throw new Error('No tenant ID available');
       const entry = await bookingRepository.createWalkIn(tenantId, dto);
       this.walkInQueue.push(entry);
