@@ -238,3 +238,23 @@ export interface CreateWalkInDTO {
   service_id?: string;
   employee_id?: string;
 }
+
+export interface DailyExtra {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  date: string;
+  customer_name: string;
+  service_id: string | null;
+  notes: string | null;
+  created_at: string;
+  service?: { name: string; duration_minutes: number; color: string };
+}
+
+export interface CreateDailyExtraDTO {
+  employee_id: string;
+  date: string;
+  customer_name: string;
+  service_id?: string;
+  notes?: string;
+}

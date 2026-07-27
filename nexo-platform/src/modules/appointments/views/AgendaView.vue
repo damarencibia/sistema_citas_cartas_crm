@@ -75,6 +75,10 @@
                 class="ml-1"
               />
             </v-tab>
+            <v-tab value="closure">
+              <v-icon start size="small">mdi-clipboard-check-outline</v-icon>
+              Cierre
+            </v-tab>
           </v-tabs>
 
           <v-divider />
@@ -94,6 +98,18 @@
                 :entries="bookingStore.waitlist"
                 :loading="bookingStore.waitlistLoading"
                 @cancel="onWaitlistCancel"
+              />
+            </v-tabs-window-item>
+            <v-tabs-window-item value="closure">
+              <DailyClosurePanel
+                ref="closurePanelRef"
+                :employee-id="agenda.selectedEmployeeId.value"
+                :date="agenda.selectedDate.value"
+                :tenant-id="tenantId"
+                class="pa-3"
+                @mark-attended="onMarkAttended"
+                @mark-no-show="onMarkNoShow"
+                @remove-extra="onRemoveExtra"
               />
             </v-tabs-window-item>
           </v-tabs-window>
@@ -138,10 +154,14 @@ import BookingDetailDialog from '../components/BookingDetailDialog.vue';
 import WalkInDialog from '../components/WalkInDialog.vue';
 import WalkInQueuePanel from '../components/WalkInQueuePanel.vue';
 import WaitlistPanel from '../components/WaitlistPanel.vue';
-import type { Booking, CreateBookingDTO, CreateWalkInDTO, WalkInEntry, WaitlistEntry } from '../types/booking.types';
+import DailyClosurePanel from '../components/DailyClosurePanel.vue';
+import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
+import { useTenantStore } from '@/shared/stores/tenant.store';
+import type { Booking, CreateBookingDTO, CreateWalkInDTO, WalkInEntry, WaitlistEntry, DailyExtra } from '../types/booking.types';
 
 const bookingStore = useBookingStore();
 const employeeStore = useEmployeeStore();
+const tenantStore = useTenantStore();
 const notification = useNotification();
 const agenda = useAgenda();
 
@@ -150,6 +170,9 @@ const showDetail = ref(false);
 const showWalkInDialog = ref(false);
 const selectedBooking = ref<Booking | null>(null);
 const sideTab = ref('walkin');
+const closurePanelRef = ref<InstanceType<typeof DailyClosurePanel> | null>(null);
+
+const tenantId = computed(() => tenantStore.tenant?.id ?? '');
 
 const employeeOptions = computed(() =>
   employeeStore.activeEmployees.map((e) => ({
@@ -311,6 +334,39 @@ async function onWaitlistCancel(entry: WaitlistEntry) {
     notification.success('Entrada de waitlist cancelada');
   } catch {
     notification.error('Error al cancelar waitlist');
+  }
+}
+
+// Daily closure handlers
+async function onMarkAttended(booking: Booking) {
+  try {
+    await bookingStore.updateStatus(booking.id, 'completed');
+    notification.success(`${booking.customer_name || 'Cliente'} marcado como asistido`);
+    await agenda.loadAgenda();
+    closurePanelRef.value?.loadExtras();
+  } catch {
+    notification.error('Error al actualizar estado');
+  }
+}
+
+async function onMarkNoShow(booking: Booking) {
+  try {
+    await bookingStore.updateStatus(booking.id, 'no_show');
+    notification.success(`${booking.customer_name || 'Cliente'} marcado como no asistido`);
+    await agenda.loadAgenda();
+    closurePanelRef.value?.loadExtras();
+  } catch {
+    notification.error('Error al actualizar estado');
+  }
+}
+
+async function onRemoveExtra(extra: DailyExtra) {
+  try {
+    await dailyExtrasRepository.remove(extra.id);
+    notification.success('Extra eliminado');
+    closurePanelRef.value?.loadExtras();
+  } catch {
+    notification.error('Error al eliminar extra');
   }
 }
 </script>
