@@ -55,7 +55,7 @@ export function useScheduleGrid() {
         buffer_before_minutes: 0,
         buffer_after_minutes: 0,
         advance_booking_days: 7,
-        min_advance_minutes: 60,
+        min_advance_minutes: 15,
         created_at: '',
         updated_at: '',
       });

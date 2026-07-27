@@ -156,7 +156,7 @@ function initLocalShifts() {
         buffer_before_minutes: s.buffer_before_minutes ?? 0,
         buffer_after_minutes: s.buffer_after_minutes ?? 0,
         advance_booking_days: s.advance_booking_days ?? 7,
-        min_advance_minutes: s.min_advance_minutes ?? 60,
+        min_advance_minutes: s.min_advance_minutes ?? 15,
       })),
     );
   }
@@ -183,7 +183,7 @@ function toggleDay(day: number) {
       buffer_before_minutes: 0,
       buffer_after_minutes: 0,
       advance_booking_days: 7,
-      min_advance_minutes: 60,
+      min_advance_minutes: 15,
     }]);
   }
 }
@@ -238,7 +238,7 @@ function onShiftSave(data: any) {
     buffer_before_minutes: data.buffer_before_minutes ?? 0,
     buffer_after_minutes: data.buffer_after_minutes ?? 0,
     advance_booking_days: data.advance_booking_days ?? 7,
-    min_advance_minutes: data.min_advance_minutes ?? 60,
+    min_advance_minutes: data.min_advance_minutes ?? 15,
   };
 
   if (editingShiftIndex.value >= 0) {

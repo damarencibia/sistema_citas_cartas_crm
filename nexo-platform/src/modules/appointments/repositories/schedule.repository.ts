@@ -32,7 +32,7 @@ export const scheduleRepository = {
       buffer_before_minutes: s.buffer_before_minutes ?? 0,
       buffer_after_minutes: s.buffer_after_minutes ?? 0,
       advance_booking_days: s.advance_booking_days ?? 7,
-      min_advance_minutes: s.min_advance_minutes ?? 60,
+      min_advance_minutes: s.min_advance_minutes ?? 15,
     }));
     const { error: insErr } = await (supabase as any).from('schedules').insert(rows);
     if (insErr) throw insErr;

@@ -248,7 +248,7 @@ const form = reactive<ShiftForm>({
   buffer_before_minutes: 0,
   buffer_after_minutes: 0,
   advance_booking_days: 7,
-  min_advance_minutes: 60,
+  min_advance_minutes: 15,
 });
 
 const slotModes = [
@@ -356,7 +356,7 @@ watch(
       form.buffer_before_minutes = props.buffer_before_minutes ?? 0;
       form.buffer_after_minutes = props.buffer_after_minutes ?? 0;
       form.advance_booking_days = props.advance_booking_days ?? 7;
-      form.min_advance_minutes = props.min_advance_minutes ?? 60;
+      form.min_advance_minutes = props.min_advance_minutes ?? 15;
       resetDuration();
     }
   },
