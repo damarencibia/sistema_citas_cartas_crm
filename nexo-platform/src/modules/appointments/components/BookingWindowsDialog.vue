@@ -44,29 +44,14 @@
           </v-col>
         </v-row>
 
-        <v-row dense>
-          <v-col cols="6">
-            <v-select
-              v-model="form.slot_mode"
-              :items="slotModes"
-              item-title="label"
-              item-value="value"
-              label="Modo"
-              density="compact"
-            />
-          </v-col>
-          <v-col cols="6" v-if="form.slot_mode === 'fixed'">
-            <v-text-field
-              v-model.number="form.slot_interval_minutes"
-              label="Intervalo (min)"
-              type="number"
-              :min="5"
-              :max="480"
-              :step="5"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
+        <v-select
+          v-model="form.slot_mode"
+          :items="slotModes"
+          item-title="label"
+          item-value="value"
+          label="Modo"
+          density="compact"
+        />
 
         <v-alert type="info" variant="tonal" density="compact" class="mt-2">
           Las ventanas de disponibilidad tienen <strong>prioridad sobre los horarios recurrentes</strong>

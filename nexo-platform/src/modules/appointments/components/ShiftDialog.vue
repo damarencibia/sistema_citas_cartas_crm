@@ -102,31 +102,16 @@
 
         <div class="text-subtitle-2 mb-2">Configuración de Slots</div>
 
-        <v-row dense>
-          <v-col cols="6">
-            <v-select
-              v-model="form.slot_mode"
-              :items="slotModes"
-              item-title="label"
-              item-value="value"
-              label="Modo de slots"
-              density="compact"
-              hide-details
-            />
-          </v-col>
-          <v-col cols="6" v-if="form.slot_mode === 'fixed'">
-            <v-text-field
-              v-model.number="form.slot_interval_minutes"
-              label="Intervalo (min)"
-              type="number"
-              :min="5"
-              :max="480"
-              :step="5"
-              density="compact"
-              hide-details
-            />
-          </v-col>
-        </v-row>
+        <v-select
+          v-model="form.slot_mode"
+          :items="slotModes"
+          item-title="label"
+          item-value="value"
+          label="Modo de slots"
+          density="compact"
+          hide-details
+          class="mb-2"
+        />
 
         <v-row dense class="mt-2">
           <v-col cols="6">

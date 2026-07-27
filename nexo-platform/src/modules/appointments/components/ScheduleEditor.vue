@@ -47,7 +47,7 @@
                 {{ shift.start_time?.slice(0, 5) }} - {{ shift.end_time?.slice(0, 5) }}
                 <template #append>
                   <span class="text-caption ml-1">
-                    {{ shift.slot_mode === 'flexible' ? 'flex' : `fixed ${shift.slot_interval_minutes}m` }}
+                    {{ shift.slot_mode === 'flexible' ? 'flex' : 'auto' }}
                   </span>
                 </template>
               </v-chip>
