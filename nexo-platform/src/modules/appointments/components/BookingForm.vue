@@ -376,7 +376,7 @@ function handleJoinWaitlist() {
   showWaitlistDialog.value = true;
 }
 
-async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string }) {
+async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible' }) {
   try {
     await bookingStore.joinWaitlist({
       service_id: form.service_id,
@@ -385,6 +385,7 @@ async function onWaitlistSave(data: { customer_name: string; customer_email: str
       customer_name: data.customer_name,
       customer_email: data.customer_email,
       customer_phone: data.customer_phone || undefined,
+      preference: data.preference,
     });
     showWaitlistDialog.value = false;
   } catch {

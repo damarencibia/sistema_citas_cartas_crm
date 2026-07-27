@@ -126,6 +126,8 @@ export interface ReassignBookingDTO {
   new_start_time: string;
 }
 
+export type WaitlistPreference = 'exact' | 'flexible';
+
 export interface WaitlistEntry {
   id: string;
   tenant_id: string;
@@ -140,8 +142,13 @@ export interface WaitlistEntry {
   position: number;
   status: 'waiting' | 'notified' | 'converted' | 'expired' | 'cancelled';
   notified_at: string | null;
-  expires_at: string;
+  entry_expires_at: string;
   created_at: string;
+  preference: WaitlistPreference;
+  offered_slot_date: string | null;
+  offered_slot_time: string | null;
+  offer_expires_at: string | null;
+  offer_token: string | null;
   service?: { name: string; duration_minutes: number; color: string };
   employee?: { first_name: string; last_name: string; color: string };
 }
@@ -155,6 +162,7 @@ export interface CreateWaitlistDTO {
   customer_name: string;
   customer_email: string;
   customer_phone?: string;
+  preference?: WaitlistPreference;
 }
 
 export interface RecurringPattern {
@@ -212,31 +220,6 @@ export interface RecurrenceData {
   preferred_time: string;
   start_date: string;
   end_date: string;
-}
-
-export interface WalkInEntry {
-  id: string;
-  tenant_id: string;
-  customer_name: string;
-  customer_phone: string | null;
-  service_id: string | null;
-  employee_id: string | null;
-  position: number;
-  status: 'waiting' | 'serving' | 'completed' | 'cancelled' | 'no_show';
-  estimated_wait_minutes: number | null;
-  checked_in_at: string;
-  started_serving_at: string | null;
-  completed_at: string | null;
-  created_at: string;
-  service?: { name: string; duration_minutes: number; color: string };
-  employee?: { first_name: string; last_name: string; color: string };
-}
-
-export interface CreateWalkInDTO {
-  customer_name: string;
-  customer_phone?: string;
-  service_id?: string;
-  employee_id?: string;
 }
 
 export interface DailyExtra {

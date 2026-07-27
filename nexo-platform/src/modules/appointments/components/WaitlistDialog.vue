@@ -32,6 +32,10 @@
             density="compact"
             class="mb-2"
           />
+          <v-btn-toggle v-model="form.preference" mandatory density="compact" class="mb-2" color="primary" variant="outlined">
+            <v-btn value="exact" size="small">Horario exacto</v-btn>
+            <v-btn value="flexible" size="small">Cualquier hora</v-btn>
+          </v-btn-toggle>
         </v-form>
       </v-card-text>
       <v-card-actions class="pa-4 pt-0">
@@ -62,7 +66,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: [];
-  save: [data: { customer_name: string; customer_email: string; customer_phone: string }];
+  save: [data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible' }];
 }>();
 
 const formRef = ref();
@@ -72,6 +76,7 @@ const form = reactive({
   customer_name: '',
   customer_email: '',
   customer_phone: '',
+  preference: 'exact' as 'exact' | 'flexible',
 });
 
 const emailRules = [

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { bookingRepository } from '../repositories/booking.repository';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
-import type { Booking, CreateBookingDTO, BookingFilters, BookingStatus, ClientBlockCheck, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance, WalkInEntry, CreateWalkInDTO } from '../types/booking.types';
+import type { Booking, CreateBookingDTO, BookingFilters, BookingStatus, ClientBlockCheck, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance } from '../types/booking.types';
 
 interface BookingStoreState {
   bookings: Booking[];
@@ -14,8 +14,6 @@ interface BookingStoreState {
   recurringPatterns: RecurringPattern[];
   recurringInstances: RecurringInstance[];
   recurringLoading: boolean;
-  walkInQueue: WalkInEntry[];
-  walkInLoading: boolean;
 }
 
 function resolveTenantId(): string | null {
@@ -39,8 +37,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
     recurringPatterns: [],
     recurringInstances: [],
     recurringLoading: false,
-    walkInQueue: [],
-    walkInLoading: false,
   }),
 
   getters: {
@@ -390,44 +386,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
       if (index !== -1) {
         this.recurringInstances[index] = { ...this.recurringInstances[index], status: 'skipped' };
       }
-    },
-
-    // --- Walk-in Queue ---
-
-    async fetchWalkInQueue() {
-      this.walkInLoading = true;
-      try {
-        const tenantId = resolveTenantId();
-        if (!tenantId) return;
-        this.walkInQueue = await bookingRepository.getWalkInQueue(tenantId);
-      } finally {
-        this.walkInLoading = false;
-      }
-    },
-
-    async createWalkIn(dto: CreateWalkInDTO): Promise<WalkInEntry> {
-      const tenantId = resolveTenantId();
-      if (!tenantId) throw new Error('No tenant ID available');
-      const entry = await bookingRepository.createWalkIn(tenantId, dto);
-      this.walkInQueue.push(entry);
-      return entry;
-    },
-
-    async updateWalkInStatus(id: string, status: WalkInEntry['status']): Promise<void> {
-      await bookingRepository.updateWalkInStatus(id, status);
-      if (status === 'completed' || status === 'cancelled' || status === 'no_show') {
-        this.walkInQueue = this.walkInQueue.filter((w) => w.id !== id);
-      } else {
-        const index = this.walkInQueue.findIndex((w) => w.id === id);
-        if (index !== -1) {
-          this.walkInQueue[index] = { ...this.walkInQueue[index], status };
-        }
-      }
-    },
-
-    async removeWalkIn(id: string): Promise<void> {
-      await bookingRepository.removeWalkIn(id);
-      this.walkInQueue = this.walkInQueue.filter((w) => w.id !== id);
     },
 
     setFilters(filters: Partial<BookingFilters>) {

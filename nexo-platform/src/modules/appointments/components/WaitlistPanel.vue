@@ -13,7 +13,7 @@
       <v-list-item
         v-for="entry in entries"
         :key="entry.id"
-        :subtitle="`${entry.customer_email} · ${entry.preferred_date}`"
+        :subtitle="`${entry.customer_email} · ${entry.preferred_date} · ${entry.preference === 'flexible' ? 'Cualquier hora' : (entry.preferred_time_start ? entry.preferred_time_start.slice(0,5) : 'Sin preferencia')}`"
       >
         <template #title>
           <div class="d-flex align-center ga-2">
