@@ -24,7 +24,11 @@
     </v-row>
 
     <v-row class="mt-2">
-      <v-col cols="12" md="8">
+      <v-col cols="12" md="4">
+        <DailySummaryCard />
+      </v-col>
+
+      <v-col cols="12" md="5">
         <v-card class="pa-4">
           <div class="text-subtitle-1 font-weight-semibold mb-3">Próximas Citas</div>
           <EmptyState
@@ -51,7 +55,7 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="3">
         <v-card class="pa-4">
           <div class="text-subtitle-1 font-weight-semibold mb-3">Resumen</div>
           <v-list density="compact" class="bg-transparent">
@@ -76,6 +80,7 @@ import { supabase } from '@/shared/api/supabase.client';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
+import DailySummaryCard from '@/modules/appointments/components/DailySummaryCard.vue';
 
 const tenantStore = useTenantStore();
 const loading = ref(true);
