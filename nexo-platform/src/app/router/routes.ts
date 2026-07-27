@@ -204,6 +204,18 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/crm/views/ClientPortalView.vue'),
         meta: { title: 'Mi Portal' },
       },
+      {
+        path: 'waitlist/accept/:token',
+        name: 'waitlist-accept',
+        component: () => import('@/modules/appointments/views/WaitlistOfferView.vue'),
+        meta: { title: 'Oferta de Lista de Espera' },
+      },
+      {
+        path: 'waitlist/decline/:token',
+        name: 'waitlist-decline',
+        component: () => import('@/modules/appointments/views/WaitlistOfferView.vue'),
+        meta: { title: 'Lista de Espera' },
+      },
     ],
   },
   {

@@ -169,20 +169,18 @@ export const useBookingStore = defineStore('appointments/bookings', {
           booking.start_time,
           booking.end_time,
         );
-        if (entry) {
-          await bookingRepository.create(
-            {
-              service_id: booking.service_id,
-              employee_id: booking.employee_id,
-              date: booking.date,
-              start_time: booking.start_time,
-              customer_name: entry.customer_name,
-              customer_email: entry.customer_email,
-              customer_phone: entry.customer_phone ?? undefined,
-              source: 'online',
+        if (entry?.offer_token) {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const functionsBase = `${supabaseUrl}/functions/v1`;
+          const authStore = useAuthStore();
+          await fetch(`${functionsBase}/send-waitlist-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authStore.session?.access_token ?? ''}`,
             },
-            tenantId,
-          );
+            body: JSON.stringify({ token: entry.offer_token, tenant_id: tenantId }),
+          });
         }
       } catch {
         // Waitlist promotion is best-effort
@@ -340,6 +338,18 @@ export const useBookingStore = defineStore('appointments/bookings', {
     async removeWaitlistEntry(id: string): Promise<void> {
       await bookingRepository.removeWaitlistEntry(id);
       this.waitlist = this.waitlist.filter((w) => w.id !== id);
+    },
+
+    async getWaitlistEntryByToken(token: string) {
+      return bookingRepository.getWaitlistEntryByToken(token);
+    },
+
+    async acceptWaitlistOffer(token: string) {
+      return bookingRepository.acceptWaitlistOffer(token);
+    },
+
+    async declineWaitlistOffer(token: string) {
+      return bookingRepository.declineWaitlistOffer(token);
     },
 
     // --- Recurring Bookings ---

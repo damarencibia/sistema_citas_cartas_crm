@@ -498,6 +498,40 @@ export const bookingRepository = {
     return (data as number) ?? 0;
   },
 
+  async getWaitlistEntryByToken(token: string): Promise<WaitlistEntry | null> {
+    const { data, error } = await (supabase as any)
+      .from('waitlist')
+      .select('*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)')
+      .eq('offer_token', token)
+      .single();
+    if (error) return null;
+    return data as unknown as WaitlistEntry | null;
+  },
+
+  async acceptWaitlistOffer(token: string): Promise<{ booking_id: string | null; error: string | null }> {
+    const { data, error } = await (supabase as any).rpc('accept_waitlist_offer', {
+      p_token: token,
+    });
+    if (error) throw error;
+    const result = data?.[0];
+    return {
+      booking_id: result?.booking_id ?? null,
+      error: result?.error ?? null,
+    };
+  },
+
+  async declineWaitlistOffer(token: string): Promise<{ success: boolean; error: string | null }> {
+    const { data, error } = await (supabase as any).rpc('decline_waitlist_offer', {
+      p_token: token,
+    });
+    if (error) throw error;
+    const result = data?.[0];
+    return {
+      success: result?.success ?? false,
+      error: result?.error ?? null,
+    };
+  },
+
   // --- Recurring Bookings ---
 
   async getRecurringPatterns(tenantId: string): Promise<RecurringPattern[]> {
