@@ -143,12 +143,6 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: 'Mi Negocio' },
           },
           {
-            path: 'team',
-            name: 'team-management',
-            component: () => import('@/modules/admin/views/TeamManagementView.vue'),
-            meta: { title: 'Equipo' },
-          },
-          {
             path: 'modules',
             name: 'modules-config',
             component: () => import('@/modules/admin/views/ModulesConfigView.vue'),

@@ -82,8 +82,6 @@ serve(async (req: Request) => {
       user_metadata: {
         first_name,
         last_name,
-      },
-      app_metadata: {
         tenant_id: callerTenantId,
         role,
       },

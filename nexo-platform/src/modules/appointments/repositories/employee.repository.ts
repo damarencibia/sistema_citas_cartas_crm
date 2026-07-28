@@ -94,6 +94,20 @@ export const employeeRepository = {
     })) as Employee[];
   },
 
+  async updateServices(employeeId: string, serviceIds: string[]): Promise<void> {
+    await (supabase as any)
+      .from('services')
+      .update({ employee_id: null, updated_at: new Date().toISOString() })
+      .eq('employee_id', employeeId);
+    if (serviceIds.length > 0) {
+      const { error } = await (supabase as any)
+        .from('services')
+        .update({ employee_id: employeeId, updated_at: new Date().toISOString() })
+        .in('id', serviceIds);
+      if (error) throw error;
+    }
+  },
+
   async softDelete(id: string): Promise<void> {
     const { error } = await supabase
       .from(TABLE)
