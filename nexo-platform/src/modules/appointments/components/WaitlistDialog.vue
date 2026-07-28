@@ -6,10 +6,22 @@
         Unirse a Lista de Espera
       </v-card-title>
       <v-card-text>
-        <v-alert v-if="preselectedTime" type="info" variant="tonal" density="compact" class="mb-4">
+        <v-alert
+          v-if="preselectedTime"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+        >
           El horario de las <strong>{{ preselectedTime.slice(0,5) }}</strong> está ocupado. Únete a la lista y te notificaremos si se libera.
         </v-alert>
-        <v-alert v-else type="info" variant="tonal" density="compact" class="mb-4">
+        <v-alert
+          v-else
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+        >
           No hay horarios disponibles para esta fecha. Puedes unirte a la lista de espera y te notificaremos cuando se libere un cupo.
         </v-alert>
 
@@ -36,7 +48,14 @@
             class="mb-2"
           />
           <div class="text-body-2 text-medium-emphasis mb-1">Preferencia</div>
-          <v-btn-toggle v-model="form.preference" mandatory density="compact" class="mb-2" color="primary" variant="outlined">
+          <v-btn-toggle
+            v-model="form.preference"
+            mandatory
+            density="compact"
+            class="mb-2"
+            color="primary"
+            variant="outlined"
+          >
             <v-btn value="exact" size="small">Horario exacto</v-btn>
             <v-btn value="flexible" size="small">Cualquier hora</v-btn>
           </v-btn-toggle>

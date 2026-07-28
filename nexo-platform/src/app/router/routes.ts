@@ -23,16 +23,34 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: 'Agenda' },
           },
           {
+            path: 'categories',
+            name: 'service-categories',
+            component: () => import('@/modules/appointments/views/CategoriesManagementView.vue'),
+            meta: { title: 'Categorías', role: 'admin' },
+          },
+          {
+            path: 'catalog',
+            name: 'service-catalog',
+            component: () => import('@/modules/appointments/views/ServiceCatalogView.vue'),
+            meta: { title: 'Catálogo', role: 'admin' },
+          },
+          {
             path: 'services',
             name: 'services',
             component: () => import('@/modules/appointments/views/ServicesView.vue'),
-            meta: { title: 'Servicios' },
+            meta: { title: 'Servicios', role: 'admin' },
+          },
+          {
+            path: 'my-services',
+            name: 'my-services',
+            component: () => import('@/modules/appointments/views/MyServicesView.vue'),
+            meta: { title: 'Mis Servicios', role: 'employee' },
           },
           {
             path: 'employees',
             name: 'employees',
             component: () => import('@/modules/appointments/views/EmployeesView.vue'),
-            meta: { title: 'Empleados' },
+            meta: { title: 'Empleados', role: 'admin' },
           },
           {
             path: 'schedules',

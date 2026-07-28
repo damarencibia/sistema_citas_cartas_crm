@@ -9,6 +9,8 @@ export interface Employee extends BaseEntity {
   phone: string | null;
   color: string;
   is_active: boolean;
+  role?: string;
+  supabase_user_id?: string | null;
 }
 
 export interface CreateEmployeeDTO {
@@ -19,4 +21,4 @@ export interface CreateEmployeeDTO {
   color?: string;
 }
 
-export type UpdateEmployeeDTO = Partial<CreateEmployeeDTO>;
+export type UpdateEmployeeDTO = Partial<CreateEmployeeDTO & { is_active: boolean }>;

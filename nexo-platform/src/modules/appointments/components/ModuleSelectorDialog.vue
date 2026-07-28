@@ -66,7 +66,12 @@
               class="module-card d-flex flex-column align-center text-center justify-center pa-6"
               :style="{ height: '240px', opacity: 0.55 }"
             >
-              <v-avatar color="grey-lighten-3" size="64" class="mb-4" variant="tonal">
+              <v-avatar
+                color="grey-lighten-3"
+                size="64"
+                class="mb-4"
+                variant="tonal"
+              >
                 <v-icon color="grey" size="32">mdi-silverware-fork-knife</v-icon>
               </v-avatar>
               <div class="text-subtitle-1 font-weight-semibold">Carta Digital</div>
@@ -74,7 +79,12 @@
                 Menú digital, productos y pedidos
               </div>
               <div class="mt-3" style="height: 24px;">
-                <v-chip size="small" variant="tonal" color="grey" class="font-weight-medium">
+                <v-chip
+                  size="small"
+                  variant="tonal"
+                  color="grey"
+                  class="font-weight-medium"
+                >
                   Próximamente
                 </v-chip>
               </div>

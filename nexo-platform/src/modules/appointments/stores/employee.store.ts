@@ -33,6 +33,15 @@ export const useEmployeeStore = defineStore('appointments/employees', {
       }
     },
 
+    async fetchEmployeesWithRoles() {
+      this.loading = true;
+      try {
+        this.employees = await employeeRepository.getAllWithRoles();
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async fetchEmployee(id: string) {
       this.loading = true;
       try {

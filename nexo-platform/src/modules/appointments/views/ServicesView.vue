@@ -16,7 +16,12 @@
     <div v-else-if="serviceStore.services.length === 0" class="text-center pa-8">
       <v-icon size="64" color="medium-emphasis">mdi-tag-outline</v-icon>
       <p class="text-body-1 text-medium-emphasis mt-4">No hay servicios configurados</p>
-      <v-btn color="primary" variant="flat" class="mt-4" @click="openCreate">
+      <v-btn
+        color="primary"
+        variant="flat"
+        class="mt-4"
+        @click="openCreate"
+      >
         Crear Primer Servicio
       </v-btn>
     </div>

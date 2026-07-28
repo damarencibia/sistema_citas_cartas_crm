@@ -37,7 +37,7 @@
               {{ b.service?.name || 'Servicio' }} · {{ formatTime(b.start_time) }}
             </v-list-item-subtitle>
             <template #append>
-              <div class="d-flex ga-1" v-if="b.status === 'confirmed' || b.status === 'in_progress'">
+              <div v-if="b.status === 'confirmed' || b.status === 'in_progress'" class="d-flex ga-1">
                 <v-btn
                   size="x-small"
                   icon="mdi-check"
@@ -99,7 +99,12 @@
           Sin extras registrados
         </div>
 
-        <v-list v-else density="compact" lines="one" class="bg-transparent pa-0">
+        <v-list
+          v-else
+          density="compact"
+          lines="one"
+          class="bg-transparent pa-0"
+        >
           <v-list-item
             v-for="extra in extras"
             :key="extra.id"

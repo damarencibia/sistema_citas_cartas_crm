@@ -62,7 +62,12 @@
             <v-list-item v-for="item in summary" :key="item.label" class="px-2">
               <v-list-item-title class="text-body-2">{{ item.label }}</v-list-item-title>
               <template #append>
-                <v-chip :color="item.color" size="x-small" variant="tonal" class="font-weight-medium">
+                <v-chip
+                  :color="item.color"
+                  size="x-small"
+                  variant="tonal"
+                  class="font-weight-medium"
+                >
                   {{ item.value }}
                 </v-chip>
               </template>

@@ -1,6 +1,11 @@
 <template>
   <div>
-    <v-switch v-model="enabled" label="Cita recurrente" color="primary" class="mb-2" />
+    <v-switch
+      v-model="enabled"
+      label="Cita recurrente"
+      color="primary"
+      class="mb-2"
+    />
 
     <div v-if="enabled" class="pa-3 rounded" style="background: rgb(var(--v-theme-surface-variant))">
       <v-select

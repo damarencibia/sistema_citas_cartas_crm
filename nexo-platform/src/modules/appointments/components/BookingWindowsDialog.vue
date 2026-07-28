@@ -7,7 +7,12 @@
       <v-card-text>
         <v-row dense>
           <v-col cols="12">
-            <EmployeeSelect v-model="form.employee_id" label="Empleado (opcional)" clearable class="mb-1" />
+            <EmployeeSelect
+              v-model="form.employee_id"
+              label="Empleado (opcional)"
+              clearable
+              class="mb-1"
+            />
           </v-col>
         </v-row>
 
@@ -28,19 +33,39 @@
 
         <v-row dense>
           <v-col cols="6">
-            <v-text-field v-model="form.start_date" label="Desde" type="date" density="compact" />
+            <v-text-field
+              v-model="form.start_date"
+              label="Desde"
+              type="date"
+              density="compact"
+            />
           </v-col>
           <v-col cols="6">
-            <v-text-field v-model="form.end_date" label="Hasta" type="date" density="compact" />
+            <v-text-field
+              v-model="form.end_date"
+              label="Hasta"
+              type="date"
+              density="compact"
+            />
           </v-col>
         </v-row>
 
         <v-row dense>
           <v-col cols="6">
-            <v-text-field v-model="form.start_time" label="Hora inicio" type="time" density="compact" />
+            <v-text-field
+              v-model="form.start_time"
+              label="Hora inicio"
+              type="time"
+              density="compact"
+            />
           </v-col>
           <v-col cols="6">
-            <v-text-field v-model="form.end_time" label="Hora fin" type="time" density="compact" />
+            <v-text-field
+              v-model="form.end_time"
+              label="Hora fin"
+              type="time"
+              density="compact"
+            />
           </v-col>
         </v-row>
 
@@ -53,7 +78,12 @@
           density="compact"
         />
 
-        <v-alert type="info" variant="tonal" density="compact" class="mt-2">
+        <v-alert
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mt-2"
+        >
           Las ventanas de disponibilidad tienen <strong>prioridad sobre los horarios recurrentes</strong>
           del empleado. Si existe una ventana para la fecha seleccionada, se usará en lugar del schedule.
         </v-alert>
@@ -61,7 +91,12 @@
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />
         <v-btn variant="text" @click="emit('close')">Cancelar</v-btn>
-        <v-btn color="primary" variant="flat" :disabled="!isValid" @click="onSave">
+        <v-btn
+          color="primary"
+          variant="flat"
+          :disabled="!isValid"
+          @click="onSave"
+        >
           {{ editing ? 'Guardar' : 'Crear' }}
         </v-btn>
       </v-card-actions>

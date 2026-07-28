@@ -22,7 +22,7 @@ export const employeeRepository = {
   },
 
   async getServicesByEmployee(employeeId: string): Promise<Service[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('services')
       .select(`
         *,
@@ -39,7 +39,7 @@ export const employeeRepository = {
   },
 
   async getEmployeesByServiceName(serviceName: string): Promise<Employee[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('services')
       .select('employee:employee_id(*)')
       .eq('name', serviceName)
@@ -61,7 +61,7 @@ export const employeeRepository = {
         email: dto.email ?? null,
         phone: dto.phone ?? null,
         color: dto.color ?? '#1976D2',
-      })
+      } as any)
       .select()
       .single();
     if (error) throw error;
@@ -71,7 +71,7 @@ export const employeeRepository = {
   async update(id: string, dto: UpdateEmployeeDTO): Promise<Employee> {
     const { data, error } = await supabase
       .from(TABLE)
-      .update({ ...dto, updated_at: new Date().toISOString() })
+      .update({ ...dto, updated_at: new Date().toISOString() } as any)
       .eq('id', id)
       .select()
       .single();
@@ -79,10 +79,25 @@ export const employeeRepository = {
     return data as Employee;
   },
 
+  async getAllWithRoles(): Promise<Employee[]> {
+    const { data, error } = await (supabase as any)
+      .from('employees')
+      .select('*, user:user_id(role, supabase_user_id)')
+      .is('deleted_at', null)
+      .order('first_name');
+    if (error) throw error;
+    return (data ?? []).map((e: any) => ({
+      ...e,
+      role: e.user?.role ?? 'employee',
+      supabase_user_id: e.user?.supabase_user_id ?? null,
+      user: undefined,
+    })) as Employee[];
+  },
+
   async softDelete(id: string): Promise<void> {
     const { error } = await supabase
       .from(TABLE)
-      .update({ deleted_at: new Date().toISOString() })
+      .update({ deleted_at: new Date().toISOString() } as any)
       .eq('id', id);
     if (error) throw error;
   },

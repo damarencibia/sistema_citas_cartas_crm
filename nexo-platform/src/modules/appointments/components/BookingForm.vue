@@ -127,7 +127,13 @@
           <v-textarea v-model="form.notes" label="Notas (opcional)" rows="2" />
 
           <v-divider class="my-4" />
-          <v-switch v-model="showRecurrence" label="Cita recurrente" color="primary" hide-details class="mb-2" />
+          <v-switch
+            v-model="showRecurrence"
+            label="Cita recurrente"
+            color="primary"
+            hide-details
+            class="mb-2"
+          />
           <RecurrencePicker
             v-if="showRecurrence"
             v-model="recurrenceData"

@@ -31,7 +31,12 @@
           </v-avatar>
         </v-btn>
       </template>
-      <v-list density="compact" nav class="py-1" style="min-width: 200px;">
+      <v-list
+        density="compact"
+        nav
+        class="py-1"
+        style="min-width: 200px;"
+      >
         <v-list-item class="px-3 py-2">
           <div class="text-body-2 font-weight-medium">{{ authStore.userName }}</div>
           <div class="text-caption" style="color: var(--text-muted);">{{ authStore.user?.email }}</div>

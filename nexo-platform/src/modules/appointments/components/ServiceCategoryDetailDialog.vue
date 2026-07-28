@@ -9,7 +9,12 @@
         <v-icon start>{{ category.icon || 'mdi-tag-outline' }}</v-icon>
         {{ category.name }}
         <v-spacer />
-        <v-btn icon="mdi-close" size="small" variant="text" @click="emit('close')" />
+        <v-btn
+          icon="mdi-close"
+          size="small"
+          variant="text"
+          @click="emit('close')"
+        />
       </v-card-title>
       <v-card-text>
         <p v-if="category.description" class="text-body-2 text-medium-emphasis mb-4">

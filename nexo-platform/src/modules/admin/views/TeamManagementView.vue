@@ -9,7 +9,14 @@
       </template>
     </PageHeader>
 
-    <v-alert v-if="alertMessage" :type="alertType" variant="tonal" class="mb-4" closable @click:close="alertMessage = null">
+    <v-alert
+      v-if="alertMessage"
+      :type="alertType"
+      variant="tonal"
+      class="mb-4"
+      closable
+      @click:close="alertMessage = null"
+    >
       {{ alertMessage }}
     </v-alert>
 
@@ -59,10 +66,22 @@
         <v-card-title class="text-h6 d-flex align-center">
           Agregar Miembro del Equipo
           <v-spacer />
-          <v-btn icon="mdi-close" size="small" variant="text" @click="closeCreateDialog" />
+          <v-btn
+            icon="mdi-close"
+            size="small"
+            variant="text"
+            @click="closeCreateDialog"
+          />
         </v-card-title>
         <v-card-text>
-          <v-alert v-if="formError" type="error" variant="tonal" class="mb-4" closable @click:close="formError = null">
+          <v-alert
+            v-if="formError"
+            type="error"
+            variant="tonal"
+            class="mb-4"
+            closable
+            @click:close="formError = null"
+          >
             {{ formError }}
           </v-alert>
           <v-form ref="formRef">
@@ -156,16 +175,15 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-import { supabase } from '@/shared/api/supabase.client';
-import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useServiceStore } from '@/modules/appointments/stores/service.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useEmployeeStore } from '@/modules/appointments/stores/employee.store';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import DataTable from '@/shared/components/DataTable.vue';
 
-const tenantStore = useTenantStore();
 const serviceStore = useServiceStore();
 const authStore = useAuthStore();
+const employeeStore = useEmployeeStore();
 
 const headers = [
   { title: 'Miembro', key: 'full_name' },
@@ -226,16 +244,10 @@ function roleLabel(role: string): string {
 }
 
 onMounted(async () => {
-  await Promise.all([fetchTeamMembers(), serviceStore.fetchServices()]);
+  await Promise.all([employeeStore.fetchEmployeesWithRoles(), serviceStore.fetchServices()]);
+  teamMembers.value = employeeStore.employees;
   loading.value = false;
 });
-
-async function fetchTeamMembers() {
-  const tenantId = tenantStore.tenant?.id;
-  if (!tenantId) return;
-  const { data } = await supabase.from('users').select('*').eq('tenant_id', tenantId);
-  teamMembers.value = data ?? [];
-}
 
 function openCreateDialog() {
   form.first_name = '';
@@ -294,7 +306,8 @@ async function onCreate() {
     closeCreateDialog();
     alertMessage.value = `${form.first_name} ${form.last_name} fue agregado exitosamente. Ahora puede iniciar sesión con ${form.email}.`;
     alertType.value = 'success';
-    await fetchTeamMembers();
+    await employeeStore.fetchEmployeesWithRoles();
+    teamMembers.value = employeeStore.employees;
   } catch (e: unknown) {
     formError.value = e instanceof Error ? e.message : 'Error de conexión. Intenta de nuevo.';
   } finally {
@@ -304,12 +317,11 @@ async function onCreate() {
 
 async function toggleActive(member: any, value: boolean) {
   if (member.role === 'owner') return;
-  const { error } = await supabase
-    .from('users')
-    .update({ is_active: value })
-    .eq('id', member.id);
-  if (!error) {
+  try {
+    await employeeStore.updateEmployee(member.id, { is_active: value });
     member.is_active = value;
+  } catch {
+    /* ignore */
   }
 }
 </script>

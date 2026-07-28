@@ -5,7 +5,7 @@ const TABLE = 'services' as const;
 
 export const serviceRepository = {
   async getAll(): Promise<Service[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from(TABLE)
       .select(`
         *,
@@ -19,7 +19,7 @@ export const serviceRepository = {
   },
 
   async getById(id: string): Promise<Service | null> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from(TABLE)
       .select(`
         *,
@@ -33,7 +33,7 @@ export const serviceRepository = {
   },
 
   async getByEmployee(employeeId: string): Promise<Service[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from(TABLE)
       .select(`
         *,
@@ -48,7 +48,7 @@ export const serviceRepository = {
   },
 
   async getByCategory(categoryId: string): Promise<Service[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from(TABLE)
       .select(`
         *,
@@ -63,7 +63,7 @@ export const serviceRepository = {
   },
 
   async create(dto: CreateServiceDTO, tenantId: string): Promise<Service> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from(TABLE)
       .insert({
         tenant_id: tenantId,
@@ -87,7 +87,7 @@ export const serviceRepository = {
   },
 
   async update(id: string, dto: UpdateServiceDTO): Promise<Service> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from(TABLE)
       .update({ ...dto, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -102,7 +102,7 @@ export const serviceRepository = {
   },
 
   async softDelete(id: string): Promise<void> {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from(TABLE)
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);

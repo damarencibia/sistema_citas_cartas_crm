@@ -11,7 +11,12 @@
           <v-icon size="64" color="error">mdi-alert-circle-outline</v-icon>
           <h2 class="text-h6 font-weight-bold mt-4">Oferta no disponible</h2>
           <p class="text-body-2 text-medium-emphasis mt-2">{{ error }}</p>
-          <v-btn color="primary" variant="flat" class="mt-6" @click="goToBooking">
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="mt-6"
+            @click="goToBooking"
+          >
             Reservar una cita
           </v-btn>
         </div>
@@ -24,7 +29,12 @@
           <p class="text-body-2 text-medium-emphasis mt-2">
             Has rechazado esta oferta. La siguiente persona en la fila será notificada.
           </p>
-          <v-btn color="primary" variant="flat" class="mt-6" @click="goToBooking">
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="mt-6"
+            @click="goToBooking"
+          >
             Reservar una cita
           </v-btn>
         </div>
@@ -55,7 +65,12 @@
               </div>
             </div>
           </v-card>
-          <v-btn color="primary" variant="flat" class="mt-6" @click="goToBooking">
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="mt-6"
+            @click="goToBooking"
+          >
             Reservar otra cita
           </v-btn>
         </div>

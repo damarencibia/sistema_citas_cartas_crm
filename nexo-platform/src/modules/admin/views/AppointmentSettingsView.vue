@@ -171,12 +171,23 @@
           </div>
         </div>
         <v-spacer />
-        <v-btn color="primary" variant="tonal" size="small" prepend-icon="mdi-plus" @click="openResourceForm()">
+        <v-btn
+          color="primary"
+          variant="tonal"
+          size="small"
+          prepend-icon="mdi-plus"
+          @click="openResourceForm()"
+        >
           Agregar recurso
         </v-btn>
       </div>
 
-      <v-alert v-if="resources.length === 0" type="info" variant="tonal" density="compact">
+      <v-alert
+        v-if="resources.length === 0"
+        type="info"
+        variant="tonal"
+        density="compact"
+      >
         No hay recursos configurados. Los recursos se asignan a servicios para controlar disponibilidad.
       </v-alert>
 
@@ -188,8 +199,19 @@
           :subtitle="`${resource.type} — Cap: ${resource.capacity}`"
         >
           <template #append>
-            <v-btn icon="mdi-pencil" size="x-small" variant="text" @click="openResourceForm(resource)" />
-            <v-btn icon="mdi-delete" size="x-small" variant="text" color="error" @click="deleteResource(resource)" />
+            <v-btn
+              icon="mdi-pencil"
+              size="x-small"
+              variant="text"
+              @click="openResourceForm(resource)"
+            />
+            <v-btn
+              icon="mdi-delete"
+              size="x-small"
+              variant="text"
+              color="error"
+              @click="deleteResource(resource)"
+            />
           </template>
         </v-list-item>
       </v-list>
@@ -199,15 +221,38 @@
       <v-card>
         <v-card-title class="text-h6">{{ editingResource ? 'Editar' : 'Nuevo' }} Recurso</v-card-title>
         <v-card-text>
-          <v-text-field v-model="resourceForm.name" label="Nombre *" :rules="[v => !!v || 'Requerido']" class="mb-2" />
-          <v-select v-model="resourceForm.type" :items="resourceTypes" label="Tipo *" class="mb-2" />
-          <v-text-field v-model.number="resourceForm.capacity" label="Capacidad" type="number" min="1" class="mb-2" />
+          <v-text-field
+            v-model="resourceForm.name"
+            label="Nombre *"
+            :rules="[v => !!v || 'Requerido']"
+            class="mb-2"
+          />
+          <v-select
+            v-model="resourceForm.type"
+            :items="resourceTypes"
+            label="Tipo *"
+            class="mb-2"
+          />
+          <v-text-field
+            v-model.number="resourceForm.capacity"
+            label="Capacidad"
+            type="number"
+            min="1"
+            class="mb-2"
+          />
           <v-textarea v-model="resourceForm.description" label="Descripción" rows="2" />
         </v-card-text>
         <v-card-actions class="pa-4 pt-0">
           <v-spacer />
           <v-btn variant="text" @click="showResourceDialog = false">Cancelar</v-btn>
-          <v-btn color="primary" variant="flat" :loading="savingResource" @click="saveResource">Guardar</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="savingResource"
+            @click="saveResource"
+          >
+            Guardar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

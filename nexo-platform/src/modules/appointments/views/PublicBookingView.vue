@@ -7,40 +7,66 @@
         <p class="text-body-1 text-medium-emphasis">Selecciona el servicio, empleado y horario</p>
       </div>
 
-      <v-alert v-if="bookingError" type="error" variant="tonal" class="mb-4" closable @click:close="bookingError = null">
+      <v-alert
+        v-if="bookingError"
+        type="error"
+        variant="tonal"
+        class="mb-4"
+        closable
+        @click:close="bookingError = null"
+      >
         {{ bookingError }}
       </v-alert>
 
-      <v-stepper v-model="step" :items="steps" alt-labels non-linear>
+      <v-stepper
+        v-model="step"
+        :items="steps"
+        alt-labels
+        non-linear
+      >
         <template #item.1>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona un servicio</h3>
             <div v-if="loading" class="text-center pa-4">
               <v-progress-circular indeterminate color="primary" />
             </div>
-            <v-card
-              v-for="service in services"
-              :key="service.id"
-              class="mb-2"
-              :color="selectedService?.id === service.id ? 'primary' : undefined"
-              :variant="selectedService?.id === service.id ? 'flat' : 'outlined'"
-              @click="selectService(service)"
-            >
-              <v-card-text class="d-flex align-center ga-3">
-                <div class="color-dot" :style="{ backgroundColor: service.color }" />
-                <div class="flex-grow-1">
-                  <div class="text-subtitle-1">{{ service.name }}</div>
-                  <div class="text-caption">{{ service.duration_minutes }} min</div>
-                </div>
-                <div class="text-subtitle-2">{{ formatPrice(service.price) }}</div>
-              </v-card-text>
-            </v-card>
+            <template v-for="cat in categoriesWithServices" :key="cat.id">
+              <div class="d-flex align-center ga-2 mb-2 mt-3">
+                <v-icon size="18">{{ cat.icon || 'mdi-tag-outline' }}</v-icon>
+                <span class="text-subtitle-2 font-weight-medium">{{ cat.name }}</span>
+              </div>
+              <v-card
+                v-for="svc in servicesByCategory(cat.id)"
+                :key="svc.id"
+                class="mb-2"
+                :color="selectedService?.id === svc.id ? 'primary' : undefined"
+                :variant="selectedService?.id === svc.id ? 'flat' : 'outlined'"
+                @click="selectService(svc)"
+              >
+                <v-card-text class="d-flex align-center ga-3">
+                  <div class="color-dot" :style="{ backgroundColor: svc.color }" />
+                  <div class="flex-grow-1">
+                    <div class="text-subtitle-1">{{ svc.name }}</div>
+                    <div class="text-caption">{{ svc.duration_minutes }} min</div>
+                  </div>
+                  <div class="text-subtitle-2">{{ formatPrice(svc.price) }}</div>
+                </v-card-text>
+              </v-card>
+            </template>
           </div>
         </template>
 
         <template #item.2>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona un empleado</h3>
+            <v-alert
+              color="info"
+              variant="tonal"
+              class="mb-4"
+              icon="mdi-account-check-outline"
+            >
+              El sistema puede asignar cualquier empleado disponible para este servicio
+            </v-alert>
             <v-card
               v-for="employee in employeesForService"
               :key="employee.id"
@@ -82,8 +108,6 @@
               :show-waitlist="true"
               label="Horarios disponibles"
               @join-waitlist="onJoinWaitlist"
-              @join-waitlist-exact="onJoinWaitlistExact"
-              @join-waitlist-flexible="onJoinWaitlistFlexible"
             />
           </div>
         </template>
@@ -96,20 +120,17 @@
                 v-model="customerName"
                 label="Nombre completo *"
                 :rules="[rules.required]"
-                class="mb-2"
               />
               <v-text-field
                 v-model="customerEmail"
                 label="Email *"
                 type="email"
                 :rules="[rules.required, rules.email]"
-                class="mb-2"
               />
               <v-text-field
                 v-model="customerPhone"
                 label="Teléfono *"
                 :rules="[rules.required, rules.phone]"
-                class="mb-2"
               />
               <v-textarea v-model="customerNotes" label="Notas (opcional)" rows="2" />
             </v-form>
@@ -210,9 +231,7 @@
       :service-id="selectedService?.id ?? ''"
       :employee-id="selectedEmployee?.id"
       :date="selectedDate"
-      :preselected-time="waitlistTime"
-      :preselected-preference="waitlistPreference"
-      @close="onWaitlistClose"
+      @close="showWaitlistDialog = false"
       @save="onWaitlistSave"
     />
   </div>
@@ -223,6 +242,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useServiceStore } from '../stores/service.store';
 import { useEmployeeStore } from '../stores/employee.store';
+import { useServiceCategoryStore } from '../stores/service-category.store';
 import { useBookingStore } from '../stores/booking.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAvailability } from '../composables/useAvailability';
@@ -234,6 +254,7 @@ import type { Employee } from '../types/employee.types';
 const route = useRoute();
 const serviceStore = useServiceStore();
 const employeeStore = useEmployeeStore();
+const categoryStore = useServiceCategoryStore();
 const bookingStore = useBookingStore();
 const tenantStore = useTenantStore();
 const availability = useAvailability();
@@ -244,8 +265,6 @@ const submitting = ref(false);
 const confirmed = ref(false);
 const bookingError = ref<string | null>(null);
 const showWaitlistDialog = ref(false);
-const waitlistTime = ref<string | undefined>(undefined);
-const waitlistPreference = ref<'exact' | 'flexible' | undefined>(undefined);
 const formRef = ref();
 
 const selectedService = ref<Service | null>(null);
@@ -261,7 +280,14 @@ const steps = ['Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'
 
 const minDate = new Date().toISOString().split('T')[0];
 
-const services = computed(() => serviceStore.activeServices);
+const categoriesWithServices = computed(() => {
+  const catIds = new Set(serviceStore.services.map((s) => s.category_id));
+  return categoryStore.categories.filter((c) => catIds.has(c.id));
+});
+
+function servicesByCategory(categoryId: string) {
+  return serviceStore.services.filter((s) => s.category_id === categoryId);
+}
 
 const employeesForService = ref<Employee[]>([]);
 
@@ -290,7 +316,11 @@ onMounted(async () => {
   loading.value = true;
   const slug = route.params.slug as string;
   await tenantStore.fetchTenantBySlug(slug);
-  await Promise.all([serviceStore.fetchServices(), employeeStore.fetchEmployees()]);
+  await Promise.all([
+    serviceStore.fetchServices(),
+    employeeStore.fetchEmployees(),
+    categoryStore.fetchCategories(),
+  ]);
   loading.value = false;
 });
 
@@ -310,7 +340,8 @@ async function selectService(service: Service) {
   selectedService.value = service;
   selectedEmployee.value = null;
   selectedTime.value = '';
-  employeesForService.value = await employeeStore.getEmployeesByService(service.id);
+  const name = service.name;
+  employeesForService.value = await employeeStore.getEmployeesByServiceName(name);
   step.value = 2;
 }
 
@@ -370,47 +401,22 @@ function resetForm() {
 
 function onJoinWaitlist() {
   if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
-  waitlistTime.value = undefined;
-  waitlistPreference.value = undefined;
   showWaitlistDialog.value = true;
 }
 
-function onJoinWaitlistExact(time: string) {
-  if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
-  waitlistTime.value = time;
-  waitlistPreference.value = 'exact';
-  showWaitlistDialog.value = true;
-}
-
-function onJoinWaitlistFlexible() {
-  if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
-  waitlistTime.value = undefined;
-  waitlistPreference.value = 'flexible';
-  showWaitlistDialog.value = true;
-}
-
-function onWaitlistClose() {
-  showWaitlistDialog.value = false;
-  waitlistTime.value = undefined;
-  waitlistPreference.value = undefined;
-}
-
-async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible'; time?: string }) {
+async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible' }) {
   if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
   try {
     await bookingStore.joinWaitlist({
       service_id: selectedService.value.id,
       employee_id: selectedEmployee.value.id,
       preferred_date: selectedDate.value,
-      preferred_time_start: data.time,
       customer_name: data.customer_name,
       customer_email: data.customer_email,
       customer_phone: data.customer_phone || undefined,
       preference: data.preference,
     });
     showWaitlistDialog.value = false;
-    waitlistTime.value = undefined;
-    waitlistPreference.value = undefined;
     bookingError.value = null;
   } catch (e: unknown) {
     bookingError.value = e instanceof Error ? e.message : 'Error al unirse a la lista de espera.';

@@ -479,6 +479,11 @@ export const bookingRepository = {
     if (error) throw error;
   },
 
+  async removeWaitlistEntry(id: string): Promise<void> {
+    const { error } = await (supabase as any).from('waitlist').delete().eq('id', id);
+    if (error) throw error;
+  },
+
   async promoteFromWaitlist(
     tenantId: string,
     serviceId: string,

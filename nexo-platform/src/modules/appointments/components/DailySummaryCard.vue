@@ -2,7 +2,12 @@
   <v-card class="pa-4">
     <div class="d-flex align-center justify-space-between mb-3">
       <div class="text-subtitle-1 font-weight-semibold">Resumen por Empleado</div>
-      <v-btn variant="text" size="x-small" icon @click="load">
+      <v-btn
+        variant="text"
+        size="x-small"
+        icon
+        @click="load"
+      >
         <v-icon size="18">mdi-refresh</v-icon>
       </v-btn>
     </div>

@@ -78,7 +78,14 @@
         <v-card-actions>
           <v-spacer />
           <v-btn variant="text" @click="rejectDialog = false">Cancelar</v-btn>
-          <v-btn color="error" variant="flat" :loading="rejecting" @click="onReject">Rechazar</v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            :loading="rejecting"
+            @click="onReject"
+          >
+            Rechazar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

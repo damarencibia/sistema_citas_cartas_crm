@@ -1,7 +1,7 @@
 {
   "services": {
     "title": "Servicios",
-    "subtitle": "Administra los servicios que ofreces",
+    "subtitle": "Administra los servicios del negocio",
     "add": "Nuevo Servicio",
     "edit": "Editar Servicio",
     "name": "Nombre del servicio",
@@ -9,13 +9,48 @@
     "duration": "Duración (min)",
     "price": "Precio",
     "category": "Categoría",
+    "employee": "Empleado",
     "color": "Color",
     "active": "Activo",
     "inactive": "Inactivo",
     "deleteConfirm": "¿Eliminar este servicio?",
     "deleted": "Servicio eliminado",
     "saved": "Servicio guardado",
-    "empty": "No hay servicios configurados"
+    "empty": "No hay servicios configurados",
+    "filterEmployee": "Filtrar por empleado",
+    "filterCategory": "Filtrar por categoría"
+  },
+  "myServices": {
+    "title": "Mis Servicios",
+    "subtitle": "Administra los servicios que ofreces",
+    "add": "Nuevo Servicio",
+    "empty": "No tienes servicios configurados",
+    "emptyHint": "Agrega los servicios que ofreces dentro de las categorías del negocio"
+  },
+  "categories": {
+    "title": "Categorías de Servicios",
+    "subtitle": "Define las categorías de servicios de tu negocio",
+    "add": "Nueva Categoría",
+    "edit": "Editar Categoría",
+    "name": "Nombre de la categoría",
+    "description": "Descripción",
+    "icon": "Icono",
+    "deleteConfirm": "¿Eliminar esta categoría?",
+    "deleted": "Categoría eliminada",
+    "saved": "Categoría guardada",
+    "empty": "No hay categorías configuradas",
+    "emptyHint": "Crea categorías como Barbería, Manicura, Estilista, etc."
+  },
+  "catalog": {
+    "title": "Catálogo de Servicios",
+    "subtitle": "Visualiza los servicios del negocio",
+    "tabCategories": "Categorías / Empleados / Servicios",
+    "tabEmployees": "Empleados / Servicios",
+    "tabAllServices": "Servicios del Negocio",
+    "search": "Buscar servicio...",
+    "noResults": "No se encontraron servicios",
+    "noEmployees": "Sin empleados asociados",
+    "noServices": "Sin servicios registrados"
   },
   "employees": {
     "title": "Empleados",
@@ -26,7 +61,6 @@
     "lastName": "Apellidos",
     "email": "Email",
     "phone": "Teléfono",
-    "services": "Servicios que realiza",
     "active": "Activo",
     "inactive": "Inactivo",
     "deleteConfirm": "¿Eliminar este empleado?",
@@ -128,7 +162,8 @@
     "notes": "Notas (opcional)",
     "confirm": "Confirmar Reserva",
     "confirmed": "¡Reserva confirmada!",
-    "anyEmployee": "Cualquier empleado disponible"
+    "anyEmployee": "Cualquier empleado disponible",
+    "autoAssignInfo": "El sistema puede asignar cualquier empleado disponible para este servicio"
   },
   "calendar": {
     "noSlots": "No hay horarios disponibles para esta fecha",
