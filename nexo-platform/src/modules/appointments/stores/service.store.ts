@@ -18,6 +18,14 @@ export const useServiceStore = defineStore('appointments/services', {
 
   getters: {
     activeServices: (state) => state.services.filter((s) => s.is_active),
+    servicesByEmployee:
+      (state) =>
+      (employeeId: string) =>
+        state.services.filter((s) => s.employee_id === employeeId),
+    servicesByCategory:
+      (state) =>
+      (categoryId: string) =>
+        state.services.filter((s) => s.category_id === categoryId),
   },
 
   actions: {
@@ -25,6 +33,15 @@ export const useServiceStore = defineStore('appointments/services', {
       this.loading = true;
       try {
         this.services = await serviceRepository.getAll();
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchServicesByEmployee(employeeId: string) {
+      this.loading = true;
+      try {
+        this.services = await serviceRepository.getByEmployee(employeeId);
       } finally {
         this.loading = false;
       }

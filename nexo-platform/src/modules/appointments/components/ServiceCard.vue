@@ -2,17 +2,21 @@
   <v-card class="service-card" hover @click="emit('select', service)">
     <v-card-text class="d-flex align-center ga-3">
       <div class="color-dot" :style="{ backgroundColor: service.color }" />
-      <div class="flex-grow-1">
-        <div class="text-subtitle-1 font-weight-medium">{{ service.name }}</div>
+      <div class="flex-grow-1 min-width-0">
+        <div class="text-subtitle-1 font-weight-medium text-truncate">{{ service.name }}</div>
         <div class="text-caption text-medium-emphasis">
           {{ service.duration_minutes }} min
-          <template v-if="service.category"> &middot; {{ service.category }} </template>
+          <template v-if="service.category_name"> &middot; {{ service.category_name }} </template>
+        </div>
+        <div v-if="service.employee_name" class="text-caption text-primary">
+          <v-icon size="12" start>mdi-account</v-icon>
+          {{ service.employee_name }}
         </div>
       </div>
       <div class="text-subtitle-2">
         {{ formatPrice(service.price) }}
       </div>
-      <v-menu>
+      <v-menu v-if="showActions">
         <template #activator="{ props: menuProps }">
           <v-btn
             icon="mdi-dots-vertical"
@@ -41,6 +45,7 @@ import type { Service } from '../types/service.types';
 
 defineProps<{
   service: Service;
+  showActions?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -55,6 +60,9 @@ function formatPrice(centavos: number): string {
 </script>
 
 <style scoped>
+.min-width-0 {
+  min-width: 0;
+}
 .color-dot {
   width: 12px;
   height: 12px;

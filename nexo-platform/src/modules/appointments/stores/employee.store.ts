@@ -2,11 +2,12 @@ import { defineStore } from 'pinia';
 import { employeeRepository } from '../repositories/employee.repository';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import type { Employee, CreateEmployeeDTO, UpdateEmployeeDTO } from '../types/employee.types';
+import type { Service } from '../types/service.types';
 
 interface EmployeeStoreState {
   employees: Employee[];
   currentEmployee: Employee | null;
-  employeeServiceIds: string[];
+  employeeServices: Service[];
   loading: boolean;
 }
 
@@ -14,7 +15,7 @@ export const useEmployeeStore = defineStore('appointments/employees', {
   state: (): EmployeeStoreState => ({
     employees: [],
     currentEmployee: null,
-    employeeServiceIds: [],
+    employeeServices: [],
     loading: false,
   }),
 
@@ -36,10 +37,18 @@ export const useEmployeeStore = defineStore('appointments/employees', {
       this.loading = true;
       try {
         this.currentEmployee = await employeeRepository.getById(id);
-        this.employeeServiceIds = await employeeRepository.getEmployeeServices(id);
+        this.employeeServices = await employeeRepository.getServicesByEmployee(id);
       } finally {
         this.loading = false;
       }
+    },
+
+    async fetchEmployeeServices(employeeId: string) {
+      this.employeeServices = await employeeRepository.getServicesByEmployee(employeeId);
+    },
+
+    async getEmployeesByServiceName(serviceName: string): Promise<Employee[]> {
+      return employeeRepository.getEmployeesByServiceName(serviceName);
     },
 
     async createEmployee(dto: CreateEmployeeDTO): Promise<Employee> {
@@ -63,10 +72,6 @@ export const useEmployeeStore = defineStore('appointments/employees', {
       await employeeRepository.softDelete(id);
       this.employees = this.employees.filter((e) => e.id !== id);
       if (this.currentEmployee?.id === id) this.currentEmployee = null;
-    },
-
-    async getEmployeesByService(serviceId: string): Promise<Employee[]> {
-      return employeeRepository.getEmployeesByService(serviceId);
     },
   },
 });

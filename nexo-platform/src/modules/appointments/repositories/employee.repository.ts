@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/api/supabase.client';
 import type { Employee, CreateEmployeeDTO, UpdateEmployeeDTO } from '../types/employee.types';
+import type { Service } from '../types/service.types';
 
 const TABLE = 'employees' as const;
 
@@ -20,20 +21,30 @@ export const employeeRepository = {
     return data as Employee | null;
   },
 
-  async getEmployeeServices(employeeId: string): Promise<string[]> {
+  async getServicesByEmployee(employeeId: string): Promise<Service[]> {
     const { data, error } = await supabase
-      .from('employee_services')
-      .select('service_id')
-      .eq('employee_id', employeeId);
+      .from('services')
+      .select(`
+        *,
+        category:category_id(name)
+      `)
+      .eq('employee_id', employeeId)
+      .is('deleted_at', null)
+      .order('sort_order');
     if (error) throw error;
-    return (data ?? []).map((row) => row.service_id);
+    return (data ?? []).map((s: any) => ({
+      ...s,
+      category_name: s.category?.name ?? '',
+    })) as Service[];
   },
 
-  async getEmployeesByService(serviceId: string): Promise<Employee[]> {
+  async getEmployeesByServiceName(serviceName: string): Promise<Employee[]> {
     const { data, error } = await supabase
-      .from('employee_services')
+      .from('services')
       .select('employee:employee_id(*)')
-      .eq('service_id', serviceId);
+      .eq('name', serviceName)
+      .is('deleted_at', null)
+      .not('employee_id', 'is', null);
     if (error) throw error;
     return (data ?? [])
       .map((row: any) => row.employee)
@@ -41,57 +52,30 @@ export const employeeRepository = {
   },
 
   async create(dto: CreateEmployeeDTO, tenantId: string): Promise<Employee> {
-    const { service_ids, ...employeeData } = dto;
     const { data, error } = await supabase
       .from(TABLE)
       .insert({
         tenant_id: tenantId,
-        first_name: employeeData.first_name,
-        last_name: employeeData.last_name,
-        email: employeeData.email ?? null,
-        phone: employeeData.phone ?? null,
-        color: employeeData.color ?? '#1976D2',
-      } as any)
+        first_name: dto.first_name,
+        last_name: dto.last_name,
+        email: dto.email ?? null,
+        phone: dto.phone ?? null,
+        color: dto.color ?? '#1976D2',
+      })
       .select()
       .single();
     if (error) throw error;
-
-    if (service_ids && service_ids.length > 0) {
-      const { error: linkError } = await supabase.from('employee_services').insert(
-        service_ids.map((service_id) => ({
-          employee_id: data.id,
-          service_id,
-        })),
-      );
-      if (linkError) throw linkError;
-    }
-
     return data as Employee;
   },
 
   async update(id: string, dto: UpdateEmployeeDTO): Promise<Employee> {
-    const { service_ids, ...employeeData } = dto;
     const { data, error } = await supabase
       .from(TABLE)
-      .update({ ...employeeData, updated_at: new Date().toISOString() })
+      .update({ ...dto, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();
     if (error) throw error;
-
-    if (service_ids !== undefined) {
-      await supabase.from('employee_services').delete().eq('employee_id', id);
-      if (service_ids.length > 0) {
-        const { error: linkError } = await supabase.from('employee_services').insert(
-          service_ids.map((service_id) => ({
-            employee_id: id,
-            service_id,
-          })),
-        );
-        if (linkError) throw linkError;
-      }
-    }
-
     return data as Employee;
   },
 

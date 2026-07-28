@@ -134,6 +134,11 @@ export const useBookingStore = defineStore('appointments/bookings', {
       return updated;
     },
 
+    async hardDeleteBooking(id: string): Promise<void> {
+      await bookingRepository.hardDelete(id);
+      this.bookings = this.bookings.filter((b) => b.id !== id);
+    },
+
     async handleNoShowBlock(tenantId: string, customerEmail: string) {
       const config = await bookingRepository.getAppointmentConfig(tenantId);
       if (!config) return;

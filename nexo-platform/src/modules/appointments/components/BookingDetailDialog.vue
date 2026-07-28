@@ -57,6 +57,15 @@
           Reasignar
         </v-btn>
         <v-spacer />
+        <v-btn
+          color="error"
+          variant="text"
+          prepend-icon="mdi-delete-forever"
+          size="small"
+          @click="showDeleteDialog = true"
+        >
+          Eliminar
+        </v-btn>
         <v-btn variant="text" @click="emit('close')">Cerrar</v-btn>
       </v-card-actions>
     </v-card>
@@ -74,6 +83,37 @@
       @close="showReassignDialog = false"
       @confirm="onReassignConfirm"
     />
+
+    <v-dialog v-model="showDeleteDialog" max-width="400" persistent>
+      <v-card>
+        <v-card-title class="text-h6 text-error">
+          <v-icon start color="error">mdi-alert-circle</v-icon>
+          Eliminar cita permanentemente
+        </v-card-title>
+        <v-card-text>
+          ¿Estás seguro de eliminar permanentemente esta cita?
+          <br><br>
+          <strong>Esta acción no se puede deshacer.</strong>
+          <div class="mt-3 text-body-2">
+            Cliente: {{ booking?.customer_name }}<br>
+            Fecha: {{ booking?.date }} - {{ booking?.start_time?.slice(0, 5) }}
+          </div>
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showDeleteDialog = false">Cancelar</v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            prepend-icon="mdi-delete-forever"
+            :loading="deleting"
+            @click="onDeleteConfirm"
+          >
+            Eliminar permanentemente
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-dialog>
 </template>
 
@@ -96,11 +136,14 @@ const emit = defineEmits<{
   statusChange: [booking: Booking, status: string];
   cancel: [booking: Booking, reason: string, blockOption: 'none' | 'temporary' | 'indefinite', blockDays: number];
   reassign: [booking: Booking, newDate: string, newStartTime: string];
+  delete: [booking: Booking];
 }>();
 
 const authStore = useAuthStore();
 const showCancelDialog = ref(false);
 const showReassignDialog = ref(false);
+const showDeleteDialog = ref(false);
+const deleting = ref(false);
 
 const canUpdate = computed(() =>
   ['owner', 'admin', 'employee', 'super_admin'].includes(authStore.userRole ?? ''),
@@ -116,5 +159,13 @@ function onReassignConfirm(data: { newDate: string; newStartTime: string }) {
   if (!props.booking) return;
   emit('reassign', props.booking, data.newDate, data.newStartTime);
   showReassignDialog.value = false;
+}
+
+async function onDeleteConfirm() {
+  if (!props.booking) return;
+  deleting.value = true;
+  emit('delete', props.booking);
+  showDeleteDialog.value = false;
+  deleting.value = false;
 }
 </script>

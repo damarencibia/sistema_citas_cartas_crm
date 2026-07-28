@@ -7,12 +7,15 @@ export interface Service extends BaseEntity {
   duration_minutes: number;
   price: number;
   color: string;
-  category: string | null;
+  category_id: string;
+  employee_id: string;
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
   max_participants: number;
   requires_approval: boolean;
+  category_name?: string;
+  employee_name?: string;
 }
 
 export interface CreateServiceDTO {
@@ -21,7 +24,8 @@ export interface CreateServiceDTO {
   duration_minutes: number;
   price: number;
   color?: string;
-  category?: string;
+  category_id: string;
+  employee_id: string;
   image_url?: string;
 }
 

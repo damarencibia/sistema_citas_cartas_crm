@@ -98,6 +98,7 @@
       @status-change="onStatusChange"
       @cancel="onCancelBooking"
       @reassign="onReassignBooking"
+      @delete="onDeleteBooking"
     />
   </div>
 </template>
@@ -228,6 +229,17 @@ async function onReassignBooking(booking: Booking, newDate: string, newStartTime
     await agenda.loadAgenda();
   } catch {
     notification.error('Error al reasignar cita');
+  }
+}
+
+async function onDeleteBooking(booking: Booking) {
+  try {
+    await bookingStore.hardDeleteBooking(booking.id);
+    notification.success('Cita eliminada permanentemente');
+    showDetail.value = false;
+    await agenda.loadAgenda();
+  } catch {
+    notification.error('Error al eliminar cita');
   }
 }
 

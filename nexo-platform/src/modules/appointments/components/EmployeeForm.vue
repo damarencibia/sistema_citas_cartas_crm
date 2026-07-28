@@ -38,24 +38,12 @@
             v-model="localForm.email"
             label="Email (opcional)"
             type="email"
-            class="mb-2"
           />
-          <v-text-field v-model="localForm.phone" label="Teléfono (opcional)" class="mb-2" />
+          <v-text-field v-model="localForm.phone" label="Teléfono (opcional)" />
           <v-text-field
             v-model="localForm.color"
             label="Color en agenda"
             type="color"
-            class="mb-2"
-          />
-          <v-select
-            v-model="localForm.service_ids"
-            :items="serviceOptions"
-            item-title="text"
-            item-value="value"
-            label="Servicios que realiza"
-            multiple
-            chips
-            closable-chips
           />
         </v-form>
       </v-card-text>
@@ -76,14 +64,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue';
-import { useServiceStore } from '../stores/service.store';
+import { ref, reactive, watch } from 'vue';
 import type { Employee, CreateEmployeeDTO } from '../types/employee.types';
 
 const props = defineProps<{
   visible: boolean;
   employee?: Employee | null;
-  employeeServiceIds?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -91,7 +77,6 @@ const emit = defineEmits<{
   save: [dto: CreateEmployeeDTO];
 }>();
 
-const serviceStore = useServiceStore();
 const editing = ref(false);
 const submitting = ref(false);
 const formRef = ref();
@@ -102,15 +87,7 @@ const localForm = reactive<CreateEmployeeDTO>({
   email: '',
   phone: '',
   color: '#1976D2',
-  service_ids: [],
 });
-
-const serviceOptions = computed(() =>
-  serviceStore.activeServices.map((s) => ({
-    value: s.id,
-    text: s.name,
-  })),
-);
 
 watch(
   () => props.employee,
@@ -122,7 +99,6 @@ watch(
       localForm.email = e.email ?? '';
       localForm.phone = e.phone ?? '';
       localForm.color = e.color;
-      localForm.service_ids = props.employeeServiceIds ?? [];
     } else {
       editing.value = false;
       localForm.first_name = '';
@@ -130,7 +106,6 @@ watch(
       localForm.email = '';
       localForm.phone = '';
       localForm.color = '#1976D2';
-      localForm.service_ids = [];
     }
   },
   { immediate: true },

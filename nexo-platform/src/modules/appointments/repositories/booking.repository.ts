@@ -421,6 +421,14 @@ export const bookingRepository = {
     if (error) throw error;
   },
 
+  async hardDelete(id: string): Promise<void> {
+    const { error } = await (supabase as any)
+      .from('bookings')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
   // --- Waitlist ---
 
   async getWaitlist(tenantId: string): Promise<WaitlistEntry[]> {

@@ -22,13 +22,28 @@
             v-model="localForm.name"
             label="Nombre del servicio"
             :rules="[(v) => !!v || 'Requerido']"
-            class="mb-2"
           />
           <v-textarea
             v-model="localForm.description"
             label="Descripción (opcional)"
             rows="2"
-            class="mb-2"
+          />
+          <v-select
+            v-model="localForm.category_id"
+            :items="categoryOptions"
+            item-title="text"
+            item-value="value"
+            label="Categoría"
+            :rules="[(v) => !!v || 'Requerido']"
+          />
+          <v-select
+            v-if="showEmployeeSelect"
+            v-model="localForm.employee_id"
+            :items="employeeOptions"
+            item-title="text"
+            item-value="value"
+            label="Empleado"
+            :rules="[(v) => !!v || 'Requerido']"
           />
           <v-row>
             <v-col cols="6">
@@ -48,14 +63,7 @@
               />
             </v-col>
           </v-row>
-          <v-row>
-            <v-col cols="6">
-              <v-text-field v-model="localForm.category" label="Categoría (opcional)" />
-            </v-col>
-            <v-col cols="6">
-              <v-text-field v-model="localForm.color" label="Color" type="color" />
-            </v-col>
-          </v-row>
+          <v-text-field v-model="localForm.color" label="Color" type="color" />
         </v-form>
       </v-card-text>
       <v-card-actions class="pa-4 pt-0">
@@ -75,12 +83,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { useServiceCategoryStore } from '../stores/service-category.store';
+import { useEmployeeStore } from '../stores/employee.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 import type { Service, CreateServiceDTO } from '../types/service.types';
 
 const props = defineProps<{
   visible: boolean;
   service?: Service | null;
+  preselectedEmployeeId?: string;
 }>();
 
 const emit = defineEmits<{
@@ -88,9 +100,15 @@ const emit = defineEmits<{
   save: [dto: CreateServiceDTO];
 }>();
 
+const categoryStore = useServiceCategoryStore();
+const employeeStore = useEmployeeStore();
+const authStore = useAuthStore();
+
 const editing = ref(false);
 const submitting = ref(false);
 const formRef = ref();
+
+const showEmployeeSelect = computed(() => authStore.isAdmin);
 
 const localForm = reactive<CreateServiceDTO>({
   name: '',
@@ -98,8 +116,23 @@ const localForm = reactive<CreateServiceDTO>({
   duration_minutes: 30,
   price: 0,
   color: '#1976D2',
-  category: '',
+  category_id: '',
+  employee_id: '',
 });
+
+const categoryOptions = computed(() =>
+  categoryStore.activeCategories.map((c) => ({
+    value: c.id,
+    text: c.name,
+  })),
+);
+
+const employeeOptions = computed(() =>
+  employeeStore.activeEmployees.map((e) => ({
+    value: e.id,
+    text: `${e.first_name} ${e.last_name}`,
+  })),
+);
 
 watch(
   () => props.service,
@@ -111,7 +144,8 @@ watch(
       localForm.duration_minutes = s.duration_minutes;
       localForm.price = s.price;
       localForm.color = s.color;
-      localForm.category = s.category ?? '';
+      localForm.category_id = s.category_id;
+      localForm.employee_id = s.employee_id;
     } else {
       editing.value = false;
       localForm.name = '';
@@ -119,11 +153,17 @@ watch(
       localForm.duration_minutes = 30;
       localForm.price = 0;
       localForm.color = '#1976D2';
-      localForm.category = '';
+      localForm.category_id = '';
+      localForm.employee_id = props.preselectedEmployeeId ?? '';
     }
   },
   { immediate: true },
 );
+
+onMounted(() => {
+  if (!categoryStore.categories.length) categoryStore.fetchCategories();
+  if (!employeeStore.employees.length) employeeStore.fetchEmployees();
+});
 
 async function onSubmit() {
   const { valid } = await formRef.value.validate();
