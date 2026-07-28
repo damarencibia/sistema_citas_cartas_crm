@@ -202,6 +202,15 @@
         ¡Reserva confirmada! Recibirás un email de confirmación.
       </v-alert>
     </v-container>
+
+    <WaitlistDialog
+      :visible="showWaitlistDialog"
+      :service-id="selectedService?.id ?? ''"
+      :employee-id="selectedEmployee?.id"
+      :date="selectedDate"
+      @close="showWaitlistDialog = false"
+      @save="onWaitlistSave"
+    />
   </div>
 </template>
 
@@ -214,6 +223,7 @@ import { useBookingStore } from '../stores/booking.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAvailability } from '../composables/useAvailability';
 import TimeSlotPicker from '../components/TimeSlotPicker.vue';
+import WaitlistDialog from '../components/WaitlistDialog.vue';
 import type { Service } from '../types/service.types';
 import type { Employee } from '../types/employee.types';
 
@@ -229,6 +239,7 @@ const loading = ref(false);
 const submitting = ref(false);
 const confirmed = ref(false);
 const bookingError = ref<string | null>(null);
+const showWaitlistDialog = ref(false);
 const formRef = ref();
 
 const selectedService = ref<Service | null>(null);
@@ -351,19 +362,25 @@ function resetForm() {
   employeesForService.value = [];
 }
 
-async function onJoinWaitlist() {
+function onJoinWaitlist() {
+  if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
+  showWaitlistDialog.value = true;
+}
+
+async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible' }) {
   if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
   try {
     await bookingStore.joinWaitlist({
       service_id: selectedService.value.id,
       employee_id: selectedEmployee.value.id,
       preferred_date: selectedDate.value,
-      customer_name: customerName.value || 'Sin nombre',
-      customer_email: customerEmail.value || 'sin@email.com',
-      customer_phone: customerPhone.value || undefined,
+      customer_name: data.customer_name,
+      customer_email: data.customer_email,
+      customer_phone: data.customer_phone || undefined,
+      preference: data.preference,
     });
+    showWaitlistDialog.value = false;
     bookingError.value = null;
-    alert('Te has unido a la lista de espera. Te notificaremos cuando haya un espacio disponible.');
   } catch (e: unknown) {
     bookingError.value = e instanceof Error ? e.message : 'Error al unirse a la lista de espera.';
   }
