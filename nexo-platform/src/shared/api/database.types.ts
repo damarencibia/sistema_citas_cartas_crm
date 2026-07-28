@@ -188,8 +188,6 @@ export type Database = {
       }
       booking_windows: {
         Row: {
-          buffer_after_minutes: number
-          buffer_before_minutes: number
           created_at: string
           employee_id: string | null
           end_date: string
@@ -205,8 +203,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          buffer_after_minutes?: number
-          buffer_before_minutes?: number
           created_at?: string
           employee_id?: string | null
           end_date: string
@@ -222,8 +218,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          buffer_after_minutes?: number
-          buffer_before_minutes?: number
           created_at?: string
           employee_id?: string | null
           end_date?: string
@@ -1499,8 +1493,6 @@ export type Database = {
       schedules: {
         Row: {
           advance_booking_days: number
-          buffer_after_minutes: number
-          buffer_before_minutes: number
           created_at: string
           day_of_week: number
           employee_id: string | null
@@ -1516,8 +1508,6 @@ export type Database = {
         }
         Insert: {
           advance_booking_days?: number
-          buffer_after_minutes?: number
-          buffer_before_minutes?: number
           created_at?: string
           day_of_week: number
           employee_id?: string | null
@@ -1533,8 +1523,6 @@ export type Database = {
         }
         Update: {
           advance_booking_days?: number
-          buffer_after_minutes?: number
-          buffer_before_minutes?: number
           created_at?: string
           day_of_week?: number
           employee_id?: string | null

@@ -52,8 +52,6 @@ export function useScheduleGrid() {
         is_active: true,
         slot_mode: 'fixed',
         slot_interval_minutes: 30,
-        buffer_before_minutes: 0,
-        buffer_after_minutes: 0,
         advance_booking_days: 7,
         min_advance_minutes: 15,
         created_at: '',
@@ -90,8 +88,6 @@ export function useScheduleGrid() {
         end_time: s.end_time,
         slot_mode: s.slot_mode,
         slot_interval_minutes: s.slot_interval_minutes,
-        buffer_before_minutes: s.buffer_before_minutes,
-        buffer_after_minutes: s.buffer_after_minutes,
         advance_booking_days: s.advance_booking_days,
         min_advance_minutes: s.min_advance_minutes,
       }));

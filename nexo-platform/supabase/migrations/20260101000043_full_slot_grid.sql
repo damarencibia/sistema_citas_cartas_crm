@@ -59,6 +59,20 @@ BEGIN
 
   v_min_ts := v_local_now + (15 || ' minutes')::INTERVAL;
 
+  -- Override min_advance_minutes from schedule (applies to ALL slot sources: booking_windows, fixed_slot_definitions, schedules)
+  SELECT s.min_advance_minutes INTO v_min_advance
+  FROM schedules s
+  WHERE s.tenant_id = p_tenant_id
+    AND s.day_of_week = v_dow
+    AND s.is_active = true
+    AND (s.employee_id = p_employee_id OR s.employee_id IS NULL)
+  ORDER BY s.employee_id NULLS LAST
+  LIMIT 1;
+
+  IF v_min_advance IS NOT NULL THEN
+    v_min_ts := v_local_now + (v_min_advance || ' minutes')::INTERVAL;
+  END IF;
+
   IF p_service_id IS NOT NULL THEN
     SELECT COALESCE(s.max_participants, 1) INTO v_max_participants
     FROM services s WHERE s.id = p_service_id;

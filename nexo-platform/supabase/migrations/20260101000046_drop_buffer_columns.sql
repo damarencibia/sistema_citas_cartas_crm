@@ -1,21 +1,27 @@
--- Migration 000037: Fix timezone mismatch in get_available_slots (v10)
---
--- Root cause: SQL function used now() (UTC) but schedule times are in local time.
--- A tenant in America/Mexico_City (UTC-6) at 11:26 local sees 17:26 UTC,
--- which is past the 09:00-17:00 shift → all slots filtered out.
---
--- Fix: Load tenant timezone and use now() AT TIME ZONE for time comparisons.
+-- Drop buffer_before_minutes / buffer_after_minutes columns
+-- The buffer concept is no longer used. Slots use raw shift boundaries.
 
-DROP FUNCTION IF EXISTS get_available_slots(UUID, UUID, DATE, INT, UUID);
+ALTER TABLE schedules       DROP COLUMN IF EXISTS buffer_before_minutes;
+ALTER TABLE schedules       DROP COLUMN IF EXISTS buffer_after_minutes;
+ALTER TABLE booking_windows DROP COLUMN IF EXISTS buffer_before_minutes;
+ALTER TABLE booking_windows DROP COLUMN IF EXISTS buffer_after_minutes;
 
-CREATE OR REPLACE FUNCTION get_available_slots(
+-- Rewrite get_full_slot_grid without buffer references
+CREATE OR REPLACE FUNCTION get_full_slot_grid(
   p_tenant_id UUID,
   p_employee_id UUID,
   p_date DATE,
   p_service_duration INT,
   p_service_id UUID DEFAULT NULL
 )
-RETURNS TABLE (start_time TIME, end_time TIME, slot_type VARCHAR(10), capacity_remaining INT)
+RETURNS TABLE (
+  start_time TIME,
+  end_time TIME,
+  slot_type VARCHAR(10),
+  status VARCHAR(10),
+  capacity_remaining INT,
+  waitlist_count INT
+)
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
@@ -24,8 +30,6 @@ DECLARE
   v_has_employee_shift BOOLEAN;
   v_mode VARCHAR(10);
   v_interval INT;
-  v_buf_before INT;
-  v_buf_after INT;
   v_shift_start TIME;
   v_shift_end TIME;
   v_min_advance INT;
@@ -46,19 +50,18 @@ DECLARE
   v_fsd RECORD;
   v_tenant_tz TEXT;
   v_local_now TIMESTAMP;
+  v_slot_status VARCHAR(10);
+  v_wl_count INT;
 BEGIN
   v_dow := EXTRACT(DOW FROM p_date)::INT;
   v_now := now();
 
-  -- Load tenant timezone for correct local time comparisons
   SELECT t.timezone INTO v_tenant_tz
   FROM tenants t WHERE t.id = p_tenant_id;
   v_local_now := now() AT TIME ZONE COALESCE(v_tenant_tz, 'UTC');
 
-  -- Default min_advance: 15 minutes (uses local time)
   v_min_ts := v_local_now + (15 || ' minutes')::INTERVAL;
 
-  -- Override min_advance_minutes from schedule (applies to ALL slot sources)
   SELECT s.min_advance_minutes INTO v_min_advance
   FROM schedules s
   WHERE s.tenant_id = p_tenant_id
@@ -72,7 +75,6 @@ BEGIN
     v_min_ts := v_local_now + (v_min_advance || ' minutes')::INTERVAL;
   END IF;
 
-  -- Get max_participants and required resource for the service
   IF p_service_id IS NOT NULL THEN
     SELECT COALESCE(s.max_participants, 1) INTO v_max_participants
     FROM services s WHERE s.id = p_service_id;
@@ -87,22 +89,19 @@ BEGIN
   END IF;
   IF v_max_participants IS NULL THEN v_max_participants := 1; END IF;
 
-  -- 0. Holiday check
+  -- Holiday check
   IF EXISTS (
     SELECT 1 FROM holiday_exceptions he
-    WHERE he.tenant_id = p_tenant_id
-      AND he.date = p_date
-      AND he.is_closed = true
+    WHERE he.tenant_id = p_tenant_id AND he.date = p_date AND he.is_closed = true
   ) THEN
     RETURN;
   END IF;
 
-  -- PRIORITY 1: booking_windows (date-specific availability)
+  -- PRIORITY 1: booking_windows
   IF p_service_id IS NOT NULL THEN
     SELECT bw.slot_mode, bw.slot_interval_minutes,
-           bw.buffer_before_minutes, bw.buffer_after_minutes,
            bw.start_time, bw.end_time
-    INTO v_mode, v_interval, v_buf_before, v_buf_after,
+    INTO v_mode, v_interval,
          v_shift_start, v_shift_end
     FROM booking_windows bw
     WHERE bw.tenant_id = p_tenant_id
@@ -111,13 +110,10 @@ BEGIN
       AND p_date BETWEEN bw.start_date AND bw.end_date
       AND bw.is_active = true
     LIMIT 1;
-
-    IF FOUND THEN
-      v_source_found := TRUE;
-    END IF;
+    IF FOUND THEN v_source_found := TRUE; END IF;
   END IF;
 
-  -- PRIORITY 2: fixed_slot_definitions (subdivided by service duration)
+  -- PRIORITY 2: fixed_slot_definitions
   IF NOT v_source_found AND EXISTS (
     SELECT 1 FROM fixed_slot_definitions fsd
     WHERE fsd.tenant_id = p_tenant_id
@@ -141,10 +137,11 @@ BEGIN
           (p_service_duration || ' minutes')::INTERVAL
         ) gs
       LOOP
-        IF v_slot_start >= v_min_ts THEN
-          v_slot_end_time := v_slot_start + (p_service_duration || ' minutes')::INTERVAL;
+        v_slot_end_time := v_slot_start + (p_service_duration || ' minutes')::INTERVAL;
 
-          -- Count existing participants in this sub-slot
+        IF v_slot_start < v_min_ts THEN
+          v_slot_status := 'past';
+        ELSE
           SELECT COALESCE(SUM(eb.participant_count), 0) INTO v_existing_count
           FROM bookings eb
           WHERE eb.tenant_id = p_tenant_id
@@ -155,36 +152,54 @@ BEGIN
             AND v_slot_start::TIME < eb.end_time
             AND v_slot_end_time::TIME > eb.start_time;
 
-          -- Resource availability check
-          IF v_resource_id IS NOT NULL THEN
-            IF EXISTS (
-              SELECT 1 FROM bookings rb
-              WHERE rb.tenant_id = p_tenant_id
-                AND rb.resource_id = v_resource_id
-                AND rb.date = p_date
-                AND rb.status NOT IN ('cancelled')
-                AND rb.deleted_at IS NULL
-                AND v_slot_start::TIME < rb.end_time
-                AND v_slot_end_time::TIME > rb.start_time
-            ) THEN
-              CONTINUE;
-            END IF;
-          END IF;
-
-          IF v_existing_count < v_max_participants THEN
-            start_time := v_slot_start::TIME;
-            end_time := v_slot_end_time::TIME;
-            slot_type := 'predefined';
+          IF v_resource_id IS NOT NULL AND EXISTS (
+            SELECT 1 FROM bookings rb
+            WHERE rb.tenant_id = p_tenant_id
+              AND rb.resource_id = v_resource_id
+              AND rb.date = p_date
+              AND rb.status NOT IN ('cancelled')
+              AND rb.deleted_at IS NULL
+              AND v_slot_start::TIME < rb.end_time
+              AND v_slot_end_time::TIME > rb.start_time
+          ) THEN
+            v_slot_status := 'occupied';
+          ELSIF v_existing_count < v_max_participants THEN
+            v_slot_status := 'available';
             capacity_remaining := GREATEST(0, v_max_participants - v_existing_count);
-            RETURN NEXT;
+          ELSE
+            v_slot_status := 'occupied';
+            capacity_remaining := 0;
           END IF;
         END IF;
+
+        start_time := v_slot_start::TIME;
+        end_time := v_slot_end_time::TIME;
+        slot_type := 'predefined';
+        status := v_slot_status;
+        IF v_slot_status = 'occupied' THEN
+          SELECT COUNT(*)::INT INTO v_wl_count
+          FROM waitlist w
+          WHERE w.tenant_id = p_tenant_id
+            AND w.service_id = p_service_id
+            AND (w.employee_id = p_employee_id OR w.employee_id IS NULL)
+            AND w.preferred_date = p_date
+            AND w.preferred_time_start = v_slot_start::TIME
+            AND w.preference = 'exact'
+            AND w.status = 'waiting';
+          waitlist_count := v_wl_count;
+        ELSE
+          waitlist_count := 0;
+        END IF;
+        capacity_remaining := COALESCE(capacity_remaining, 0);
+        RETURN NEXT;
+        v_slot_status := NULL;
+        capacity_remaining := 0;
       END LOOP;
     END LOOP;
     RETURN;
   END IF;
 
-  -- PRIORITY 3: schedules (recurring day-of-week)
+  -- PRIORITY 3: schedules
   IF NOT v_source_found THEN
     SELECT EXISTS (
       SELECT 1 FROM schedules s
@@ -195,10 +210,9 @@ BEGIN
     ) INTO v_has_employee_shift;
 
     SELECT s.slot_mode, s.slot_interval_minutes,
-           s.buffer_before_minutes, s.buffer_after_minutes,
            s.min_advance_minutes, s.advance_booking_days,
            s.start_time, s.end_time
-    INTO v_mode, v_interval, v_buf_before, v_buf_after,
+    INTO v_mode, v_interval,
          v_min_advance, v_advance_days, v_shift_start, v_shift_end
     FROM schedules s
     WHERE s.tenant_id = p_tenant_id
@@ -213,36 +227,22 @@ BEGIN
     ORDER BY s.employee_id NULLS LAST, s.start_time
     LIMIT 1;
 
-    IF NOT FOUND THEN
-      RETURN;
-    END IF;
-
+    IF NOT FOUND THEN RETURN; END IF;
     v_source_found := TRUE;
   END IF;
 
-  -- Apply buffers to shift boundaries
-  v_shift_start := v_shift_start + (COALESCE(v_buf_before, 0) || ' minutes')::INTERVAL;
-  v_shift_end := v_shift_end - (COALESCE(v_buf_after, 0) || ' minutes')::INTERVAL;
+  IF v_shift_end <= v_shift_start THEN RETURN; END IF;
 
-  IF v_shift_end <= v_shift_start THEN
-    RETURN;
-  END IF;
-
-  -- Advance booking: max date check
   IF v_advance_days IS NOT NULL AND v_advance_days > 0 THEN
     v_max_date := CURRENT_DATE + (v_advance_days || ' days')::INTERVAL;
-    IF p_date > v_max_date THEN
-      RETURN;
-    END IF;
+    IF p_date > v_max_date THEN RETURN; END IF;
   END IF;
 
-  -- Override min_ts if schedule has a custom min_advance_minutes (using local time)
   IF v_min_advance IS NOT NULL THEN
     v_min_ts := v_local_now + (v_min_advance || ' minutes')::INTERVAL;
   END IF;
 
   IF v_mode = 'flexible' THEN
-    -- FLEXIBLE MODE: return continuous windows between bookings
     v_last_end := v_shift_start;
 
     FOR v_booked_start, v_booked_end IN
@@ -258,36 +258,9 @@ BEGIN
       IF v_last_end < v_booked_start THEN
         v_slot_start := (p_date || ' ' || v_last_end::TEXT)::TIMESTAMP;
         v_slot_end := (p_date || ' ' || v_booked_start::TEXT)::TIMESTAMP;
-        IF (v_slot_end - v_slot_start) >= (p_service_duration || ' minutes')::INTERVAL THEN
-          IF v_slot_start >= v_min_ts THEN
-            IF v_resource_id IS NULL OR NOT EXISTS (
-              SELECT 1 FROM bookings rb
-              WHERE rb.tenant_id = p_tenant_id
-                AND rb.resource_id = v_resource_id
-                AND rb.date = p_date
-                AND rb.status NOT IN ('cancelled')
-                AND rb.deleted_at IS NULL
-                AND v_last_end < rb.end_time
-                AND v_booked_start > rb.start_time
-            ) THEN
-              start_time := v_last_end;
-              end_time := v_booked_start;
-              slot_type := 'window';
-              capacity_remaining := v_max_participants;
-              RETURN NEXT;
-            END IF;
-          END IF;
-        END IF;
-      END IF;
-      v_last_end := GREATEST(v_last_end, v_booked_end);
-    END LOOP;
-
-    -- Final window after last booking
-    IF v_last_end < v_shift_end THEN
-      v_slot_start := (p_date || ' ' || v_last_end::TEXT)::TIMESTAMP;
-      v_slot_end := (p_date || ' ' || v_shift_end::TEXT)::TIMESTAMP;
-      IF (v_slot_end - v_slot_start) >= (p_service_duration || ' minutes')::INTERVAL THEN
-        IF v_slot_start >= v_min_ts THEN
+        IF (v_slot_end - v_slot_start) >= (p_service_duration || ' minutes')::INTERVAL
+          AND v_slot_start >= v_min_ts
+        THEN
           IF v_resource_id IS NULL OR NOT EXISTS (
             SELECT 1 FROM bookings rb
             WHERE rb.tenant_id = p_tenant_id
@@ -296,20 +269,50 @@ BEGIN
               AND rb.status NOT IN ('cancelled')
               AND rb.deleted_at IS NULL
               AND v_last_end < rb.end_time
-              AND v_shift_end > rb.start_time
+              AND v_booked_start > rb.start_time
           ) THEN
             start_time := v_last_end;
-            end_time := v_shift_end;
+            end_time := v_booked_start;
             slot_type := 'window';
+            status := 'available';
             capacity_remaining := v_max_participants;
+            waitlist_count := 0;
             RETURN NEXT;
           END IF;
+        END IF;
+      END IF;
+      v_last_end := GREATEST(v_last_end, v_booked_end);
+    END LOOP;
+
+    IF v_last_end < v_shift_end THEN
+      v_slot_start := (p_date || ' ' || v_last_end::TEXT)::TIMESTAMP;
+      v_slot_end := (p_date || ' ' || v_shift_end::TEXT)::TIMESTAMP;
+      IF (v_slot_end - v_slot_start) >= (p_service_duration || ' minutes')::INTERVAL
+        AND v_slot_start >= v_min_ts
+      THEN
+        IF v_resource_id IS NULL OR NOT EXISTS (
+          SELECT 1 FROM bookings rb
+          WHERE rb.tenant_id = p_tenant_id
+            AND rb.resource_id = v_resource_id
+            AND rb.date = p_date
+            AND rb.status NOT IN ('cancelled')
+            AND rb.deleted_at IS NULL
+            AND v_last_end < rb.end_time
+            AND v_shift_end > rb.start_time
+        ) THEN
+          start_time := v_last_end;
+          end_time := v_shift_end;
+          slot_type := 'window';
+          status := 'available';
+          capacity_remaining := v_max_participants;
+          waitlist_count := 0;
+          RETURN NEXT;
         END IF;
       END IF;
     END IF;
 
   ELSE
-    -- FIXED MODE: auto-generate slots based on service duration
+    -- FIXED MODE
     FOR v_slot_start IN
       SELECT gs FROM generate_series(
         (p_date || ' ' || v_shift_start::TEXT)::TIMESTAMP,
@@ -318,10 +321,11 @@ BEGIN
         (p_service_duration || ' minutes')::INTERVAL
       ) gs
     LOOP
-      IF v_slot_start >= v_min_ts THEN
-        v_slot_end_time := v_slot_start + (p_service_duration || ' minutes')::INTERVAL;
+      v_slot_end_time := v_slot_start + (p_service_duration || ' minutes')::INTERVAL;
 
-        -- Count existing participants in this time range
+      IF v_slot_start < v_min_ts THEN
+        v_slot_status := 'past';
+      ELSE
         SELECT COALESCE(SUM(eb.participant_count), 0) INTO v_existing_count
         FROM bookings eb
         WHERE eb.tenant_id = p_tenant_id
@@ -332,30 +336,48 @@ BEGIN
           AND v_slot_start::TIME < eb.end_time
           AND v_slot_end_time::TIME > eb.start_time;
 
-        -- Resource availability check
-        IF v_resource_id IS NOT NULL THEN
-          IF EXISTS (
-            SELECT 1 FROM bookings rb
-            WHERE rb.tenant_id = p_tenant_id
-              AND rb.resource_id = v_resource_id
-              AND rb.date = p_date
-              AND rb.status NOT IN ('cancelled')
-              AND rb.deleted_at IS NULL
-              AND v_slot_start::TIME < rb.end_time
-              AND v_slot_end_time::TIME > rb.start_time
-          ) THEN
-            CONTINUE;
-          END IF;
-        END IF;
-
-        IF v_existing_count < v_max_participants THEN
-          start_time := v_slot_start::TIME;
-          end_time := v_slot_end_time::TIME;
-          slot_type := 'auto';
+        IF v_resource_id IS NOT NULL AND EXISTS (
+          SELECT 1 FROM bookings rb
+          WHERE rb.tenant_id = p_tenant_id
+            AND rb.resource_id = v_resource_id
+            AND rb.date = p_date
+            AND rb.status NOT IN ('cancelled')
+            AND rb.deleted_at IS NULL
+            AND v_slot_start::TIME < rb.end_time
+            AND v_slot_end_time::TIME > rb.start_time
+        ) THEN
+          v_slot_status := 'occupied';
+        ELSIF v_existing_count < v_max_participants THEN
+          v_slot_status := 'available';
           capacity_remaining := GREATEST(0, v_max_participants - v_existing_count);
-          RETURN NEXT;
+        ELSE
+          v_slot_status := 'occupied';
+          capacity_remaining := 0;
         END IF;
       END IF;
+
+      start_time := v_slot_start::TIME;
+      end_time := v_slot_end_time::TIME;
+      slot_type := 'auto';
+      status := v_slot_status;
+      IF v_slot_status = 'occupied' THEN
+        SELECT COUNT(*)::INT INTO v_wl_count
+        FROM waitlist w
+        WHERE w.tenant_id = p_tenant_id
+          AND w.service_id = p_service_id
+          AND (w.employee_id = p_employee_id OR w.employee_id IS NULL)
+          AND w.preferred_date = p_date
+          AND w.preferred_time_start = v_slot_start::TIME
+          AND w.preference = 'exact'
+          AND w.status = 'waiting';
+        waitlist_count := v_wl_count;
+      ELSE
+        waitlist_count := 0;
+      END IF;
+      capacity_remaining := COALESCE(capacity_remaining, 0);
+      RETURN NEXT;
+      v_slot_status := NULL;
+      capacity_remaining := 0;
     END LOOP;
   END IF;
 END;

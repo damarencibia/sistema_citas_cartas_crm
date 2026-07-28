@@ -9,8 +9,6 @@ export interface Schedule extends BaseEntity {
   is_active: boolean;
   slot_mode: 'fixed' | 'flexible';
   slot_interval_minutes: number;
-  buffer_before_minutes: number;
-  buffer_after_minutes: number;
   advance_booking_days: number;
   min_advance_minutes: number;
 }
@@ -45,8 +43,6 @@ export interface CreateScheduleDTO {
   end_time: string;
   slot_mode?: 'fixed' | 'flexible';
   slot_interval_minutes?: number;
-  buffer_before_minutes?: number;
-  buffer_after_minutes?: number;
   advance_booking_days?: number;
   min_advance_minutes?: number;
 }

@@ -86,21 +86,9 @@
       </v-btn>
     </div>
 
-    <!-- EMPTY STATE (no slots at all) -->
+    <!-- EMPTY STATE (no slots at all — do NOT offer waitlist) -->
     <div v-if="allSlots.length === 0 && !loading" class="text-body-2 text-medium-emphasis pa-4 text-center">
       No hay horarios disponibles para esta fecha
-      <v-btn
-        v-if="showWaitlist"
-        size="small"
-        color="warning"
-        variant="tonal"
-        prepend-icon="mdi-clock-outline"
-        class="mt-2"
-        block
-        @click="emit('joinWaitlist')"
-      >
-        Unirse a la Lista de Espera
-      </v-btn>
     </div>
   </div>
 </template>
@@ -115,7 +103,6 @@ const props = defineProps<{
   date?: string;
   label?: string;
   loading?: boolean;
-  showWaitlist?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -125,17 +112,7 @@ const emit = defineEmits<{
   joinWaitlistFlexible: [];
 }>();
 
-const isToday = computed(() => {
-  if (!props.date) return false;
-  const now = new Date();
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  return props.date === today;
-});
-
-const allSlots = computed(() => {
-  if (!isToday.value || !props.date) return props.slots;
-  return props.slots;
-});
+const allSlots = computed(() => props.slots);
 
 const gridSlots = computed(() =>
   allSlots.value.filter((s) => s.slot_type === 'auto' || s.slot_type === 'predefined'),

@@ -93,8 +93,6 @@
       :end_time="editingShift?.end_time"
       :slot_mode="editingShift?.slot_mode"
       :slot_interval_minutes="editingShift?.slot_interval_minutes"
-      :buffer_before_minutes="editingShift?.buffer_before_minutes"
-      :buffer_after_minutes="editingShift?.buffer_after_minutes"
       :advance_booking_days="editingShift?.advance_booking_days"
       :min_advance_minutes="editingShift?.min_advance_minutes"
       :existing-shifts="currentDayShiftsForValidation"
@@ -122,8 +120,6 @@ interface LocalShift {
   end_time: string;
   slot_mode: 'fixed' | 'flexible';
   slot_interval_minutes: number;
-  buffer_before_minutes: number;
-  buffer_after_minutes: number;
   advance_booking_days: number;
   min_advance_minutes: number;
 }
@@ -153,8 +149,6 @@ function initLocalShifts() {
         end_time: s.end_time,
         slot_mode: s.slot_mode ?? 'fixed',
         slot_interval_minutes: s.slot_interval_minutes ?? 30,
-        buffer_before_minutes: s.buffer_before_minutes ?? 0,
-        buffer_after_minutes: s.buffer_after_minutes ?? 0,
         advance_booking_days: s.advance_booking_days ?? 7,
         min_advance_minutes: s.min_advance_minutes ?? 15,
       })),
@@ -180,8 +174,6 @@ function toggleDay(day: number) {
       end_time: '17:00',
       slot_mode: 'fixed',
       slot_interval_minutes: 30,
-      buffer_before_minutes: 0,
-      buffer_after_minutes: 0,
       advance_booking_days: 7,
       min_advance_minutes: 15,
     }]);
@@ -235,8 +227,6 @@ function onShiftSave(data: any) {
     end_time: data.end_time,
     slot_mode: data.slot_mode ?? 'fixed',
     slot_interval_minutes: data.slot_interval_minutes ?? 30,
-    buffer_before_minutes: data.buffer_before_minutes ?? 0,
-    buffer_after_minutes: data.buffer_after_minutes ?? 0,
     advance_booking_days: data.advance_booking_days ?? 7,
     min_advance_minutes: data.min_advance_minutes ?? 15,
   };
@@ -269,8 +259,6 @@ async function onSave() {
           end_time: s.end_time,
           slot_mode: s.slot_mode,
           slot_interval_minutes: s.slot_interval_minutes,
-          buffer_before_minutes: s.buffer_before_minutes,
-          buffer_after_minutes: s.buffer_after_minutes,
           advance_booking_days: s.advance_booking_days,
           min_advance_minutes: s.min_advance_minutes,
         });

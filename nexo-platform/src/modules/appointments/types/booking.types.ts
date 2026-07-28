@@ -75,8 +75,6 @@ export interface BookingWindow {
   end_time: string;
   slot_mode: 'fixed' | 'flexible';
   slot_interval_minutes: number;
-  buffer_before_minutes: number;
-  buffer_after_minutes: number;
   is_active: boolean;
   created_at: string;
 }
@@ -90,8 +88,6 @@ export interface CreateBookingWindowDTO {
   end_time: string;
   slot_mode?: 'fixed' | 'flexible';
   slot_interval_minutes?: number;
-  buffer_before_minutes?: number;
-  buffer_after_minutes?: number;
 }
 
 export interface BookingStatusLog {

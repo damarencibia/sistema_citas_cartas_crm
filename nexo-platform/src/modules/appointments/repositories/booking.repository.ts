@@ -406,8 +406,6 @@ export const bookingRepository = {
         end_time: dto.end_time,
         slot_mode: dto.slot_mode ?? 'fixed',
         slot_interval_minutes: dto.slot_interval_minutes ?? 30,
-        buffer_before_minutes: dto.buffer_before_minutes ?? 0,
-        buffer_after_minutes: dto.buffer_after_minutes ?? 0,
         is_active: true,
       })
       .select()

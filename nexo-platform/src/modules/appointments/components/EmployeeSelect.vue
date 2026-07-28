@@ -30,10 +30,11 @@
 import { computed } from 'vue';
 import { useEmployeeStore } from '../stores/employee.store';
 
-defineProps<{
+const props = defineProps<{
   modelValue: string | null;
   label?: string;
   rules?: readonly ((v: string | null) => boolean | string)[];
+  allowedIds?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -44,10 +45,12 @@ const employeeStore = useEmployeeStore();
 const loading = computed(() => employeeStore.loading);
 
 const employees = computed(() =>
-  employeeStore.activeEmployees.map((e) => ({
-    ...e,
-    displayName: `${e.first_name} ${e.last_name}`,
-  })),
+  employeeStore.activeEmployees
+    .filter((e) => !props.allowedIds || props.allowedIds.length === 0 || props.allowedIds.includes(e.id))
+    .map((e) => ({
+      ...e,
+      displayName: `${e.first_name} ${e.last_name}`,
+    })),
 );
 </script>
 

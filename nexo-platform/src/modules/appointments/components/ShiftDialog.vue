@@ -116,31 +116,6 @@
         <v-row dense class="mt-2">
           <v-col cols="6">
             <v-text-field
-              v-model.number="form.buffer_before_minutes"
-              label="Buffer antes (min)"
-              type="number"
-              :min="0"
-              :max="120"
-              density="compact"
-              hide-details
-            />
-          </v-col>
-          <v-col cols="6">
-            <v-text-field
-              v-model.number="form.buffer_after_minutes"
-              label="Buffer después (min)"
-              type="number"
-              :min="0"
-              :max="120"
-              density="compact"
-              hide-details
-            />
-          </v-col>
-        </v-row>
-
-        <v-row dense class="mt-2">
-          <v-col cols="6">
-            <v-text-field
               v-model.number="form.advance_booking_days"
               label="Días máx. anticipación"
               type="number"
@@ -198,8 +173,6 @@ interface ShiftForm {
   end_time: string;
   slot_mode: 'fixed' | 'flexible';
   slot_interval_minutes: number;
-  buffer_before_minutes: number;
-  buffer_after_minutes: number;
   advance_booking_days: number;
   min_advance_minutes: number;
 }
@@ -211,8 +184,6 @@ const props = defineProps<{
   end_time?: string;
   slot_mode?: 'fixed' | 'flexible';
   slot_interval_minutes?: number;
-  buffer_before_minutes?: number;
-  buffer_after_minutes?: number;
   advance_booking_days?: number;
   min_advance_minutes?: number;
   existingShifts: { start_time: string; end_time: string }[];
@@ -230,8 +201,6 @@ const form = reactive<ShiftForm>({
   end_time: '17:00',
   slot_mode: 'fixed',
   slot_interval_minutes: 30,
-  buffer_before_minutes: 0,
-  buffer_after_minutes: 0,
   advance_booking_days: 7,
   min_advance_minutes: 15,
 });
@@ -338,8 +307,6 @@ watch(
       form.end_time = props.end_time ?? '17:00';
       form.slot_mode = props.slot_mode ?? 'fixed';
       form.slot_interval_minutes = props.slot_interval_minutes ?? 30;
-      form.buffer_before_minutes = props.buffer_before_minutes ?? 0;
-      form.buffer_after_minutes = props.buffer_after_minutes ?? 0;
       form.advance_booking_days = props.advance_booking_days ?? 7;
       form.min_advance_minutes = props.min_advance_minutes ?? 15;
       resetDuration();

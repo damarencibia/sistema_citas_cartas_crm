@@ -136,8 +136,6 @@ const form = reactive({
   end_time: '18:00',
   slot_mode: 'fixed' as 'fixed' | 'flexible',
   slot_interval_minutes: 30,
-  buffer_before_minutes: 0,
-  buffer_after_minutes: 0,
 });
 
 const serviceOptions = computed(() =>
@@ -180,8 +178,6 @@ watch(
       form.end_time = props.window.end_time;
       form.slot_mode = props.window.slot_mode ?? 'fixed';
       form.slot_interval_minutes = props.window.slot_interval_minutes ?? 30;
-      form.buffer_before_minutes = props.window.buffer_before_minutes ?? 0;
-      form.buffer_after_minutes = props.window.buffer_after_minutes ?? 0;
     } else if (v) {
       form.employee_id = null;
       form.service_id = null;
@@ -191,8 +187,6 @@ watch(
       form.end_time = '18:00';
       form.slot_mode = 'fixed';
       form.slot_interval_minutes = 30;
-      form.buffer_before_minutes = 0;
-      form.buffer_after_minutes = 0;
     }
   },
 );
