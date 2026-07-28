@@ -82,6 +82,8 @@
               :show-waitlist="true"
               label="Horarios disponibles"
               @join-waitlist="onJoinWaitlist"
+              @join-waitlist-exact="onJoinWaitlistExact"
+              @join-waitlist-flexible="onJoinWaitlistFlexible"
             />
           </div>
         </template>
@@ -208,7 +210,9 @@
       :service-id="selectedService?.id ?? ''"
       :employee-id="selectedEmployee?.id"
       :date="selectedDate"
-      @close="showWaitlistDialog = false"
+      :preselected-time="waitlistTime"
+      :preselected-preference="waitlistPreference"
+      @close="onWaitlistClose"
       @save="onWaitlistSave"
     />
   </div>
@@ -240,6 +244,8 @@ const submitting = ref(false);
 const confirmed = ref(false);
 const bookingError = ref<string | null>(null);
 const showWaitlistDialog = ref(false);
+const waitlistTime = ref<string | undefined>(undefined);
+const waitlistPreference = ref<'exact' | 'flexible' | undefined>(undefined);
 const formRef = ref();
 
 const selectedService = ref<Service | null>(null);
@@ -364,22 +370,47 @@ function resetForm() {
 
 function onJoinWaitlist() {
   if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
+  waitlistTime.value = undefined;
+  waitlistPreference.value = undefined;
   showWaitlistDialog.value = true;
 }
 
-async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible' }) {
+function onJoinWaitlistExact(time: string) {
+  if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
+  waitlistTime.value = time;
+  waitlistPreference.value = 'exact';
+  showWaitlistDialog.value = true;
+}
+
+function onJoinWaitlistFlexible() {
+  if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
+  waitlistTime.value = undefined;
+  waitlistPreference.value = 'flexible';
+  showWaitlistDialog.value = true;
+}
+
+function onWaitlistClose() {
+  showWaitlistDialog.value = false;
+  waitlistTime.value = undefined;
+  waitlistPreference.value = undefined;
+}
+
+async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible'; time?: string }) {
   if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
   try {
     await bookingStore.joinWaitlist({
       service_id: selectedService.value.id,
       employee_id: selectedEmployee.value.id,
       preferred_date: selectedDate.value,
+      preferred_time_start: data.time,
       customer_name: data.customer_name,
       customer_email: data.customer_email,
       customer_phone: data.customer_phone || undefined,
       preference: data.preference,
     });
     showWaitlistDialog.value = false;
+    waitlistTime.value = undefined;
+    waitlistPreference.value = undefined;
     bookingError.value = null;
   } catch (e: unknown) {
     bookingError.value = e instanceof Error ? e.message : 'Error al unirse a la lista de espera.';

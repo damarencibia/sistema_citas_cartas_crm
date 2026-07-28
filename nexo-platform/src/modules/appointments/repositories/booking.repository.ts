@@ -327,6 +327,24 @@ export const bookingRepository = {
     return (data ?? []) as AvailableSlot[];
   },
 
+  async getFullSlotGrid(
+    tenantId: string,
+    employeeId: string,
+    date: string,
+    serviceDuration: number,
+    serviceId?: string,
+  ): Promise<AvailableSlot[]> {
+    const { data, error } = await (supabase as any).rpc('get_full_slot_grid', {
+      p_tenant_id: tenantId,
+      p_employee_id: employeeId,
+      p_date: date,
+      p_service_duration: serviceDuration,
+      p_service_id: serviceId ?? undefined,
+    });
+    if (error) throw error;
+    return (data ?? []) as AvailableSlot[];
+  },
+
   async getByEmployeeAndDate(employeeId: string, date: string): Promise<Booking[]> {
     const { data, error } = await supabase
       .from(TABLE)

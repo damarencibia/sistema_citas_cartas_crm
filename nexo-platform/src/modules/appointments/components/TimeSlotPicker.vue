@@ -8,22 +8,32 @@
       class="mb-2"
     />
 
-    <!-- AUTO / PREDEFINED MODE: chips -->
-    <div v-else-if="hasChips" class="slots-grid">
-      <v-chip
-        v-for="slot in filteredChips"
+    <!-- AUTO + PREDEFINED SLOTS GRID -->
+    <div v-else-if="gridSlots.length > 0" class="slots-grid">
+      <v-badge
+        v-for="slot in gridSlots"
         :key="slot.start_time"
-        :color="slot.start_time === modelValue ? 'primary' : 'success'"
-        :variant="slot.start_time === modelValue ? 'flat' : 'outlined'"
+        :content="slot.waitlist_count"
+        :model-value="slot.status === 'occupied' && (slot.waitlist_count ?? 0) > 0"
+        color="error"
         size="small"
-        class="ma-1"
-        @click="onSelect(slot)"
+        offset="-4 4"
       >
-        {{ slot.start_time?.slice(0, 5) }} - {{ slot.end_time?.slice(0, 5) }}
-        <span v-if="slot.capacity_remaining !== undefined && slot.capacity_remaining < 999" class="ml-1 text-caption">
-          ({{ slot.capacity_remaining }})
-        </span>
-      </v-chip>
+        <v-chip
+          :color="chipColor(slot)"
+          :variant="chipVariant(slot)"
+          :class="chipClass(slot)"
+          size="small"
+          class="ma-1"
+          :disabled="slot.status === 'past'"
+          @click="onSlotClick(slot)"
+        >
+          {{ slot.start_time?.slice(0, 5) }} - {{ slot.end_time?.slice(0, 5) }}
+          <span v-if="slot.status === 'available' && slot.capacity_remaining < 999" class="ml-1 text-caption">
+            ({{ slot.capacity_remaining }})
+          </span>
+        </v-chip>
+      </v-badge>
     </div>
 
     <!-- FLEXIBLE MODE: window range + time picker -->
@@ -62,7 +72,22 @@
       </div>
     </div>
 
-    <div v-if="filteredSlots.length === 0 && !loading" class="text-body-2 text-medium-emphasis pa-4 text-center">
+    <!-- FLEXIBLE WAITLIST BUTTON -->
+    <div v-if="hasOccupied && !loading" class="mt-2">
+      <v-btn
+        size="small"
+        color="warning"
+        variant="tonal"
+        prepend-icon="mdi-clock-outline"
+        block
+        @click="emit('joinWaitlistFlexible')"
+      >
+        Modo flexible — Avísame cuando se libere cualquier horario
+      </v-btn>
+    </div>
+
+    <!-- EMPTY STATE (no slots at all) -->
+    <div v-if="allSlots.length === 0 && !loading" class="text-body-2 text-medium-emphasis pa-4 text-center">
       No hay horarios disponibles para esta fecha
       <v-btn
         v-if="showWaitlist"
@@ -96,6 +121,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: string];
   joinWaitlist: [];
+  joinWaitlistExact: [time: string];
+  joinWaitlistFlexible: [];
 }>();
 
 const isToday = computed(() => {
@@ -105,28 +132,46 @@ const isToday = computed(() => {
   return props.date === today;
 });
 
-const filteredSlots = computed(() => {
+const allSlots = computed(() => {
   if (!isToday.value || !props.date) return props.slots;
-
-  const now = new Date();
-  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-  return props.slots.filter((slot) => {
-    const slotTime = slot.start_time?.slice(0, 5);
-    return slotTime >= currentTime;
-  });
+  return props.slots;
 });
 
-const filteredChips = computed(() =>
-  filteredSlots.value.filter((s) => s.slot_type === 'auto' || s.slot_type === 'predefined'),
+const gridSlots = computed(() =>
+  allSlots.value.filter((s) => s.slot_type === 'auto' || s.slot_type === 'predefined'),
 );
 
 const filteredWindows = computed(() =>
-  filteredSlots.value.filter((s) => s.slot_type === 'window'),
+  allSlots.value.filter((s) => s.slot_type === 'window'),
 );
 
-const hasChips = computed(() => filteredChips.value.length > 0);
 const hasWindows = computed(() => filteredWindows.value.length > 0);
+
+const hasOccupied = computed(() =>
+  gridSlots.value.some((s) => s.status === 'occupied'),
+);
+
+function chipColor(slot: AvailableSlot) {
+  if (slot.status === 'occupied') return 'error';
+  if (slot.status === 'past') return 'grey';
+  if (slot.start_time === props.modelValue) return 'primary';
+  return 'success';
+}
+
+function chipVariant(slot: AvailableSlot): 'outlined' | 'tonal' | 'flat' {
+  if (slot.status === 'occupied') return 'outlined';
+  if (slot.status === 'past') return 'tonal';
+  if (slot.start_time === props.modelValue) return 'flat';
+  return 'outlined';
+}
+
+function chipClass(slot: AvailableSlot): string {
+  const classes: string[] = [];
+  if (slot.status === 'occupied') classes.push('slot-occupied');
+  if (slot.status === 'past') classes.push('slot-past');
+  if (slot.status === 'available' && slot.start_time === props.modelValue) classes.push('slot-selected');
+  return classes.join(' ');
+}
 
 function maxSelectableTime(win: AvailableSlot): string {
   if (!win.end_time) return '23:59';
@@ -135,6 +180,14 @@ function maxSelectableTime(win: AvailableSlot): string {
 
 function onWindowSelect(time: string) {
   emit('update:modelValue', time);
+}
+
+function onSlotClick(slot: AvailableSlot) {
+  if (slot.status === 'occupied') {
+    emit('joinWaitlistExact', slot.start_time);
+  } else if (slot.status === 'available') {
+    emit('update:modelValue', slot.start_time);
+  }
 }
 
 function onSelect(slot: AvailableSlot) {
@@ -147,5 +200,15 @@ function onSelect(slot: AvailableSlot) {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.slot-occupied {
+  opacity: 0.65;
+  border-color: rgba(244, 67, 54, 0.5) !important;
+}
+
+.slot-past {
+  opacity: 0.4;
+  cursor: default !important;
 }
 </style>

@@ -78,6 +78,8 @@
             :show-waitlist="noSlotsAvailable && !isGroupService"
             label="Hora disponible *"
             @join-waitlist="handleJoinWaitlist"
+            @join-waitlist-exact="handleJoinWaitlistExact"
+            @join-waitlist-flexible="handleJoinWaitlistFlexible"
           />
           <v-text-field
             v-if="isGroupService"
@@ -154,7 +156,9 @@
     :service-id="form.service_id"
     :employee-id="form.employee_id || undefined"
     :date="form.date"
-    @close="showWaitlistDialog = false"
+    :preselected-time="waitlistTime"
+    :preselected-preference="waitlistPreference"
+    @close="onWaitlistClose"
     @save="onWaitlistSave"
   />
 </template>
@@ -194,6 +198,8 @@ const submitting = ref(false);
 const slotsLoading = computed(() => availability.loading.value);
 const minDate = new Date().toISOString().split('T')[0];
 const showWaitlistDialog = ref(false);
+const waitlistTime = ref<string | undefined>(undefined);
+const waitlistPreference = ref<'exact' | 'flexible' | undefined>(undefined);
 const showRecurrence = ref(false);
 const recurrenceData = ref<RecurrenceData>({
   enabled: false,
@@ -373,21 +379,44 @@ async function onSubmit() {
 }
 
 function handleJoinWaitlist() {
+  waitlistTime.value = undefined;
+  waitlistPreference.value = undefined;
   showWaitlistDialog.value = true;
 }
 
-async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible' }) {
+function handleJoinWaitlistExact(time: string) {
+  waitlistTime.value = time;
+  waitlistPreference.value = 'exact';
+  showWaitlistDialog.value = true;
+}
+
+function handleJoinWaitlistFlexible() {
+  waitlistTime.value = undefined;
+  waitlistPreference.value = 'flexible';
+  showWaitlistDialog.value = true;
+}
+
+function onWaitlistClose() {
+  showWaitlistDialog.value = false;
+  waitlistTime.value = undefined;
+  waitlistPreference.value = undefined;
+}
+
+async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible'; time?: string }) {
   try {
     await bookingStore.joinWaitlist({
       service_id: form.service_id,
       employee_id: form.employee_id || undefined,
       preferred_date: form.date,
+      preferred_time_start: data.time,
       customer_name: data.customer_name,
       customer_email: data.customer_email,
       customer_phone: data.customer_phone || undefined,
       preference: data.preference,
     });
     showWaitlistDialog.value = false;
+    waitlistTime.value = undefined;
+    waitlistPreference.value = undefined;
   } catch {
     // Error handled by store
   }

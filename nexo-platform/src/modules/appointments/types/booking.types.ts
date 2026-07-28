@@ -60,6 +60,8 @@ export interface AvailableSlot {
   end_time: string;
   slot_type: 'auto' | 'predefined' | 'window';
   capacity_remaining: number;
+  status?: 'available' | 'occupied' | 'past';
+  waitlist_count?: number;
 }
 
 export interface BookingWindow {
