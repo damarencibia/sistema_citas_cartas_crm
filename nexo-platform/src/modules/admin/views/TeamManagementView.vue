@@ -22,14 +22,14 @@
       >
         <template #[`item.full_name`]="{ item }">
           <div class="d-flex align-center ga-2">
-            <v-avatar :color="item.raw.role === 'owner' ? 'primary' : 'grey'" size="32">
+            <v-avatar :color="item.role === 'owner' ? 'primary' : 'grey'" size="32">
               <span class="text-white text-caption">
-                {{ (item.raw.first_name || '')[0] }}{{ (item.raw.last_name || '')[0] }}
+                {{ (item.first_name || '')[0] }}{{ (item.last_name || '')[0] }}
               </span>
             </v-avatar>
             <div>
-              <div class="text-body-2 font-weight-medium">{{ item.raw.first_name }} {{ item.raw.last_name }}</div>
-              <div class="text-caption text-medium-emphasis">{{ item.raw.email }}</div>
+              <div class="text-body-2 font-weight-medium">{{ item.first_name }} {{ item.last_name }}</div>
+              <div class="text-caption text-medium-emphasis">{{ item.email }}</div>
             </div>
           </div>
         </template>
@@ -47,8 +47,8 @@
             :model-value="value"
             density="compact"
             hide-details
-            :disabled="item.raw.role === 'owner'"
-            @update:model-value="toggleActive(item.raw, $event)"
+            :disabled="item.role === 'owner'"
+            @update:model-value="toggleActive(item, $event)"
           />
         </template>
       </DataTable>
