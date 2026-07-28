@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Servicios" subtitle="Administra los servicios que ofreces">
+    <PageHeader title="Servicios" subtitle="Administra los servicios del negocio">
       <template #actions>
         <v-btn color="primary" @click="openCreate">
           <v-icon start>mdi-plus</v-icon>
@@ -16,31 +16,58 @@
     <div v-else-if="serviceStore.services.length === 0" class="text-center pa-8">
       <v-icon size="64" color="medium-emphasis">mdi-tag-outline</v-icon>
       <p class="text-body-1 text-medium-emphasis mt-4">No hay servicios configurados</p>
-      <v-btn
-        color="primary"
-        variant="flat"
-        class="mt-4"
-        @click="openCreate"
-      >
+      <v-btn color="primary" variant="flat" class="mt-4" @click="openCreate">
         Crear Primer Servicio
       </v-btn>
     </div>
 
-    <v-row v-else>
-      <v-col
-        v-for="service in serviceStore.services"
-        :key="service.id"
-        cols="12"
-        sm="6"
-        md="4"
-      >
-        <ServiceCard
-          :service="service"
-          @edit="openEdit"
-          @delete="onDelete"
-        />
-      </v-col>
-    </v-row>
+    <template v-else>
+      <v-row class="mb-4">
+        <v-col cols="12" sm="4">
+          <v-select
+            v-model="filterEmployee"
+            :items="employeeOptions"
+            item-title="text"
+            item-value="value"
+            label="Filtrar por empleado"
+            clearable
+            density="compact"
+            variant="outlined"
+            hide-details
+          />
+        </v-col>
+        <v-col cols="12" sm="4">
+          <v-select
+            v-model="filterCategory"
+            :items="categoryOptions"
+            item-title="text"
+            item-value="value"
+            label="Filtrar por categoría"
+            clearable
+            density="compact"
+            variant="outlined"
+            hide-details
+          />
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-col
+          v-for="service in filteredServices"
+          :key="service.id"
+          cols="12"
+          sm="6"
+          md="4"
+        >
+          <ServiceCard
+            :service="service"
+            :show-actions="true"
+            @edit="openEdit"
+            @delete="onDelete"
+          />
+        </v-col>
+      </v-row>
+    </template>
 
     <ServiceForm
       :visible="showForm"
@@ -52,24 +79,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useServiceStore } from '../stores/service.store';
+import { useEmployeeStore } from '../stores/employee.store';
+import { useServiceCategoryStore } from '../stores/service-category.store';
 import ServiceCard from '../components/ServiceCard.vue';
 import ServiceForm from '../components/ServiceForm.vue';
 import type { Service, CreateServiceDTO } from '../types/service.types';
 
 const serviceStore = useServiceStore();
+const employeeStore = useEmployeeStore();
+const categoryStore = useServiceCategoryStore();
 const notification = useNotification();
 const { confirm } = useConfirm();
 
 const showForm = ref(false);
 const editingService = ref<Service | null>(null);
+const filterEmployee = ref<string | null>(null);
+const filterCategory = ref<string | null>(null);
+
+const filteredServices = computed(() => {
+  let result = serviceStore.services;
+  if (filterEmployee.value) {
+    result = result.filter((s) => s.employee_id === filterEmployee.value);
+  }
+  if (filterCategory.value) {
+    result = result.filter((s) => s.category_id === filterCategory.value);
+  }
+  return result;
+});
+
+const employeeOptions = computed(() =>
+  employeeStore.activeEmployees.map((e) => ({
+    value: e.id,
+    text: `${e.first_name} ${e.last_name}`,
+  })),
+);
+
+const categoryOptions = computed(() =>
+  categoryStore.activeCategories.map((c) => ({
+    value: c.id,
+    text: c.name,
+  })),
+);
 
 onMounted(() => {
-  serviceStore.fetchServices();
+  Promise.all([
+    serviceStore.fetchServices(),
+    employeeStore.fetchEmployees(),
+    categoryStore.fetchCategories(),
+  ]);
 });
 
 function openCreate() {

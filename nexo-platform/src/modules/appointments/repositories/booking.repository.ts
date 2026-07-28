@@ -475,14 +475,6 @@ export const bookingRepository = {
   },
 
   async cancelWaitlistEntry(id: string): Promise<void> {
-    const { error } = await (supabase as any)
-      .from('waitlist')
-      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-      .eq('id', id);
-    if (error) throw error;
-  },
-
-  async removeWaitlistEntry(id: string): Promise<void> {
     const { error } = await (supabase as any).from('waitlist').delete().eq('id', id);
     if (error) throw error;
   },
@@ -547,15 +539,11 @@ export const bookingRepository = {
   },
 
   async declineWaitlistOffer(token: string): Promise<{ success: boolean; error: string | null }> {
-    const { data, error } = await (supabase as any).rpc('decline_waitlist_offer', {
-      p_token: token,
-    });
-    if (error) throw error;
-    const result = data?.[0];
-    return {
-      success: result?.success ?? false,
-      error: result?.error ?? null,
-    };
+    const { error } = await (supabase as any).from('waitlist').delete().eq('offer_token', token);
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true, error: null };
   },
 
   // --- Recurring Bookings ---

@@ -16,12 +16,7 @@
     <div v-else-if="employeeStore.employees.length === 0" class="text-center pa-8">
       <v-icon size="64" color="medium-emphasis">mdi-account-group-outline</v-icon>
       <p class="text-body-1 text-medium-emphasis mt-4">No hay empleados registrados</p>
-      <v-btn
-        color="primary"
-        variant="flat"
-        class="mt-4"
-        @click="openCreate"
-      >
+      <v-btn color="primary" variant="flat" class="mt-4" @click="openCreate">
         Agregar Primer Empleado
       </v-btn>
     </div>
@@ -71,7 +66,6 @@
     <EmployeeForm
       :visible="showForm"
       :employee="editingEmployee"
-      :employee-service-ids="editingServiceIds"
       @close="closeForm"
       @save="onSave"
     />
@@ -83,34 +77,28 @@ import { ref, onMounted } from 'vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
-import { useServiceStore } from '../stores/service.store';
 import { useEmployeeStore } from '../stores/employee.store';
 import EmployeeForm from '../components/EmployeeForm.vue';
 import type { Employee, CreateEmployeeDTO } from '../types/employee.types';
 
 const employeeStore = useEmployeeStore();
-const serviceStore = useServiceStore();
 const notification = useNotification();
 const { confirm } = useConfirm();
 
 const showForm = ref(false);
 const editingEmployee = ref<Employee | null>(null);
-const editingServiceIds = ref<string[]>([]);
 
 onMounted(async () => {
-  await Promise.all([employeeStore.fetchEmployees(), serviceStore.fetchServices()]);
+  await employeeStore.fetchEmployees();
 });
 
 function openCreate() {
   editingEmployee.value = null;
-  editingServiceIds.value = [];
   showForm.value = true;
 }
 
 async function openEdit(employee: Employee) {
   editingEmployee.value = employee;
-  await employeeStore.fetchEmployee(employee.id);
-  editingServiceIds.value = employeeStore.employeeServiceIds;
   showForm.value = true;
 }
 

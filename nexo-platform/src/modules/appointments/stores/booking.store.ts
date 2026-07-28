@@ -334,10 +334,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
 
     async cancelWaitlistEntry(id: string): Promise<void> {
       await bookingRepository.cancelWaitlistEntry(id);
-      const index = this.waitlist.findIndex((w) => w.id === id);
-      if (index !== -1) {
-        this.waitlist[index] = { ...this.waitlist[index], status: 'cancelled' };
-      }
+      this.waitlist = this.waitlist.filter((w) => w.id !== id);
     },
 
     async removeWaitlistEntry(id: string): Promise<void> {
