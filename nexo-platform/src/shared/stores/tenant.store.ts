@@ -58,11 +58,14 @@ export const useTenantStore = defineStore('tenant', {
 
     async updateTenant(payload: Partial<Tenant>) {
       if (!this.tenant) return;
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tenants')
         .update(payload as any)
-        .eq('id', this.tenant.id);
+        .eq('id', this.tenant.id)
+        .select('id')
+        .single();
       if (error) throw error;
+      if (!data) throw new Error('No se pudo guardar los cambios');
       this.tenant = { ...this.tenant, ...payload } as Tenant;
       if (payload.primary_color || payload.secondary_color) {
         applyTenantTheme({
