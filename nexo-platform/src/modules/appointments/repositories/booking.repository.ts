@@ -1,6 +1,21 @@
 import { supabase } from '@/shared/api/supabase.client';
 import type { Database } from '@/shared/types/supabase.gen';
-import type { Booking, CreateBookingDTO, BookingFilters, AvailableSlot, ClientBlockCheck, StatusChangedBy, BookingWindow, CreateBookingWindowDTO, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance, BookingStatus } from '../types/booking.types';
+import type {
+  Booking,
+  CreateBookingDTO,
+  BookingFilters,
+  AvailableSlot,
+  ClientBlockCheck,
+  StatusChangedBy,
+  BookingWindow,
+  CreateBookingWindowDTO,
+  WaitlistEntry,
+  CreateWaitlistDTO,
+  RecurringPattern,
+  CreateRecurringDTO,
+  RecurringInstance,
+  BookingStatus,
+} from '../types/booking.types';
 
 const TABLE = 'bookings' as const;
 
@@ -31,7 +46,9 @@ export const bookingRepository = {
   async getByFilters(filters: BookingFilters): Promise<Booking[]> {
     let query = supabase
       .from(TABLE)
-      .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
+      .select(
+        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+      )
       .is('deleted_at', null)
       .order('date', { ascending: true })
       .order('start_time', { ascending: true });
@@ -60,7 +77,9 @@ export const bookingRepository = {
   async getById(id: string): Promise<Booking | null> {
     const { data, error } = await supabase
       .from(TABLE)
-      .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
+      .select(
+        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+      )
       .eq('id', id)
       .single();
     if (error) throw error;
@@ -80,6 +99,18 @@ export const bookingRepository = {
 
     const initialStatus = serviceData.requires_approval ? 'pending_approval' : 'confirmed';
 
+    let customerId: string | null = null;
+    if (dto.customer_email) {
+      const { data: cid, error: customerError } = await supabase.rpc('upsert_booking_customer', {
+        p_tenant_id: tenantId,
+        p_customer_name: dto.customer_name ?? '',
+        p_customer_email: dto.customer_email,
+        p_customer_phone: dto.customer_phone ?? null,
+      });
+      if (customerError) throw customerError;
+      customerId = (cid as string) ?? null;
+    }
+
     const insertPayload: BookingInsert = {
       tenant_id: tenantId,
       service_id: dto.service_id,
@@ -87,6 +118,7 @@ export const bookingRepository = {
       date: dto.date,
       start_time: dto.start_time,
       end_time: endTime,
+      customer_id: customerId,
       customer_name: dto.customer_name ?? null,
       customer_email: dto.customer_email ?? null,
       customer_phone: dto.customer_phone ?? null,
@@ -98,11 +130,7 @@ export const bookingRepository = {
       custom_duration_minutes: dto.custom_duration_minutes ?? null,
     };
 
-    const { data, error } = await supabase
-      .from(TABLE)
-      .insert(insertPayload)
-      .select()
-      .single();
+    const { data, error } = await supabase.from(TABLE).insert(insertPayload).select().single();
     if (error) {
       if (error.message?.includes('check') || error.message?.includes('overlap')) {
         throw new Error('El empleado ya tiene una cita en ese horario.');
@@ -189,7 +217,11 @@ export const bookingRepository = {
     };
   },
 
-  async countRecentNoShows(tenantId: string, customerEmail: string, days: number = 30): Promise<number> {
+  async countRecentNoShows(
+    tenantId: string,
+    customerEmail: string,
+    days: number = 30,
+  ): Promise<number> {
     if (!customerEmail) return 0;
     const { data, error } = await supabase.rpc('count_recent_no_shows', {
       p_tenant_id: tenantId,
@@ -211,7 +243,14 @@ export const bookingRepository = {
     return count ?? 0;
   },
 
-  async getAppointmentConfig(tenantId: string): Promise<{ auto_start: boolean; grace_period_minutes: number; max_no_shows: number; block_duration_days: number } | null> {
+  async getAppointmentConfig(
+    tenantId: string,
+  ): Promise<{
+    auto_start: boolean;
+    grace_period_minutes: number;
+    max_no_shows: number;
+    block_duration_days: number;
+  } | null> {
     const { data, error } = await supabase
       .from('tenants')
       .select('config')
@@ -240,23 +279,22 @@ export const bookingRepository = {
     reason: string,
     noShowCount: number,
   ): Promise<void> {
-    const { error } = await supabase.from('client_blocks').upsert({
-      tenant_id: tenantId,
-      customer_email: customerEmail,
-      blocked_until: blockedUntil,
-      reason,
-      no_show_count: noShowCount,
-    }, {
-      onConflict: 'tenant_id,customer_email',
-    });
+    const { error } = await supabase.from('client_blocks').upsert(
+      {
+        tenant_id: tenantId,
+        customer_email: customerEmail,
+        blocked_until: blockedUntil,
+        reason,
+        no_show_count: noShowCount,
+      },
+      {
+        onConflict: 'tenant_id,customer_email',
+      },
+    );
     if (error) throw error;
   },
 
-  async approveBooking(
-    bookingId: string,
-    approvedBy: string,
-    reason?: string,
-  ): Promise<Booking> {
+  async approveBooking(bookingId: string, approvedBy: string, reason?: string): Promise<Booking> {
     const { data, error } = await supabase
       .from(TABLE)
       .update({
@@ -279,11 +317,7 @@ export const bookingRepository = {
     return data as Booking;
   },
 
-  async rejectBooking(
-    bookingId: string,
-    approvedBy: string,
-    reason?: string,
-  ): Promise<Booking> {
+  async rejectBooking(bookingId: string, approvedBy: string, reason?: string): Promise<Booking> {
     const { data, error } = await supabase
       .from(TABLE)
       .update({
@@ -348,7 +382,9 @@ export const bookingRepository = {
   async getByEmployeeAndDate(employeeId: string, date: string): Promise<Booking[]> {
     const { data, error } = await supabase
       .from(TABLE)
-      .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
+      .select(
+        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+      )
       .eq('employee_id', employeeId)
       .eq('date', date)
       .not('status', 'eq', 'cancelled')
@@ -420,10 +456,7 @@ export const bookingRepository = {
   },
 
   async hardDelete(id: string): Promise<void> {
-    const { error } = await (supabase as any)
-      .from('bookings')
-      .delete()
-      .eq('id', id);
+    const { error } = await (supabase as any).from('bookings').delete().eq('id', id);
     if (error) throw error;
   },
 
@@ -432,7 +465,9 @@ export const bookingRepository = {
   async getWaitlist(tenantId: string): Promise<WaitlistEntry[]> {
     const { data, error } = await (supabase as any)
       .from('waitlist')
-      .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
+      .select(
+        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+      )
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: true });
     if (error) throw error;
@@ -522,14 +557,18 @@ export const bookingRepository = {
   async getWaitlistEntryByToken(token: string): Promise<WaitlistEntry | null> {
     const { data, error } = await (supabase as any)
       .from('waitlist')
-      .select('*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)')
+      .select(
+        '*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)',
+      )
       .eq('offer_token', token)
       .single();
     if (error) return null;
     return data as unknown as WaitlistEntry | null;
   },
 
-  async acceptWaitlistOffer(token: string): Promise<{ booking_id: string | null; error: string | null }> {
+  async acceptWaitlistOffer(
+    token: string,
+  ): Promise<{ booking_id: string | null; error: string | null }> {
     const { data, error } = await (supabase as any).rpc('accept_waitlist_offer', {
       p_token: token,
     });
@@ -554,14 +593,19 @@ export const bookingRepository = {
   async getRecurringPatterns(tenantId: string): Promise<RecurringPattern[]> {
     const { data, error } = await supabase
       .from('recurring_booking_patterns')
-      .select('*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)')
+      .select(
+        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+      )
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
     if (error) throw error;
     return (data ?? []) as unknown as RecurringPattern[];
   },
 
-  async createRecurringPattern(tenantId: string, dto: CreateRecurringDTO): Promise<RecurringPattern> {
+  async createRecurringPattern(
+    tenantId: string,
+    dto: CreateRecurringDTO,
+  ): Promise<RecurringPattern> {
     const { data, error } = await supabase
       .from('recurring_booking_patterns')
       .insert({
@@ -620,5 +664,4 @@ export const bookingRepository = {
       .eq('id', instanceId);
     if (error) throw error;
   },
-
 };

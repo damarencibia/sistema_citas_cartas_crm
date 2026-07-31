@@ -28,6 +28,19 @@
           </v-list-item>
         </v-list>
       </v-card-text>
+      <v-card-text v-if="whatsappUrl" class="pt-0">
+        <v-btn
+          color="green"
+          variant="tonal"
+          block
+          prepend-icon="mdi-whatsapp"
+          :href="whatsappUrl"
+          target="_blank"
+          rel="noopener"
+        >
+          Contactar por WhatsApp
+        </v-btn>
+      </v-card-text>
       <v-card-actions v-if="showActions && canUpdate" class="pa-4 pt-0">
         <v-btn
           v-if="booking.status === 'confirmed' || booking.status === 'in_progress'"
@@ -92,10 +105,10 @@
         </v-card-title>
         <v-card-text>
           ¿Estás seguro de eliminar permanentemente esta cita?
-          <br><br>
+          <br /><br />
           <strong>Esta acción no se puede deshacer.</strong>
           <div class="mt-3 text-body-2">
-            Cliente: {{ booking?.customer_name }}<br>
+            Cliente: {{ booking?.customer_name }}<br />
             Fecha: {{ booking?.date }} - {{ booking?.start_time?.slice(0, 5) }}
           </div>
         </v-card-text>
@@ -134,7 +147,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   statusChange: [booking: Booking, status: string];
-  cancel: [booking: Booking, reason: string, blockOption: 'none' | 'temporary' | 'indefinite', blockDays: number];
+  cancel: [
+    booking: Booking,
+    reason: string,
+    blockOption: 'none' | 'temporary' | 'indefinite',
+    blockDays: number,
+  ];
   reassign: [booking: Booking, newDate: string, newStartTime: string];
   delete: [booking: Booking];
 }>();
@@ -149,7 +167,20 @@ const canUpdate = computed(() =>
   ['owner', 'admin', 'employee', 'super_admin'].includes(authStore.userRole ?? ''),
 );
 
-function onCancelConfirm(data: { reason: string; blockOption: 'none' | 'temporary' | 'indefinite'; blockDays: number }) {
+const whatsappUrl = computed(() => {
+  const phone = props.booking?.customer_phone;
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (!digits) return null;
+  const text = `Hola ${props.booking.customer_name ?? ''}, te escribo respecto a tu cita del ${props.booking.date}.`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+});
+
+function onCancelConfirm(data: {
+  reason: string;
+  blockOption: 'none' | 'temporary' | 'indefinite';
+  blockDays: number;
+}) {
   if (!props.booking) return;
   emit('cancel', props.booking, data.reason, data.blockOption, data.blockDays);
   showCancelDialog.value = false;

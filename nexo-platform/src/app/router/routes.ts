@@ -193,6 +193,12 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/app/layouts/public.vue'),
     children: [
       {
+        path: '',
+        name: 'business-profile',
+        component: () => import('@/modules/appointments/views/BusinessProfileView.vue'),
+        meta: { title: 'Inicio' },
+      },
+      {
         path: 'booking',
         name: 'public-booking',
         component: () => import('@/modules/appointments/views/PublicBookingView.vue'),
