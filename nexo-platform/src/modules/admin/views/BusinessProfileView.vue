@@ -41,21 +41,6 @@
             </v-row>
           </FormSection>
         </v-card>
-
-        <v-card class="pa-6 mt-4">
-          <FormSection title="Personalización">
-            <v-row>
-              <v-col cols="6">
-                <v-label class="mb-2">Color Primario</v-label>
-                <v-text-field v-model="form.primary_color" type="color" hide-details />
-              </v-col>
-              <v-col cols="6">
-                <v-label class="mb-2">Color Secundario</v-label>
-                <v-text-field v-model="form.secondary_color" type="color" hide-details />
-              </v-col>
-            </v-row>
-          </FormSection>
-        </v-card>
       </v-col>
     </v-row>
   </div>
@@ -76,8 +61,6 @@ const form = reactive({
   email: '',
   phone: '',
   address: '',
-  primary_color: '#1976D2',
-  secondary_color: '#424242',
 });
 
 function required(v: string) {
@@ -91,8 +74,6 @@ onMounted(() => {
     form.email = tenantStore.tenant.email || '';
     form.phone = tenantStore.tenant.phone || '';
     form.address = tenantStore.tenant.address || '';
-    form.primary_color = tenantStore.tenant.primary_color || '#1976D2';
-    form.secondary_color = tenantStore.tenant.secondary_color || '#424242';
   }
 });
 

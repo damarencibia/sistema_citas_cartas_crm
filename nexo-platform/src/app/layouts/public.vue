@@ -1,6 +1,12 @@
 <template>
   <v-layout>
-    <v-app-bar v-if="tenantStore.tenant" color="surface" elevation="0" border="b" density="compact">
+    <v-app-bar
+      v-if="tenantStore.tenant"
+      color="surface"
+      elevation="0"
+      border="b"
+      density="compact"
+    >
       <v-container max-width="1100">
         <div class="d-flex align-center w-100">
           <router-link

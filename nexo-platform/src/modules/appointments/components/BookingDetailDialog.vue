@@ -105,10 +105,10 @@
         </v-card-title>
         <v-card-text>
           ¿Estás seguro de eliminar permanentemente esta cita?
-          <br /><br />
+          <br><br>
           <strong>Esta acción no se puede deshacer.</strong>
           <div class="mt-3 text-body-2">
-            Cliente: {{ booking?.customer_name }}<br />
+            Cliente: {{ booking?.customer_name }}<br>
             Fecha: {{ booking?.date }} - {{ booking?.start_time?.slice(0, 5) }}
           </div>
         </v-card-text>

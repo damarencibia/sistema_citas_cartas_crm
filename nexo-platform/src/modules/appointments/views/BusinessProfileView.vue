@@ -11,8 +11,18 @@
 
     <v-container v-else max-width="900" class="py-10">
       <div class="text-center mb-10">
-        <v-avatar v-if="tenant?.logo_url" :image="tenant.logo_url" size="96" class="mb-4" />
-        <v-avatar v-else color="primary" size="96" class="mb-4">
+        <v-avatar
+          v-if="tenant?.logo_url"
+          :image="tenant.logo_url"
+          size="96"
+          class="mb-4"
+        />
+        <v-avatar
+          v-else
+          color="primary"
+          size="96"
+          class="mb-4"
+        >
           <span class="text-white text-h4 font-weight-bold">{{ (tenant?.name || 'N')[0] }}</span>
         </v-avatar>
         <h1 class="text-h4 font-weight-bold">{{ tenant?.name }}</h1>
@@ -41,7 +51,12 @@
             <v-icon start>mdi-menu</v-icon>
             Ver Menú
           </v-btn>
-          <v-btn v-if="tenant?.modules?.crm" variant="tonal" size="large" :to="`/${slug}/portal`">
+          <v-btn
+            v-if="tenant?.modules?.crm"
+            variant="tonal"
+            size="large"
+            :to="`/${slug}/portal`"
+          >
             <v-icon start>mdi-account-heart</v-icon>
             Mi Portal
           </v-btn>

@@ -149,6 +149,12 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: 'Módulos' },
           },
           {
+            path: 'portal',
+            name: 'portal-config',
+            component: () => import('@/modules/admin/views/PortalConfigView.vue'),
+            meta: { title: 'Portal Público' },
+          },
+          {
             path: 'appointments-config',
             name: 'appointments-config',
             component: () => import('@/modules/admin/views/AppointmentSettingsView.vue'),
@@ -194,7 +200,7 @@ export const routes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
-        name: 'business-profile',
+        name: 'public-business-profile',
         component: () => import('@/modules/appointments/views/BusinessProfileView.vue'),
         meta: { title: 'Inicio' },
       },
