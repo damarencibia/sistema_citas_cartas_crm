@@ -1,11 +1,13 @@
 import { ref, computed } from 'vue';
 import { useBookingStore } from '../stores/booking.store';
 import { useEmployeeStore } from '../stores/employee.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 import type { BookingFilters } from '../types/booking.types';
 
 export function useAgenda() {
   const bookingStore = useBookingStore();
   const employeeStore = useEmployeeStore();
+  const authStore = useAuthStore();
 
   const viewMode = ref<'day' | 'week'>('day');
   const selectedDate = ref(new Date().toISOString().split('T')[0]);
@@ -63,6 +65,18 @@ export function useAgenda() {
     selectedEmployeeId.value = employeeId;
   }
 
+  const isEmployeeView = computed(() => authStore.userRole === 'employee');
+
+  async function assignCurrentEmployee() {
+    if (!isEmployeeView.value) return;
+    await employeeStore.fetchEmployeesWithRoles();
+    const userId = authStore.user?.id;
+    const match = employeeStore.employees.find(
+      (e) => e.user_id === userId || e.supabase_user_id === userId,
+    );
+    selectedEmployeeId.value = match?.id ?? null;
+  }
+
   function prevDay() {
     const d = new Date(selectedDate.value);
     d.setDate(d.getDate() - 1);
@@ -91,11 +105,13 @@ export function useAgenda() {
     viewMode,
     selectedDate,
     selectedEmployeeId,
+    isEmployeeView,
     weekDates,
     agendaBookings,
     dayBookings,
     employees: computed(() => employeeStore.activeEmployees),
     loadAgenda,
+    assignCurrentEmployee,
     setView,
     setDate,
     setEmployee,

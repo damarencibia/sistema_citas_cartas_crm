@@ -405,6 +405,7 @@ watch(
       availability.clear();
     } else {
       categoryStore.fetchCategories();
+      serviceStore.fetchServices();
       resourceStore.fetchResources();
       if (!editing.value) {
         form.date = new Date().toISOString().split('T')[0];
