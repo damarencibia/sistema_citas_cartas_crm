@@ -150,9 +150,7 @@ export const routes: RouteRecordRaw[] = [
           },
           {
             path: 'portal',
-            name: 'portal-config',
-            component: () => import('@/modules/admin/views/PortalConfigView.vue'),
-            meta: { title: 'Portal Público' },
+            redirect: '/settings/business',
           },
           {
             path: 'appointments-config',

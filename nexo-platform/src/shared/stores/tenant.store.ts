@@ -63,6 +63,7 @@ export const useTenantStore = defineStore('tenant', {
         .update(payload as any)
         .eq('id', this.tenant.id);
       if (error) throw error;
+      this.tenant = { ...this.tenant, ...payload } as Tenant;
       if (payload.primary_color || payload.secondary_color) {
         applyTenantTheme({
           primary: payload.primary_color ?? undefined,

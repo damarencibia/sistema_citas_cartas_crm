@@ -151,7 +151,6 @@ const settingsNav = computed(() => {
       icon: 'mdi-cog-outline',
       children: [
         { title: 'Mi Negocio', icon: 'mdi-store-outline', to: '/settings/business' },
-        { title: 'Portal Público', icon: 'mdi-web', to: '/settings/portal' },
         { title: 'Módulos', icon: 'mdi-puzzle-outline', to: '/settings/modules' },
         { title: 'Config. Citas', icon: 'mdi-calendar-cog-outline', to: '/settings/appointments-config' },
       ],
