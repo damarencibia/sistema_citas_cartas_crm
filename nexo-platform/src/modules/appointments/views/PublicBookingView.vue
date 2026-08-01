@@ -396,7 +396,18 @@
         <p v-else class="text-body-1 text-medium-emphasis mb-0">
           Te notificaremos a <strong>{{ customerEmail }}</strong> cuando alguno de tus horarios seleccionados se libere.
         </p>
-        <div class="d-flex justify-center mt-6">
+        <div class="d-flex flex-column align-center mt-6 ga-3">
+          <v-btn
+            v-if="!waitlistJoined && waSummaryUrl"
+            color="green"
+            variant="tonal"
+            :href="waSummaryUrl"
+            target="_blank"
+            rel="noopener"
+            prepend-icon="mdi-whatsapp"
+          >
+            Enviar resumen por WhatsApp
+          </v-btn>
           <v-btn color="primary" variant="flat" @click="resetForm">
             <v-icon start>mdi-calendar-plus</v-icon>
             Reservar otra cita
@@ -454,6 +465,22 @@ const tenant = computed(() => tenantStore.tenant);
 const pendingEmployeeName = computed(() => {
   if (!pendingEmployeeId.value) return '';
   return employeeStore.activeEmployees.find((e) => e.id === pendingEmployeeId.value)?.first_name ?? '';
+});
+
+const waSummaryUrl = computed(() => {
+  const digits = (selectedEmployee.value?.phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  const workerName = selectedEmployee.value
+    ? `${selectedEmployee.value.first_name} ${selectedEmployee.value.last_name}`.trim()
+    : '';
+  const text = [
+    `Hola ${workerName}, confirmo mi cita`,
+    selectedService.value?.name ? ` de ${selectedService.value.name}` : '',
+    selectedDate.value ? ` el ${formatDate(selectedDate.value)}` : '',
+    selectedTime.value ? ` a las ${selectedTime.value.slice(0, 5)}` : '',
+    customerName.value ? `. Soy ${customerName.value}` : '.',
+  ].join('');
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 });
 
 const steps = ['Categoría', 'Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
@@ -611,6 +638,7 @@ function goBack() {
 async function onConfirm() {
   submitting.value = true;
   bookingError.value = null;
+  const waWindow = waSummaryUrl.value ? window.open('', '_blank') : null;
   try {
     if (joiningWaitlist.value) {
       await bookingStore.joinWaitlist({
@@ -641,8 +669,12 @@ async function onConfirm() {
       whatsapp_consent: whatsappConsent.value,
     });
     confirmed.value = true;
+    if (waWindow && waSummaryUrl.value) {
+      waWindow.location.href = waSummaryUrl.value;
+    }
   } catch (e: unknown) {
     bookingError.value = e instanceof Error ? e.message : 'Error al procesar tu solicitud. Intenta de nuevo.';
+    if (waWindow) waWindow.close();
   } finally {
     submitting.value = false;
   }

@@ -23,24 +23,6 @@ function resolveTenantId(): string | null {
   return tenantStore.tenant?.id ?? null;
 }
 
-async function sendClientNotification(event: string, bookingId: string) {
-  try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    if (!supabaseUrl) return;
-    const authStore = useAuthStore();
-    await fetch(`${supabaseUrl}/functions/v1/send-client-notification`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authStore.session?.access_token ?? ''}`,
-      },
-      body: JSON.stringify({ event, booking_id: bookingId }),
-    });
-  } catch {
-    // WhatsApp delivery is best-effort
-  }
-}
-
 export const useBookingStore = defineStore('appointments/bookings', {
   state: (): BookingStoreState => ({
     bookings: [],
@@ -113,9 +95,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
 
       const booking = await bookingRepository.create(dto, tenantId);
       this.bookings.push(booking);
-      if (booking.status === 'confirmed') {
-        await sendClientNotification('booking_confirmed', booking.id);
-      }
       return booking;
     },
 
@@ -149,7 +128,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
 
         if (status === 'cancelled' && booking) {
           await this.promoteWaitlistForBooking(tenantId, booking);
-          await sendClientNotification('booking_cancelled', id);
         }
       }
 
@@ -270,8 +248,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
         );
       }
 
-      await sendClientNotification('booking_rescheduled', bookingId);
-
       return updated;
     },
 
@@ -302,8 +278,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
         );
       }
 
-      await sendClientNotification('booking_confirmed', bookingId);
-
       return updated;
     },
 
@@ -333,8 +307,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
           reason ?? 'Rechazado por administrador',
         );
       }
-
-      await sendClientNotification('booking_cancelled', bookingId);
 
       return updated;
     },
@@ -375,11 +347,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
     },
 
     async acceptWaitlistOffer(token: string) {
-      const result = await bookingRepository.acceptWaitlistOffer(token);
-      if (result.booking_id) {
-        await sendClientNotification('booking_confirmed', result.booking_id);
-      }
-      return result;
+      return bookingRepository.acceptWaitlistOffer(token);
     },
 
     async declineWaitlistOffer(token: string) {

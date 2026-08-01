@@ -168,11 +168,15 @@ const canUpdate = computed(() =>
 );
 
 const whatsappUrl = computed(() => {
-  const phone = props.booking?.customer_phone;
+  if (!props.booking?.whatsapp_consent) return null;
+  const phone = props.booking.customer_phone;
   if (!phone) return null;
   const digits = phone.replace(/\D/g, '');
   if (!digits) return null;
-  const text = `Hola ${props.booking.customer_name ?? ''}, te escribo respecto a tu cita del ${props.booking.date}.`;
+  const service = props.booking.service?.name ?? '';
+  const date = props.booking.date;
+  const time = props.booking.start_time?.slice(0, 5) ?? '';
+  const text = `Hola ${props.booking.customer_name ?? ''}, te escribo respecto a tu cita${service ? ` de ${service}` : ''} del ${date}${time ? ` a las ${time}` : ''}.`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 });
 
