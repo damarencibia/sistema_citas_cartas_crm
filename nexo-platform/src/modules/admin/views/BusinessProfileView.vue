@@ -334,6 +334,7 @@ async function save() {
       email: form.email,
       phone: form.phone || null,
       address: form.address || null,
+      description: form.description || null,
       logo_url: form.logo_url || null,
       primary_color: form.primary_color,
       secondary_color: form.secondary_color,
