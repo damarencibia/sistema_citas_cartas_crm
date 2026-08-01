@@ -638,7 +638,6 @@ function goBack() {
 async function onConfirm() {
   submitting.value = true;
   bookingError.value = null;
-  const waWindow = waSummaryUrl.value ? window.open('', '_blank') : null;
   try {
     if (joiningWaitlist.value) {
       await bookingStore.joinWaitlist({
@@ -669,12 +668,11 @@ async function onConfirm() {
       whatsapp_consent: whatsappConsent.value,
     });
     confirmed.value = true;
-    if (waWindow && waSummaryUrl.value) {
-      waWindow.location.href = waSummaryUrl.value;
+    if (waSummaryUrl.value) {
+      window.location.href = waSummaryUrl.value;
     }
   } catch (e: unknown) {
     bookingError.value = e instanceof Error ? e.message : 'Error al procesar tu solicitud. Intenta de nuevo.';
-    if (waWindow) waWindow.close();
   } finally {
     submitting.value = false;
   }
