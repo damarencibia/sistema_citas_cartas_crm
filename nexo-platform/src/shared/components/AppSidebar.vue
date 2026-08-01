@@ -102,12 +102,10 @@ const moduleNavItems = computed(() => {
 
   if (modules.appointments) {
     items.push({ title: 'Agenda', icon: 'mdi-calendar-outline', to: '/appointments/agenda' });
+    items.push({ title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' });
     if (isAdmin) {
-      items.push({ title: 'Categorías', icon: 'mdi-shape-outline', to: '/appointments/categories' });
-      items.push({ title: 'Catálogo', icon: 'mdi-book-open-outline', to: '/appointments/catalog' });
-      items.push({ title: 'Servicios', icon: 'mdi-content-cut', to: '/appointments/services' });
+      items.push({ title: 'Catálogo y Servicios', icon: 'mdi-book-open-outline', to: '/appointments/catalog' });
       items.push({ title: 'Empleados', icon: 'mdi-account-group-outline', to: '/appointments/employees' });
-      items.push({ title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' });
     } else {
       items.push({ title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services' });
     }

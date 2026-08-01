@@ -1,11 +1,31 @@
 <template>
   <div class="schedule-editor">
     <div class="d-flex align-center ga-2 mb-4">
-      <EmployeeSelect v-model="selectedEmployeeId" label="Empleado" class="flex-grow-1" />
+      <EmployeeSelect
+        v-model="selectedEmployeeId"
+        label="Empleado"
+        class="flex-grow-1"
+        :allowed-ids="allowedIds"
+        :disabled="isEmployeeView"
+      />
+      <v-chip
+        v-if="isEmployeeView"
+        color="primary"
+        variant="tonal"
+        size="small"
+      >
+        <v-icon start size="16">mdi-account-badge-outline</v-icon>
+        Configurando tu horario
+      </v-chip>
     </div>
 
     <div v-if="!selectedEmployeeId" class="text-center text-medium-emphasis pa-8">
-      Selecciona un empleado para configurar sus turnos
+      <template v-if="isEmployeeView && !myEmployeeId">
+        No hay un perfil de empleado vinculado a tu cuenta. Contacta a un administrador.
+      </template>
+      <template v-else>
+        Selecciona un empleado para configurar sus turnos
+      </template>
     </div>
 
     <template v-else>
@@ -103,17 +123,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue';
+import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useScheduleStore } from '../stores/schedule.store';
 import { useNotification } from '@/shared/composables/useNotification';
+import { useAuthStore } from '@/shared/stores/auth.store';
+import { useEmployeeStore } from '../stores/employee.store';
 import EmployeeSelect from './EmployeeSelect.vue';
 import ShiftDialog from './ShiftDialog.vue';
 
 const scheduleStore = useScheduleStore();
 const notification = useNotification();
+const authStore = useAuthStore();
+const employeeStore = useEmployeeStore();
 
 const selectedEmployeeId = ref<string | null>(null);
 const saving = ref(false);
+
+const isEmployeeView = computed(() => authStore.userRole === 'employee');
+const myEmployeeId = ref<string | null>(null);
+
+const allowedIds = computed(() =>
+  isEmployeeView.value && myEmployeeId.value ? [myEmployeeId.value] : undefined,
+);
+
+onMounted(async () => {
+  if (!isEmployeeView.value) return;
+  await employeeStore.fetchEmployeesWithRoles();
+  const userId = authStore.user?.id;
+  const match = employeeStore.employees.find(
+    (e) => e.user_id === userId || e.supabase_user_id === userId,
+  );
+  myEmployeeId.value = match?.id ?? null;
+  if (myEmployeeId.value) {
+    selectedEmployeeId.value = myEmployeeId.value;
+  }
+});
 
 interface LocalShift {
   start_time: string;

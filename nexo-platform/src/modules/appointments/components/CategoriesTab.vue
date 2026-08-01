@@ -1,14 +1,5 @@
 <template>
   <div>
-    <PageHeader title="Categorías de Servicios" subtitle="Define las categorías de servicios de tu negocio">
-      <template #actions>
-        <v-btn color="primary" @click="openCreate">
-          <v-icon start>mdi-plus</v-icon>
-          Nueva Categoría
-        </v-btn>
-      </template>
-    </PageHeader>
-
     <div v-if="categoryStore.loading" class="text-center pa-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
@@ -86,7 +77,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useServiceCategoryStore } from '../stores/service-category.store';
@@ -152,4 +142,6 @@ async function onDelete(category: ServiceCategory) {
     notification.error('Error al eliminar categoría');
   }
 }
+
+defineExpose({ openCreate });
 </script>

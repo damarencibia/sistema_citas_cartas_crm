@@ -1,14 +1,5 @@
 <template>
   <div>
-    <PageHeader title="Servicios" subtitle="Administra los servicios del negocio">
-      <template #actions>
-        <v-btn color="primary" @click="openCreate">
-          <v-icon start>mdi-plus</v-icon>
-          Nuevo Servicio
-        </v-btn>
-      </template>
-    </PageHeader>
-
     <div v-if="serviceStore.loading" class="text-center pa-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
@@ -85,7 +76,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useServiceStore } from '../stores/service.store';
@@ -179,4 +169,6 @@ async function onDelete(service: Service) {
     notification.error('Error al eliminar servicio');
   }
 }
+
+defineExpose({ openCreate });
 </script>

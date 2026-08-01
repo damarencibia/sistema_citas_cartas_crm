@@ -1,11 +1,16 @@
 <template>
   <div class="page-header mb-6">
-    <div>
-      <h1 class="page-header__title">{{ title }}</h1>
-      <p v-if="subtitle" class="page-header__subtitle">{{ subtitle }}</p>
+    <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+      <div>
+        <h1 class="page-header__title">{{ title }}</h1>
+        <p v-if="subtitle" class="page-header__subtitle">{{ subtitle }}</p>
+      </div>
+      <div class="d-flex ga-2 flex-wrap">
+        <slot name="actions" />
+      </div>
     </div>
-    <div class="d-flex ga-2 flex-wrap">
-      <slot name="actions" />
+    <div class="page-header__tabs">
+      <slot name="tabs" />
     </div>
   </div>
 </template>
