@@ -70,12 +70,10 @@
             />
             <TimeSlotPicker
               v-model="form.start_time"
+              v-model:waitlist-times="waitlistTimes"
               :slots="availability.slots.value"
               :date="form.date"
               :loading="slotsLoading"
-              @join-waitlist="handleJoinWaitlist"
-              @join-waitlist-exact="handleJoinWaitlistExact"
-              @join-waitlist-flexible="handleJoinWaitlistFlexible"
             />
             <v-text-field
               v-if="isGroupService"
@@ -103,35 +101,12 @@
               <v-icon size="small" class="mr-1">mdi-numeric-4-circle-outline</v-icon>
               4. Empleado
             </div>
-            <div v-if="autoAssign && assignedEmployee" class="d-flex align-center ga-2">
-              <v-chip color="primary" variant="tonal" prepend-icon="mdi-account-check">
-                {{ assignedEmployee.first_name }} {{ assignedEmployee.last_name }}
-              </v-chip>
-              <v-btn
-                size="small"
-                variant="text"
-                color="primary"
-                @click="enableManualEmployee"
-              >
-                Cambiar
-              </v-btn>
-            </div>
             <EmployeeSelect
-              v-else
               v-model="form.employee_id"
               :allowed-ids="serviceEmployeeIds"
+              :rules="[(v) => !!v || 'Selecciona un empleado']"
               @update:model-value="onEmployeeChange"
             />
-            <div v-if="!autoAssign && selectedService?.employee_id" class="mt-1">
-              <v-btn
-                size="small"
-                variant="text"
-                color="primary"
-                @click="enableAutoAssign"
-              >
-                Auto-asignar empleado
-              </v-btn>
-            </div>
           </div>
 
           <!-- Step 5: Datos del Cliente -->
@@ -157,8 +132,9 @@
               <v-col cols="6">
                 <v-text-field
                   v-model="form.customer_email"
-                  label="Email (opcional)"
+                  :label="joiningWaitlist ? 'Email *' : 'Email (opcional)'"
                   type="email"
+                  :rules="emailRules"
                 />
               </v-col>
             </v-row>
@@ -175,37 +151,25 @@
           :loading="submitting"
           @click="onSubmit"
         >
-          {{ editing ? 'Guardar' : 'Crear Reserva' }}
+          {{ editing ? 'Guardar' : joiningWaitlist ? 'Unirse a Lista de Espera' : 'Crear Reserva' }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
-
-  <WaitlistDialog
-    :visible="showWaitlistDialog"
-    :service-id="form.service_id"
-    :employee-id="form.employee_id || undefined"
-    :date="form.date"
-    :preselected-time="waitlistTime"
-    :preselected-preference="waitlistPreference"
-    @close="onWaitlistClose"
-    @save="onWaitlistSave"
-  />
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue';
 import { useServiceStore } from '../stores/service.store';
 import { useServiceCategoryStore } from '../stores/service-category.store';
-import { useEmployeeStore } from '../stores/employee.store';
 import { useBookingStore } from '../stores/booking.store';
 import { useResourceStore } from '../stores/resource.store';
 import { useAvailability } from '../composables/useAvailability';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useNotification } from '@/shared/composables/useNotification';
 import EmployeeSelect from './EmployeeSelect.vue';
 import TimeSlotPicker from './TimeSlotPicker.vue';
 import ResourceSelect from './ResourceSelect.vue';
-import WaitlistDialog from './WaitlistDialog.vue';
 import type { Booking, CreateBookingDTO } from '../types/booking.types';
 
 const props = defineProps<{
@@ -220,20 +184,17 @@ const emit = defineEmits<{
 
 const serviceStore = useServiceStore();
 const categoryStore = useServiceCategoryStore();
-const employeeStore = useEmployeeStore();
 const bookingStore = useBookingStore();
 const resourceStore = useResourceStore();
 const availability = useAvailability();
 const authStore = useAuthStore();
+const notification = useNotification();
 const formRef = ref();
 const editing = ref(false);
 const submitting = ref(false);
 const slotsLoading = computed(() => availability.loading.value);
 const minDate = new Date().toISOString().split('T')[0];
-const showWaitlistDialog = ref(false);
-const waitlistTime = ref<string | undefined>(undefined);
-const waitlistPreference = ref<'exact' | 'flexible' | undefined>(undefined);
-const autoAssign = ref(false);
+const waitlistTimes = ref<string[]>([]);
 
 const form = reactive({
   category_id: '',
@@ -281,38 +242,31 @@ const hasResources = computed(() =>
   resourceStore.activeResources.length > 0,
 );
 
+const joiningWaitlist = computed(() => waitlistTimes.value.length > 0);
+
+const emailRules = [
+  (v: string) => !joiningWaitlist.value || !!v?.trim() || 'Se requiere email para la lista de espera',
+  (v: string) => !v || v.includes('@') || 'Email inválido',
+];
+
 const serviceEmployeeIds = computed(() => {
   if (!selectedService.value?.employee_id) return [];
   return [selectedService.value.employee_id];
-});
-
-const assignedEmployee = computed(() => {
-  if (!selectedService.value?.employee_id) return null;
-  return employeeStore.employees.find((e) => e.id === selectedService.value!.employee_id) ?? null;
 });
 
 function onCategoryChange() {
   form.service_id = '';
   form.employee_id = '';
   form.start_time = '';
+  waitlistTimes.value = [];
   availability.clear();
-  autoAssign.value = false;
 }
 
 function onServiceChange() {
   form.start_time = '';
   form.employee_id = '';
+  waitlistTimes.value = [];
   availability.clear();
-  autoAssign.value = false;
-
-  const svc = selectedService.value;
-  if (svc?.employee_id) {
-    const emp = employeeStore.employees.find((e) => e.id === svc.employee_id);
-    if (emp) {
-      form.employee_id = svc.employee_id;
-      autoAssign.value = true;
-    }
-  }
 
   if (form.service_id && form.date) {
     loadSlots();
@@ -321,6 +275,7 @@ function onServiceChange() {
 
 function onDateChange() {
   form.start_time = '';
+  waitlistTimes.value = [];
   availability.clear();
   if (form.service_id && form.employee_id && form.date) {
     loadSlots();
@@ -329,26 +284,10 @@ function onDateChange() {
 
 function onEmployeeChange() {
   form.start_time = '';
+  waitlistTimes.value = [];
   availability.clear();
-  autoAssign.value = false;
   if (form.service_id && form.employee_id && form.date) {
     loadSlots();
-  }
-}
-
-function enableManualEmployee() {
-  autoAssign.value = false;
-  form.employee_id = '';
-  availability.clear();
-}
-
-function enableAutoAssign() {
-  const svc = selectedService.value;
-  if (svc?.employee_id) {
-    form.employee_id = svc.employee_id;
-    autoAssign.value = true;
-    availability.clear();
-    if (form.date) loadSlots();
   }
 }
 
@@ -377,7 +316,6 @@ watch(
       form.notes = b.notes ?? '';
       form.participant_count = b.participant_count ?? 1;
       form.resource_id = b.resource_id ?? null;
-      autoAssign.value = false;
     } else {
       editing.value = false;
       form.category_id = '';
@@ -391,8 +329,8 @@ watch(
       form.notes = '';
       form.participant_count = 1;
       form.resource_id = null;
+      waitlistTimes.value = [];
       availability.clear();
-      autoAssign.value = false;
     }
   },
   { immediate: true },
@@ -421,64 +359,39 @@ async function onSubmit() {
   const { valid } = await formRef.value.validate();
   if (!valid) return;
   submitting.value = true;
-  const payload: CreateBookingDTO = {
-    service_id: form.service_id,
-    employee_id: form.employee_id,
-    date: form.date,
-    start_time: form.start_time,
-    customer_name: form.customer_name || undefined,
-    customer_email: form.customer_email || undefined,
-    customer_phone: form.customer_phone || undefined,
-    notes: form.notes || undefined,
-    participant_count: form.participant_count,
-    resource_id: form.resource_id ?? undefined,
-    source: 'manual',
-  };
-  emit('save', payload);
-  submitting.value = false;
-}
-
-function handleJoinWaitlist() {
-  waitlistTime.value = undefined;
-  waitlistPreference.value = undefined;
-  showWaitlistDialog.value = true;
-}
-
-function handleJoinWaitlistExact(time: string) {
-  waitlistTime.value = time;
-  waitlistPreference.value = 'exact';
-  showWaitlistDialog.value = true;
-}
-
-function handleJoinWaitlistFlexible() {
-  waitlistTime.value = undefined;
-  waitlistPreference.value = 'flexible';
-  showWaitlistDialog.value = true;
-}
-
-function onWaitlistClose() {
-  showWaitlistDialog.value = false;
-  waitlistTime.value = undefined;
-  waitlistPreference.value = undefined;
-}
-
-async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible'; time?: string }) {
   try {
-    await bookingStore.joinWaitlist({
+    if (joiningWaitlist.value) {
+      await bookingStore.joinWaitlist({
+        service_id: form.service_id,
+        employee_id: form.employee_id,
+        preferred_date: form.date,
+        preferred_times: waitlistTimes.value,
+        preferred_time_start: waitlistTimes.value[0],
+        customer_name: form.customer_name,
+        customer_email: form.customer_email,
+        customer_phone: form.customer_phone || undefined,
+        preference: 'exact',
+      });
+      notification.success('Te unimos a la lista de espera. Te avisaremos cuando un horario se libere.');
+      emit('close');
+      return;
+    }
+    const payload: CreateBookingDTO = {
       service_id: form.service_id,
-      employee_id: form.employee_id || undefined,
-      preferred_date: form.date,
-      preferred_time_start: data.time,
-      customer_name: data.customer_name,
-      customer_email: data.customer_email,
-      customer_phone: data.customer_phone || undefined,
-      preference: data.preference,
-    });
-    showWaitlistDialog.value = false;
-    waitlistTime.value = undefined;
-    waitlistPreference.value = undefined;
-  } catch {
-    // Error handled by store
+      employee_id: form.employee_id,
+      date: form.date,
+      start_time: form.start_time,
+      customer_name: form.customer_name || undefined,
+      customer_email: form.customer_email || undefined,
+      customer_phone: form.customer_phone || undefined,
+      notes: form.notes || undefined,
+      participant_count: form.participant_count,
+      resource_id: form.resource_id ?? undefined,
+      source: 'manual',
+    };
+    emit('save', payload);
+  } finally {
+    submitting.value = false;
   }
 }
 </script>

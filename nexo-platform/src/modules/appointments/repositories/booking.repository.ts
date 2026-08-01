@@ -42,6 +42,10 @@ function computeEndTime(startTime: string, durationMinutes: number): string {
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 }
 
+function normalizeTime(t: string): string {
+  return t.length === 5 ? `${t}:00` : t;
+}
+
 export const bookingRepository = {
   async getByFilters(filters: BookingFilters): Promise<Booking[]> {
     let query = supabase
@@ -485,6 +489,12 @@ export const bookingRepository = {
 
     const position = (count ?? 0) + 1;
 
+    const preferredTimes = (dto.preferred_times?.length
+      ? dto.preferred_times
+      : dto.preferred_time_start
+        ? [dto.preferred_time_start]
+        : []).map(normalizeTime);
+
     const { data, error } = await (supabase as any)
       .from('waitlist')
       .insert({
@@ -492,7 +502,8 @@ export const bookingRepository = {
         service_id: dto.service_id,
         employee_id: dto.employee_id ?? null,
         preferred_date: dto.preferred_date,
-        preferred_time_start: dto.preferred_time_start ?? null,
+        preferred_times: preferredTimes,
+        preferred_time_start: preferredTimes[0] ?? dto.preferred_time_start ?? null,
         preferred_time_end: dto.preferred_time_end ?? null,
         customer_name: dto.customer_name,
         customer_email: dto.customer_email,
@@ -581,11 +592,17 @@ export const bookingRepository = {
   },
 
   async declineWaitlistOffer(token: string): Promise<{ success: boolean; error: string | null }> {
-    const { error } = await (supabase as any).from('waitlist').delete().eq('offer_token', token);
+    const { data, error } = await (supabase as any).rpc('decline_waitlist_offer', {
+      p_token: token,
+    });
     if (error) {
       return { success: false, error: error.message };
     }
-    return { success: true, error: null };
+    const result = data?.[0];
+    return {
+      success: result?.success ?? false,
+      error: result?.error ?? null,
+    };
   },
 
   // --- Recurring Bookings ---

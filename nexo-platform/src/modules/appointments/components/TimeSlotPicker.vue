@@ -25,13 +25,16 @@
           :class="chipClass(slot)"
           size="small"
           class="ma-1"
-          :disabled="slot.status === 'past'"
+          :disabled="slot.status === 'past' || (waitlistMode && slot.status === 'available')"
           @click="onSlotClick(slot)"
         >
           {{ slot.start_time?.slice(0, 5) }} - {{ slot.end_time?.slice(0, 5) }}
-          <span v-if="slot.status === 'available' && slot.capacity_remaining < 999" class="ml-1 text-caption">
+          <span v-if="slot.status === 'available' && slot.capacity_remaining < 999 && !waitlistMode" class="ml-1 text-caption">
             ({{ slot.capacity_remaining }})
           </span>
+          <v-icon v-if="waitlistMode && slot.status === 'occupied' && isWaitlistSelected(slot)" size="small" class="ml-1">
+            mdi-check
+          </v-icon>
         </v-chip>
       </v-badge>
     </div>
@@ -72,18 +75,21 @@
       </div>
     </div>
 
-    <!-- FLEXIBLE WAITLIST BUTTON -->
+    <!-- WAITLIST MODE TOGGLE (shown when there are occupied slots) -->
     <div v-if="hasOccupied && !loading" class="mt-2">
       <v-btn
         size="small"
-        color="warning"
-        variant="tonal"
-        prepend-icon="mdi-clock-outline"
+        :color="waitlistMode ? 'primary' : 'warning'"
+        :variant="waitlistMode ? 'flat' : 'tonal'"
+        :prepend-icon="waitlistMode ? 'mdi-close' : 'mdi-clock-outline'"
         block
-        @click="emit('joinWaitlistFlexible')"
+        @click="toggleWaitlistMode"
       >
-        Modo flexible — Avísame cuando se libere cualquier horario
+        {{ waitlistMode ? 'Volver a horarios disponibles' : 'Modo flexible — Elige horarios ocupados para la lista de espera' }}
       </v-btn>
+      <div v-if="waitlistMode" class="text-caption text-medium-emphasis mt-1 text-center">
+        Selecciona uno o varios horarios ocupados. Te avisaremos cuando alguno se libere.
+      </div>
     </div>
 
     <!-- EMPTY STATE (no slots at all — do NOT offer waitlist) -->
@@ -94,23 +100,32 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { AvailableSlot } from '../types/booking.types';
 
-const props = defineProps<{
-  modelValue: string;
-  slots: AvailableSlot[];
-  date?: string;
-  label?: string;
-  loading?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: string;
+    slots: AvailableSlot[];
+    date?: string;
+    label?: string;
+    loading?: boolean;
+    waitlistTimes?: string[];
+  }>(),
+  {
+    date: undefined,
+    label: '',
+    loading: false,
+    waitlistTimes: () => [],
+  },
+);
 
 const emit = defineEmits<{
   'update:modelValue': [value: string];
-  joinWaitlist: [];
-  joinWaitlistExact: [time: string];
-  joinWaitlistFlexible: [];
+  'update:waitlistTimes': [value: string[]];
 }>();
+
+const waitlistMode = ref(false);
 
 const allSlots = computed(() => props.slots);
 
@@ -128,25 +143,46 @@ const hasOccupied = computed(() =>
   gridSlots.value.some((s) => s.status === 'occupied'),
 );
 
+function isWaitlistSelected(slot: AvailableSlot): boolean {
+  return props.waitlistTimes.includes(slot.start_time);
+}
+
 function chipColor(slot: AvailableSlot) {
-  if (slot.status === 'occupied') return 'error';
   if (slot.status === 'past') return 'grey';
+  if (waitlistMode.value) {
+    if (slot.status === 'occupied') return 'error';
+    return 'grey';
+  }
+  if (slot.status === 'occupied') return 'error';
   if (slot.start_time === props.modelValue) return 'primary';
   return 'success';
 }
 
 function chipVariant(slot: AvailableSlot): 'outlined' | 'tonal' | 'flat' {
-  if (slot.status === 'occupied') return 'outlined';
   if (slot.status === 'past') return 'tonal';
+  if (waitlistMode.value) {
+    if (slot.status === 'occupied') return isWaitlistSelected(slot) ? 'flat' : 'outlined';
+    return 'tonal';
+  }
+  if (slot.status === 'occupied') return 'outlined';
   if (slot.start_time === props.modelValue) return 'flat';
   return 'outlined';
 }
 
 function chipClass(slot: AvailableSlot): string {
   const classes: string[] = [];
-  if (slot.status === 'occupied') classes.push('slot-occupied');
   if (slot.status === 'past') classes.push('slot-past');
-  if (slot.status === 'available' && slot.start_time === props.modelValue) classes.push('slot-selected');
+  if (waitlistMode.value) {
+    if (slot.status === 'occupied') {
+      classes.push('slot-waitlist-selectable');
+      if (isWaitlistSelected(slot)) classes.push('slot-waitlist-selected');
+    } else {
+      classes.push('slot-dimmed');
+    }
+  } else {
+    if (slot.status === 'occupied') classes.push('slot-occupied');
+    if (slot.status === 'available' && slot.start_time === props.modelValue) classes.push('slot-selected');
+  }
   return classes.join(' ');
 }
 
@@ -159,10 +195,30 @@ function onWindowSelect(time: string) {
   emit('update:modelValue', time);
 }
 
+function toggleWaitlistTime(time: string) {
+  const current = props.waitlistTimes;
+  const next = current.includes(time)
+    ? current.filter((t) => t !== time)
+    : [...current, time];
+  emit('update:waitlistTimes', next);
+}
+
+function toggleWaitlistMode() {
+  waitlistMode.value = !waitlistMode.value;
+  if (waitlistMode.value) {
+    emit('update:modelValue', '');
+  } else {
+    emit('update:waitlistTimes', []);
+  }
+}
+
 function onSlotClick(slot: AvailableSlot) {
-  if (slot.status === 'occupied') {
-    emit('joinWaitlistExact', slot.start_time);
-  } else if (slot.status === 'available') {
+  if (slot.status === 'past') return;
+  if (waitlistMode.value) {
+    if (slot.status === 'occupied') toggleWaitlistTime(slot.start_time);
+    return;
+  }
+  if (slot.status === 'available') {
     emit('update:modelValue', slot.start_time);
   }
 }
@@ -187,5 +243,21 @@ function onSelect(slot: AvailableSlot) {
 .slot-past {
   opacity: 0.4;
   cursor: default !important;
+}
+
+.slot-dimmed {
+  opacity: 0.45;
+  cursor: default !important;
+}
+
+.slot-waitlist-selectable {
+  opacity: 1;
+  border-color: rgba(244, 67, 54, 0.7) !important;
+  box-shadow: 0 0 6px rgba(244, 67, 54, 0.35);
+}
+
+.slot-waitlist-selected {
+  opacity: 1;
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.55);
 }
 </style>

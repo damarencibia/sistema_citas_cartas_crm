@@ -28,7 +28,7 @@
         <v-list-item
           v-for="entry in filteredEntries"
           :key="entry.id"
-          :subtitle="`${entry.customer_email} · ${entry.preferred_date} · ${entry.preference === 'flexible' ? 'Cualquier hora' : (entry.preferred_time_start ? entry.preferred_time_start.slice(0, 5) : 'Sin preferencia')}`"
+          :subtitle="`${entry.customer_email} · ${entry.preferred_date} · ${waitlistTimesLabel(entry)}`"
         >
           <template #title>
             <div class="d-flex align-center ga-2">
@@ -126,5 +126,13 @@ function statusLabel(status: WaitlistEntry['status']): string {
     cancelled: 'Cancelado',
   };
   return map[status] ?? status;
+}
+
+function waitlistTimesLabel(entry: WaitlistEntry): string {
+  if (entry.preferred_times?.length) {
+    return entry.preferred_times.map((t) => t.slice(0, 5)).join(', ');
+  }
+  if (entry.preferred_time_start) return entry.preferred_time_start.slice(0, 5);
+  return 'Cualquier hora';
 }
 </script>

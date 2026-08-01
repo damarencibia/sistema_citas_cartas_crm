@@ -132,6 +132,7 @@ export interface WaitlistEntry {
   service_id: string;
   employee_id: string | null;
   preferred_date: string;
+  preferred_times: string[];
   preferred_time_start: string | null;
   preferred_time_end: string | null;
   customer_name: string;
@@ -155,6 +156,7 @@ export interface CreateWaitlistDTO {
   service_id: string;
   employee_id?: string;
   preferred_date: string;
+  preferred_times?: string[];
   preferred_time_start?: string;
   preferred_time_end?: string;
   customer_name: string;

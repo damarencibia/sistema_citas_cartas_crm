@@ -12,15 +12,31 @@
         </div>
         <h1 class="text-h4 font-weight-bold">Reserva tu Cita</h1>
         <p class="text-body-1 text-medium-emphasis">En pocos pasos, sin complicaciones.</p>
-        <v-progress-linear
-          v-if="!confirmed"
-          :model-value="bookingProgress"
-          color="primary"
-          height="6"
-          rounded
-          class="mx-auto mt-4"
-          style="max-width: 420px"
-        />
+        <div v-if="!confirmed" class="booking-stepper-track mx-auto mt-4">
+          <div class="booking-stepper-line">
+            <div
+              class="booking-stepper-fill"
+              :style="{ width: `${progressFraction * 100}%` }"
+            />
+          </div>
+          <div class="booking-stepper-steps">
+            <div
+              v-for="(label, i) in steps"
+              :key="label"
+              class="booking-step"
+              :class="{
+                'is-done': step > i + 1,
+                'is-active': step === i + 1,
+              }"
+            >
+              <div class="booking-step-dot">
+                <v-icon v-if="step > i + 1" size="14">mdi-check</v-icon>
+                <span v-else>{{ i + 1 }}</span>
+              </div>
+              <span class="booking-step-label">{{ label }}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <v-alert
@@ -43,49 +59,110 @@
       >
         <template #item.1>
           <div class="pa-4">
-            <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona un servicio</h3>
+            <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona una categoría</h3>
             <div v-if="loading" class="text-center pa-4">
               <v-progress-circular indeterminate color="primary" />
             </div>
-            <template v-for="cat in categoriesWithServices" :key="cat.id">
-              <div class="d-flex align-center ga-2 mb-2 mt-3">
-                <v-icon size="18">{{ cat.icon || 'mdi-tag-outline' }}</v-icon>
-                <span class="text-subtitle-2 font-weight-medium">{{ cat.name }}</span>
-              </div>
-              <v-card
-                v-for="svc in servicesByCategory(cat.id)"
-                :key="svc.id"
-                class="mb-3 rounded-xl service-select-card"
-                :class="{
-                  'hover-lift': selectedService?.id !== svc.id,
-                  'is-selected': selectedService?.id === svc.id,
-                }"
-                :variant="selectedService?.id === svc.id ? 'flat' : 'outlined'"
-                :color="selectedService?.id === svc.id ? 'primary' : undefined"
-                @click="selectService(svc)"
+            <v-row v-else>
+              <v-col
+                v-for="cat in categoryOptions"
+                :key="cat.id"
+                cols="12"
+                sm="6"
+                md="4"
               >
-                <v-card-text class="d-flex align-center ga-3">
-                  <div class="color-dot" :style="{ backgroundColor: svc.color }" />
-                  <div class="flex-grow-1">
-                    <div class="text-subtitle-1 font-weight-medium">{{ svc.name }}</div>
-                    <div v-if="svc.description" class="text-caption text-medium-emphasis">
-                      {{ svc.description }}
+                <v-card
+                  class="mb-3 rounded-xl service-select-card h-100"
+                  :class="{
+                    'hover-lift': selectedCategory !== cat.id,
+                    'is-selected': selectedCategory === cat.id,
+                  }"
+                  :variant="selectedCategory === cat.id ? 'flat' : 'outlined'"
+                  :color="selectedCategory === cat.id ? 'primary' : undefined"
+                  @click="selectCategory(cat.id)"
+                >
+                  <v-card-text class="text-center pa-5">
+                    <v-avatar
+                      :color="`rgba(var(--v-theme-primary), 0.12)`"
+                      size="56"
+                      class="mx-auto mb-3"
+                    >
+                      <v-icon size="26" color="primary">{{ cat.icon }}</v-icon>
+                    </v-avatar>
+                    <div class="text-subtitle-1 font-weight-medium">{{ cat.name }}</div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      {{ cat.serviceCount }}
+                      {{ cat.serviceCount === 1 ? 'servicio' : 'servicios' }}
                     </div>
-                    <div class="text-caption text-medium-emphasis">{{ svc.duration_minutes }} min</div>
-                  </div>
-                  <div class="text-end">
-                    <div class="text-subtitle-2 font-weight-bold">{{ formatPrice(svc.price) }}</div>
-                    <v-icon v-if="selectedService?.id === svc.id" size="20" class="mt-1">
+                    <v-icon
+                      v-if="selectedCategory === cat.id"
+                      size="20"
+                      color="primary"
+                      class="mt-1"
+                    >
                       mdi-check-circle
                     </v-icon>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </template>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
           </div>
         </template>
 
         <template #item.2>
+          <div class="pa-4">
+            <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-4">
+              <h3 class="text-subtitle-1 font-weight-medium mb-0">
+                Servicios de {{ selectedCategoryName }}
+              </h3>
+              <v-btn
+                variant="text"
+                size="small"
+                color="primary"
+                @click="step = 1"
+              >
+                <v-icon start size="16">mdi-swap-horizontal</v-icon>
+                Cambiar categoría
+              </v-btn>
+            </div>
+            <v-card
+              v-for="svc in servicesInCategory"
+              :key="svc.id"
+              class="mb-3 rounded-xl service-select-card"
+              :class="{
+                'hover-lift': selectedService?.id !== svc.id,
+                'is-selected': selectedService?.id === svc.id,
+              }"
+              :variant="selectedService?.id === svc.id ? 'flat' : 'outlined'"
+              :color="selectedService?.id === svc.id ? 'primary' : undefined"
+              @click="selectService(svc)"
+            >
+              <v-card-text class="d-flex align-center ga-3">
+                <div class="color-dot" :style="{ backgroundColor: svc.color }" />
+                <div class="flex-grow-1">
+                  <div class="text-subtitle-1 font-weight-medium">{{ svc.name }}</div>
+                  <div v-if="svc.description" class="text-caption text-medium-emphasis">
+                    {{ svc.description }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">{{ svc.duration_minutes }} min</div>
+                </div>
+                <div class="text-end">
+                  <div class="text-subtitle-2 font-weight-bold">{{ formatPrice(svc.price) }}</div>
+                  <v-icon v-if="selectedService?.id === svc.id" size="20" class="mt-1">
+                    mdi-check-circle
+                  </v-icon>
+                </div>
+              </v-card-text>
+            </v-card>
+            <v-empty
+              v-if="!servicesInCategory.length"
+              icon="mdi-spa-off-outline"
+              text="No hay servicios disponibles en esta categoría."
+            />
+          </div>
+        </template>
+
+        <template #item.3>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona un empleado</h3>
             <v-alert
@@ -125,14 +202,14 @@
           </div>
         </template>
 
-        <template #item.3>
+        <template #item.4>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona una fecha</h3>
             <v-date-picker v-model="selectedDate" :min="minDate" show-current />
           </div>
         </template>
 
-        <template #item.4>
+        <template #item.5>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona una hora</h3>
             <div v-if="slotsLoading" class="text-center pa-4">
@@ -141,16 +218,15 @@
             <TimeSlotPicker
               v-else
               v-model="selectedTime"
+              v-model:waitlist-times="waitlistTimes"
               :slots="availability.slots.value"
               :date="selectedDate"
-              :show-waitlist="true"
               label="Horarios disponibles"
-              @join-waitlist="onJoinWaitlist"
             />
           </div>
         </template>
 
-        <template #item.5>
+        <template #item.6>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Tus datos</h3>
             <v-form ref="formRef">
@@ -175,9 +251,21 @@
           </div>
         </template>
 
-        <template #item.6>
+        <template #item.7>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Confirma tu reserva</h3>
+            <v-alert
+              v-if="joiningWaitlist"
+              type="info"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+              icon="mdi-clock-outline"
+            >
+              Te unirás a la lista de espera para:
+              <strong>{{ waitlistTimes.map((t) => t.slice(0, 5)).join(', ') }}</strong>.
+              Te avisaremos cuando alguno se libere.
+            </v-alert>
             <v-card variant="outlined" class="rounded-xl overflow-hidden mb-4">
               <div class="d-flex flex-column">
                 <div class="pa-4 d-flex align-center ga-3" style="background: rgba(var(--v-theme-primary), 0.06)">
@@ -202,7 +290,10 @@
                     <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
                       <v-icon size="16">mdi-clock-outline</v-icon>Hora
                     </span>
-                    <span class="text-body-2 font-weight-medium">{{ selectedTime?.slice(0, 5) }}</span>
+                    <span v-if="!joiningWaitlist" class="text-body-2 font-weight-medium">{{ selectedTime?.slice(0, 5) }}</span>
+                    <span v-else class="text-body-2 font-weight-medium text-end">
+                      {{ waitlistTimes.map((t) => t.slice(0, 5)).join(', ') }}
+                    </span>
                   </div>
                   <div class="d-flex justify-space-between">
                     <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
@@ -243,7 +334,7 @@
             </v-btn>
             <v-spacer />
             <v-btn
-              v-if="step < 6"
+              v-if="step < 7"
               color="primary"
               variant="flat"
               :disabled="!canProceed"
@@ -262,7 +353,7 @@
               @click="onConfirm"
             >
               <v-icon start>mdi-check</v-icon>
-              Confirmar Reserva
+              {{ joiningWaitlist ? 'Unirse a Lista de Espera' : 'Confirmar Reserva' }}
             </v-btn>
           </div>
         </template>
@@ -272,9 +363,13 @@
         <v-avatar color="success" size="72" class="mx-auto mb-4">
           <v-icon size="40" color="white">mdi-check</v-icon>
         </v-avatar>
-        <h2 class="text-h5 font-weight-bold mb-2">¡Reserva confirmada!</h2>
-        <p class="text-body-1 text-medium-emphasis mb-0">
+        <h2 v-if="!waitlistJoined" class="text-h5 font-weight-bold mb-2">¡Reserva confirmada!</h2>
+        <h2 v-else class="text-h5 font-weight-bold mb-2">¡Estás en la lista de espera!</h2>
+        <p v-if="!waitlistJoined" class="text-body-1 text-medium-emphasis mb-0">
           Recibirás un email de confirmación en <strong>{{ customerEmail }}</strong>.
+        </p>
+        <p v-else class="text-body-1 text-medium-emphasis mb-0">
+          Te notificaremos a <strong>{{ customerEmail }}</strong> cuando alguno de tus horarios seleccionados se libere.
         </p>
         <div class="d-flex justify-center mt-6">
           <v-btn color="primary" variant="flat" @click="resetForm">
@@ -284,15 +379,6 @@
         </div>
       </v-card>
     </v-container>
-
-    <WaitlistDialog
-      :visible="showWaitlistDialog"
-      :service-id="selectedService?.id ?? ''"
-      :employee-id="selectedEmployee?.id"
-      :date="selectedDate"
-      @close="showWaitlistDialog = false"
-      @save="onWaitlistSave"
-    />
   </div>
 </template>
 
@@ -306,7 +392,6 @@ import { useBookingStore } from '../stores/booking.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAvailability } from '../composables/useAvailability';
 import TimeSlotPicker from '../components/TimeSlotPicker.vue';
-import WaitlistDialog from '../components/WaitlistDialog.vue';
 import type { Service } from '../types/service.types';
 import type { Employee } from '../types/employee.types';
 
@@ -323,13 +408,15 @@ const loading = ref(false);
 const submitting = ref(false);
 const confirmed = ref(false);
 const bookingError = ref<string | null>(null);
-const showWaitlistDialog = ref(false);
 const formRef = ref();
 
+const selectedCategory = ref<string | null>(null);
 const selectedService = ref<Service | null>(null);
 const selectedEmployee = ref<Employee | null>(null);
 const selectedDate = ref(new Date().toISOString().split('T')[0]);
 const selectedTime = ref('');
+const waitlistTimes = ref<string[]>([]);
+const waitlistJoined = ref(false);
 const customerName = ref('');
 const customerEmail = ref('');
 const customerPhone = ref('');
@@ -337,24 +424,56 @@ const customerNotes = ref('');
 
 const tenant = computed(() => tenantStore.tenant);
 
-const steps = ['Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
+const steps = ['Categoría', 'Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
 
-const bookingProgress = computed(() => Math.round(((step.value - 1) / (steps.length - 1)) * 100));
+const progressFraction = computed(() => {
+  if (steps.length <= 1) return 0;
+  return (step.value - 1) / (steps.length - 1);
+});
 
 const minDate = new Date().toISOString().split('T')[0];
 
-const categoriesWithServices = computed(() => {
-  const catIds = new Set(serviceStore.services.map((s) => s.category_id));
-  return categoryStore.categories.filter((c) => catIds.has(c.id));
+const activeServices = computed(() => serviceStore.services.filter((s) => s.is_active));
+
+const categoryOptions = computed(() => {
+  const map = new Map<
+    string,
+    { id: string; name: string; icon: string; description: string | null; serviceCount: number }
+  >();
+  for (const svc of activeServices.value) {
+    const cat = categoryStore.categories.find((c) => c.id === svc.category_id);
+    const key = cat ? cat.id : '__general__';
+    if (!map.has(key)) {
+      map.set(key, {
+        id: key,
+        name: cat?.name ?? 'General',
+        icon: cat?.icon ?? 'mdi-tag-outline',
+        description: cat?.description ?? null,
+        serviceCount: 0,
+      });
+    }
+    map.get(key)!.serviceCount++;
+  }
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
 });
 
-function servicesByCategory(categoryId: string) {
-  return serviceStore.services.filter((s) => s.category_id === categoryId);
-}
+const selectedCategoryName = computed(
+  () => categoryOptions.value.find((c) => c.id === selectedCategory.value)?.name ?? '',
+);
+
+const servicesInCategory = computed(() => {
+  if (!selectedCategory.value) return [];
+  return activeServices.value.filter((svc) => {
+    const cat = categoryStore.categories.find((c) => c.id === svc.category_id);
+    return (cat ? cat.id : '__general__') === selectedCategory.value;
+  });
+});
 
 const employeesForService = ref<Employee[]>([]);
 
 const slotsLoading = computed(() => availability.loading.value);
+
+const joiningWaitlist = computed(() => waitlistTimes.value.length > 0);
 
 const rules = {
   required: (v: string) => !!v?.trim() || 'Campo requerido',
@@ -363,11 +482,12 @@ const rules = {
 };
 
 const canProceed = computed(() => {
-  if (step.value === 1) return !!selectedService.value;
-  if (step.value === 2) return !!selectedEmployee.value;
-  if (step.value === 3) return !!selectedDate.value;
-  if (step.value === 4) return !!selectedTime.value;
-  if (step.value === 5) {
+  if (step.value === 1) return !!selectedCategory.value;
+  if (step.value === 2) return !!selectedService.value;
+  if (step.value === 3) return !!selectedEmployee.value;
+  if (step.value === 4) return !!selectedDate.value;
+  if (step.value === 5) return !!selectedTime.value || waitlistTimes.value.length > 0;
+  if (step.value === 6) {
     return !!customerName.value?.trim() &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.value) &&
       /^\+?[\d\s\-()]{7,15}$/.test(customerPhone.value);
@@ -388,6 +508,8 @@ onMounted(async () => {
 });
 
 watch(selectedDate, async () => {
+  selectedTime.value = '';
+  waitlistTimes.value = [];
   if (selectedService.value && selectedEmployee.value && selectedDate.value && tenantStore.tenant) {
     await availability.fetchSlots(
       tenantStore.tenant.id,
@@ -399,24 +521,38 @@ watch(selectedDate, async () => {
   }
 });
 
+function selectCategory(categoryId: string) {
+  if (selectedCategory.value === categoryId) return;
+  selectedCategory.value = categoryId;
+  selectedService.value = null;
+  selectedEmployee.value = null;
+  selectedTime.value = '';
+  waitlistTimes.value = [];
+}
+
 async function selectService(service: Service) {
   selectedService.value = service;
   selectedEmployee.value = null;
   selectedTime.value = '';
+  waitlistTimes.value = [];
   const name = service.name;
   employeesForService.value = await employeeStore.getEmployeesByServiceName(name);
-  step.value = 2;
+  step.value = 3;
 }
 
 function selectEmployee(employee: Employee) {
   selectedEmployee.value = employee;
   selectedTime.value = '';
-  step.value = 3;
+  waitlistTimes.value = [];
+  step.value = 4;
 }
 
 function goBack() {
-  if (step.value === 4) selectedTime.value = '';
   if (step.value === 5) {
+    selectedTime.value = '';
+    waitlistTimes.value = [];
+  }
+  if (step.value === 6) {
     customerName.value = '';
     customerEmail.value = '';
     customerPhone.value = '';
@@ -429,6 +565,22 @@ async function onConfirm() {
   submitting.value = true;
   bookingError.value = null;
   try {
+    if (joiningWaitlist.value) {
+      await bookingStore.joinWaitlist({
+        service_id: selectedService.value!.id,
+        employee_id: selectedEmployee.value!.id,
+        preferred_date: selectedDate.value,
+        preferred_times: waitlistTimes.value,
+        preferred_time_start: waitlistTimes.value[0],
+        customer_name: customerName.value,
+        customer_email: customerEmail.value,
+        customer_phone: customerPhone.value,
+        preference: 'exact',
+      });
+      waitlistJoined.value = true;
+      confirmed.value = true;
+      return;
+    }
     await bookingStore.createBooking({
       service_id: selectedService.value!.id,
       employee_id: selectedEmployee.value!.id,
@@ -442,7 +594,7 @@ async function onConfirm() {
     });
     confirmed.value = true;
   } catch (e: unknown) {
-    bookingError.value = e instanceof Error ? e.message : 'Error al crear la reserva. Intenta de nuevo.';
+    bookingError.value = e instanceof Error ? e.message : 'Error al procesar tu solicitud. Intenta de nuevo.';
   } finally {
     submitting.value = false;
   }
@@ -451,39 +603,18 @@ async function onConfirm() {
 function resetForm() {
   step.value = 1;
   confirmed.value = false;
+  waitlistJoined.value = false;
   bookingError.value = null;
+  selectedCategory.value = null;
   selectedService.value = null;
   selectedEmployee.value = null;
   selectedTime.value = '';
+  waitlistTimes.value = [];
   customerName.value = '';
   customerEmail.value = '';
   customerPhone.value = '';
   customerNotes.value = '';
   employeesForService.value = [];
-}
-
-function onJoinWaitlist() {
-  if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
-  showWaitlistDialog.value = true;
-}
-
-async function onWaitlistSave(data: { customer_name: string; customer_email: string; customer_phone: string; preference: 'exact' | 'flexible' }) {
-  if (!tenantStore.tenant || !selectedService.value || !selectedEmployee.value) return;
-  try {
-    await bookingStore.joinWaitlist({
-      service_id: selectedService.value.id,
-      employee_id: selectedEmployee.value.id,
-      preferred_date: selectedDate.value,
-      customer_name: data.customer_name,
-      customer_email: data.customer_email,
-      customer_phone: data.customer_phone || undefined,
-      preference: data.preference,
-    });
-    showWaitlistDialog.value = false;
-    bookingError.value = null;
-  } catch (e: unknown) {
-    bookingError.value = e instanceof Error ? e.message : 'Error al unirse a la lista de espera.';
-  }
 }
 
 function formatPrice(centavos: number): string {
@@ -497,6 +628,119 @@ function formatDate(dateStr: string): string {
 </script>
 
 <style scoped>
+:deep(.v-stepper-header) {
+  display: none;
+}
+
+.booking-stepper-track {
+  position: relative;
+  max-width: 640px;
+  padding: 0 12px;
+  margin-bottom: 24px;
+}
+
+.booking-stepper-line {
+  position: absolute;
+  top: 15px;
+  left: calc(100% / 7 / 2);
+  right: calc(100% / 7 / 2);
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(var(--v-theme-primary), 0.16);
+  overflow: hidden;
+}
+
+.booking-stepper-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: rgb(var(--v-theme-primary));
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.booking-stepper-steps {
+  display: flex;
+  position: relative;
+  z-index: 1;
+}
+
+.booking-step {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.booking-step-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--v-theme-primary));
+  background: rgb(var(--v-theme-surface));
+  border: 2px solid rgba(var(--v-theme-primary), 0.4);
+  transition: all 0.3s ease;
+}
+
+.booking-step-label {
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+  color: rgb(var(--v-theme-on-surface), 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.booking-step.is-done .booking-step-dot,
+.booking-step.is-active .booking-step-dot {
+  background: rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
+}
+
+.booking-step.is-active .booking-step-dot {
+  transform: scale(1.18);
+  animation: bookingDotPulse 1.6s ease-out infinite;
+}
+
+.booking-step.is-active .booking-step-label {
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
+}
+
+@keyframes bookingDotPulse {
+  0% { box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0.35); }
+  70% { box-shadow: 0 0 0 9px rgba(var(--v-theme-primary), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0); }
+}
+
+@media (max-width: 600px) {
+  .booking-stepper-track {
+    max-width: 420px;
+  }
+
+  .booking-step-label {
+    display: none;
+  }
+
+  .booking-step-dot {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .booking-stepper-line {
+    top: 13px;
+  }
+}
+
 .color-dot {
   width: 12px;
   height: 12px;

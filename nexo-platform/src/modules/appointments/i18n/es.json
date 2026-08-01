@@ -162,8 +162,7 @@
     "notes": "Notas (opcional)",
     "confirm": "Confirmar Reserva",
     "confirmed": "¡Reserva confirmada!",
-    "anyEmployee": "Cualquier empleado disponible",
-    "autoAssignInfo": "El sistema puede asignar cualquier empleado disponible para este servicio"
+    "anyEmployee": "Cualquier empleado disponible"
   },
   "calendar": {
     "noSlots": "No hay horarios disponibles para esta fecha",
