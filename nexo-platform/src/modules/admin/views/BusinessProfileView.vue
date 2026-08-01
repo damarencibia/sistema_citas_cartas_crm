@@ -81,10 +81,11 @@
               <v-textarea
                 v-model="form.description"
                 label="Descripción / Tagline"
-                rows="2"
+                rows="3"
+                auto-grow
                 counter
-                maxlength="220"
-                hint="Frase corta que aparece en el encabezado de tu página pública"
+                maxlength="500"
+                hint="Aparece en el encabezado de tu página pública (hasta 500 caracteres)"
                 persistent-hint
               />
             </v-col>

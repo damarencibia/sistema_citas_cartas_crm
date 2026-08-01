@@ -44,7 +44,7 @@
             <p
               v-if="tenant?.description"
               class="text-subtitle-1 text-medium-emphasis mx-auto mt-3 reveal reveal-delay-2"
-              style="max-width: 560px"
+              style="max-width: 720px"
             >
               {{ tenant.description }}
             </p>
