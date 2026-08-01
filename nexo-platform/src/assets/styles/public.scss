@@ -13,7 +13,7 @@
   background-image: linear-gradient(
     90deg,
     rgb(var(--v-theme-primary)),
-    color-mix(in srgb, rgb(var(--v-theme-secondary)) 62%, rgb(var(--v-theme-background)))
+    rgba(var(--v-theme-on-surface), 0.55)
   );
   -webkit-background-clip: text;
   background-clip: text;

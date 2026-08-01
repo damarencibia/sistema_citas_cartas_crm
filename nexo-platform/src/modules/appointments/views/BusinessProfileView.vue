@@ -122,7 +122,7 @@
                         <span class="public-text-gradient">
                           {{ stat.count != null ? (counts[stat.label] ?? 0) : stat.value }}
                         </span>
-                        <span v-if="stat.unit" class="stat-unit">{{ stat.unit }}</span>
+                        <span v-if="stat.unit" class="stat-unit text-medium-emphasis">{{ stat.unit }}</span>
                       </div>
                       <div class="text-caption text-medium-emphasis mt-1">{{ stat.label }}</div>
                     </div>
@@ -615,7 +615,6 @@ onMounted(async () => {
   margin-left: 3px;
   font-size: 0.8em;
   font-weight: 600;
-  color: rgb(var(--v-theme-secondary));
 }
 
 .stat-delay-0 { animation-delay: 0.25s; }
