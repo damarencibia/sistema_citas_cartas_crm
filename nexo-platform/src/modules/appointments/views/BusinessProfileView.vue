@@ -102,32 +102,6 @@
                 Mi Portal
               </v-btn>
             </div>
-
-            <div v-if="stats.length" class="mx-auto mt-12" style="max-width: 720px">
-              <v-card variant="outlined" class="stats-card-enter soft-shadow rounded-xl px-4 py-3 px-md-6 py-md-4">
-                <div class="d-flex flex-column flex-sm-row align-center justify-space-around">
-                  <template v-for="(stat, i) in stats" :key="stat.label">
-                    <div
-                      class="stat-enter d-flex flex-column align-center text-center py-2 px-md-8"
-                      :class="`stat-delay-${i}`"
-                    >
-                      <div class="text-h3 font-weight-bold stat-value">
-                        <span class="public-text-gradient">
-                          {{ stat.count != null ? (counts[stat.label] ?? 0) : stat.value }}
-                        </span>
-                        <span v-if="stat.unit" class="stat-unit text-medium-emphasis">{{ stat.unit }}</span>
-                      </div>
-                      <div class="text-caption text-medium-emphasis mt-1">{{ stat.label }}</div>
-                    </div>
-                    <v-divider
-                      v-if="i < stats.length - 1"
-                      vertical
-                      class="d-none d-sm-block align-self-stretch my-2"
-                    />
-                  </template>
-                </div>
-              </v-card>
-            </div>
           </div>
         </v-container>
       </section>
@@ -525,6 +499,25 @@ function startCounters() {
   }
 }
 
+function observeCounters() {
+  if (countersStarted) return;
+  const el = document.querySelector<HTMLElement>('.about-stats');
+  if (!el || typeof IntersectionObserver === 'undefined') {
+    startCounters();
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        io.disconnect();
+        startCounters();
+      }
+    },
+    { threshold: 0.4 },
+  );
+  io.observe(el);
+}
+
 const selectedCategory = ref<string | null>(null);
 const searchQuery = ref('');
 
@@ -604,7 +597,7 @@ onMounted(async () => {
     loading.value = false;
     await nextTick();
     observeReveal();
-    startCounters();
+    observeCounters();
   }
 });
 </script>
@@ -736,40 +729,6 @@ onMounted(async () => {
     transform: translateY(12px);
   }
 
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.stats-card-enter {
-  opacity: 0;
-  transform: translateY(16px);
-  animation: statIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: 0.05s;
-}
-
-.stat-enter {
-  opacity: 0;
-  transform: translateY(20px) scale(0.94);
-  animation: statIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.stat-value {
-  line-height: 1.2;
-}
-
-.stat-unit {
-  margin-left: 3px;
-  font-size: 0.8em;
-  font-weight: 600;
-}
-
-.stat-delay-0 { animation-delay: 0.25s; }
-.stat-delay-1 { animation-delay: 0.5s; }
-.stat-delay-2 { animation-delay: 0.75s; }
-
-@keyframes statIn {
   to {
     opacity: 1;
     transform: none;
