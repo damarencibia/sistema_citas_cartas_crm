@@ -110,11 +110,27 @@
               </v-btn>
             </div>
 
-            <div v-if="stats.length" class="d-flex justify-center flex-wrap gap-8 mt-12 reveal reveal-delay-5">
-              <div v-for="stat in stats" :key="stat.label" class="text-center">
-                <div class="text-h4 font-weight-bold public-text-gradient">{{ stat.value }}</div>
-                <div class="text-caption text-medium-emphasis mt-1">{{ stat.label }}</div>
-              </div>
+            <div v-if="stats.length" class="mx-auto mt-12" style="max-width: 720px">
+              <v-card variant="outlined" class="stats-card-enter soft-shadow rounded-xl px-4 py-3 px-md-6 py-md-4">
+                <div class="d-flex flex-column flex-sm-row align-center justify-space-around">
+                  <template v-for="(stat, i) in stats" :key="stat.label">
+                    <div
+                      class="stat-enter d-flex flex-column align-center text-center py-2 px-md-8"
+                      :class="`stat-delay-${i}`"
+                    >
+                      <div class="text-h3 font-weight-bold public-text-gradient">
+                        {{ stat.count != null ? (counts[stat.label] ?? 0) : stat.value }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis mt-1">{{ stat.label }}</div>
+                    </div>
+                    <v-divider
+                      v-if="i < stats.length - 1"
+                      vertical
+                      class="d-none d-sm-block align-self-stretch my-2"
+                    />
+                  </template>
+                </div>
+              </v-card>
             </div>
           </div>
         </v-container>
@@ -303,7 +319,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useServiceStore } from '../stores/service.store';
@@ -340,18 +356,51 @@ const steps = [
   { icon: 'mdi-check-decagram', title: 'Confirma en segundos', text: 'Recibe tu confirmación y listo, ¡nos vemos!' },
 ];
 
+const counts = reactive<Record<string, number>>({});
+let countersStarted = false;
+
 const stats = computed(() => {
-  const list: { value: string; label: string }[] = [];
-  if (activeServices.value.length) list.push({ value: String(activeServices.value.length), label: 'Servicios' });
-  if (activeEmployees.value.length) list.push({ value: String(activeEmployees.value.length), label: 'Especialistas' });
+  const list: { label: string; value: string; count?: number }[] = [];
+  if (activeServices.value.length) {
+    list.push({
+      label: 'Servicios',
+      value: String(activeServices.value.length),
+      count: activeServices.value.length,
+    });
+  }
+  if (activeEmployees.value.length) {
+    list.push({
+      label: 'Especialistas',
+      value: String(activeEmployees.value.length),
+      count: activeEmployees.value.length,
+    });
+  }
   if (activeServices.value.length) {
     const minutes = activeServices.value.map((s) => s.duration_minutes);
     const min = Math.min(...minutes);
     const max = Math.max(...minutes);
-    list.push({ value: min === max ? `${min} min` : `${min}–${max} min`, label: 'Duración' });
+    list.push({ label: 'Duración', value: min === max ? `${min} min` : `${min}–${max} min` });
   }
   return list;
 });
+
+function startCounters() {
+  if (countersStarted) return;
+  countersStarted = true;
+  for (const stat of stats.value) {
+    if (stat.count == null) continue;
+    counts[stat.label] = 0;
+    const start = performance.now();
+    const duration = 1100;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      counts[stat.label] = Math.round(eased * (stat.count ?? 0));
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+}
 
 const groupedServices = computed(() => {
   const groups = new Map<
@@ -394,6 +443,7 @@ onMounted(async () => {
     loading.value = false;
     await nextTick();
     observeReveal();
+    startCounters();
   }
 });
 </script>
@@ -414,5 +464,29 @@ onMounted(async () => {
 
 .relative {
   position: relative;
+}
+
+.stats-card-enter {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: statIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.05s;
+}
+
+.stat-enter {
+  opacity: 0;
+  transform: translateY(20px) scale(0.94);
+  animation: statIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stat-delay-0 { animation-delay: 0.25s; }
+.stat-delay-1 { animation-delay: 0.5s; }
+.stat-delay-2 { animation-delay: 0.75s; }
+
+@keyframes statIn {
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 </style>
