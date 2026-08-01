@@ -111,6 +111,7 @@ const moduleNavItems = computed(() => {
     }
     items.push({ title: 'Reservas', icon: 'mdi-book-check-outline', to: '/appointments/bookings' });
     items.push({ title: 'Historial', icon: 'mdi-history', to: '/appointments/history' });
+    items.push({ title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/appointments/notifications' });
   }
 
   if (modules.digital_menu && isAdmin) {

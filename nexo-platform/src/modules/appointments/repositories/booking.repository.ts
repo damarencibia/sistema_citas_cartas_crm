@@ -109,7 +109,7 @@ export const bookingRepository = {
         p_tenant_id: tenantId,
         p_customer_name: dto.customer_name ?? '',
         p_customer_email: dto.customer_email,
-        p_customer_phone: dto.customer_phone ?? null,
+        p_customer_phone: dto.customer_phone ?? '',
       });
       if (customerError) throw customerError;
       customerId = (cid as string) ?? null;
@@ -132,6 +132,7 @@ export const bookingRepository = {
       participant_count: dto.participant_count ?? 1,
       resource_id: dto.resource_id ?? null,
       custom_duration_minutes: dto.custom_duration_minutes ?? null,
+      whatsapp_consent: dto.whatsapp_consent ?? false,
     };
 
     const { data, error } = await supabase.from(TABLE).insert(insertPayload).select().single();

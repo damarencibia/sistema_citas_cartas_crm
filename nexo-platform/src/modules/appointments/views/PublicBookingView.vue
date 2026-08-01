@@ -247,6 +247,20 @@
                 :rules="[rules.required, rules.phone]"
               />
               <v-textarea v-model="customerNotes" label="Notas (opcional)" rows="2" />
+              <v-checkbox
+                v-if="!joiningWaitlist"
+                v-model="whatsappConsent"
+                color="primary"
+                density="compact"
+                hide-details
+                class="mt-1"
+              >
+                <template #label>
+                  <span class="text-caption">
+                    Quiero recibir confirmaciones y recordatorios por WhatsApp
+                  </span>
+                </template>
+              </v-checkbox>
             </v-form>
           </div>
         </template>
@@ -421,6 +435,7 @@ const customerName = ref('');
 const customerEmail = ref('');
 const customerPhone = ref('');
 const customerNotes = ref('');
+const whatsappConsent = ref(false);
 
 const tenant = computed(() => tenantStore.tenant);
 
@@ -557,6 +572,7 @@ function goBack() {
     customerEmail.value = '';
     customerPhone.value = '';
     customerNotes.value = '';
+    whatsappConsent.value = false;
   }
   step.value--;
 }
@@ -591,6 +607,7 @@ async function onConfirm() {
       customer_phone: customerPhone.value,
       notes: customerNotes.value || undefined,
       source: 'online',
+      whatsapp_consent: whatsappConsent.value,
     });
     confirmed.value = true;
   } catch (e: unknown) {
@@ -614,6 +631,7 @@ function resetForm() {
   customerEmail.value = '';
   customerPhone.value = '';
   customerNotes.value = '';
+  whatsappConsent.value = false;
   employeesForService.value = [];
 }
 

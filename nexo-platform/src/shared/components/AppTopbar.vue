@@ -8,6 +8,8 @@
 
     <v-spacer />
 
+    <NotificationCenter class="mr-1" />
+
     <v-btn
       icon
       size="x-small"
@@ -64,6 +66,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useUiStore } from '@/shared/stores/ui.store';
+import NotificationCenter from '@/modules/notifications/components/NotificationCenter.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();

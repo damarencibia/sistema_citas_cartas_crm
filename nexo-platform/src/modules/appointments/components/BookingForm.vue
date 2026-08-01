@@ -139,6 +139,20 @@
               </v-col>
             </v-row>
             <v-textarea v-model="form.notes" label="Notas (opcional)" rows="2" />
+            <v-checkbox
+              v-if="!joiningWaitlist"
+              v-model="form.whatsapp_consent"
+              color="primary"
+              density="compact"
+              hide-details
+              class="mt-1"
+            >
+              <template #label>
+                <span class="text-caption">
+                  Quiero recibir recordatorios y confirmaciones por WhatsApp
+                </span>
+              </template>
+            </v-checkbox>
           </div>
         </v-form>
       </v-card-text>
@@ -208,6 +222,7 @@ const form = reactive({
   notes: '',
   participant_count: 1,
   resource_id: null as string | null,
+  whatsapp_consent: false,
 });
 
 const categoryOptions = computed(() =>
@@ -316,6 +331,7 @@ watch(
       form.notes = b.notes ?? '';
       form.participant_count = b.participant_count ?? 1;
       form.resource_id = b.resource_id ?? null;
+      form.whatsapp_consent = b.whatsapp_consent ?? false;
     } else {
       editing.value = false;
       form.category_id = '';
@@ -329,6 +345,7 @@ watch(
       form.notes = '';
       form.participant_count = 1;
       form.resource_id = null;
+      form.whatsapp_consent = false;
       waitlistTimes.value = [];
       availability.clear();
     }
@@ -388,6 +405,7 @@ async function onSubmit() {
       participant_count: form.participant_count,
       resource_id: form.resource_id ?? undefined,
       source: 'manual',
+      whatsapp_consent: form.whatsapp_consent,
     };
     emit('save', payload);
   } finally {

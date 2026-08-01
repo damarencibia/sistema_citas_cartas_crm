@@ -284,6 +284,7 @@ export type Database = {
           status: string
           tenant_id: string
           updated_at: string
+          whatsapp_consent: boolean
         }
         Insert: {
           cancellation_reason?: string | null
@@ -312,6 +313,7 @@ export type Database = {
           status?: string
           tenant_id: string
           updated_at?: string
+          whatsapp_consent?: boolean
         }
         Update: {
           cancellation_reason?: string | null
@@ -340,6 +342,7 @@ export type Database = {
           status?: string
           tenant_id?: string
           updated_at?: string
+          whatsapp_consent?: boolean
         }
         Relationships: [
           {
@@ -1091,6 +1094,60 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          data: Json
+          id: string
+          is_read: boolean
+          read_at: string | null
+          recipient_user_id: string | null
+          tenant_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          data?: Json
+          id?: string
+          is_read?: boolean
+          read_at?: string | null
+          recipient_user_id?: string | null
+          tenant_id: string
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          is_read?: boolean
+          read_at?: string | null
+          recipient_user_id?: string | null
+          tenant_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -1819,6 +1876,7 @@ export type Database = {
           config: Json | null
           created_at: string
           deleted_at: string | null
+          description: string | null
           email: string
           id: string
           locale: string | null
@@ -1841,6 +1899,7 @@ export type Database = {
           config?: Json | null
           created_at?: string
           deleted_at?: string | null
+          description?: string | null
           email: string
           id?: string
           locale?: string | null
@@ -1863,6 +1922,7 @@ export type Database = {
           config?: Json | null
           created_at?: string
           deleted_at?: string | null
+          description?: string | null
           email?: string
           id?: string
           locale?: string | null
@@ -1960,6 +2020,7 @@ export type Database = {
           preferred_date: string
           preferred_time_end: string | null
           preferred_time_start: string | null
+          preferred_times: Json
           service_id: string
           status: string
           tenant_id: string
@@ -1983,6 +2044,7 @@ export type Database = {
           preferred_date: string
           preferred_time_end?: string | null
           preferred_time_start?: string | null
+          preferred_times?: Json
           service_id: string
           status?: string
           tenant_id: string
@@ -2006,6 +2068,7 @@ export type Database = {
           preferred_date?: string
           preferred_time_end?: string | null
           preferred_time_start?: string | null
+          preferred_times?: Json
           service_id?: string
           status?: string
           tenant_id?: string
@@ -2122,6 +2185,17 @@ export type Database = {
         Args: { p_customer_email: string; p_days?: number; p_tenant_id: string }
         Returns: number
       }
+      create_notification: {
+        Args: {
+          p_body: string
+          p_data?: Json
+          p_recipient_user_id: string
+          p_tenant_id: string
+          p_title: string
+          p_type: string
+        }
+        Returns: string
+      }
       decline_waitlist_offer: {
         Args: { p_token: string }
         Returns: {
@@ -2204,6 +2278,15 @@ export type Database = {
           offered_slot_time: string
           preference: string
         }[]
+      }
+      upsert_booking_customer: {
+        Args: {
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_tenant_id: string
+        }
+        Returns: string
       }
     }
     Enums: {

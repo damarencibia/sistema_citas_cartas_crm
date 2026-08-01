@@ -28,6 +28,7 @@ export interface Booking extends BaseEntity {
   custom_duration_minutes: number | null;
   requires_approval: boolean;
   participant_count: number;
+  whatsapp_consent: boolean;
   service?: { name: string; duration_minutes: number; color: string };
   employee?: { first_name: string; last_name: string; color: string };
 }
@@ -45,6 +46,7 @@ export interface CreateBookingDTO {
   custom_duration_minutes?: number;
   participant_count?: number;
   resource_id?: string;
+  whatsapp_consent?: boolean;
 }
 
 export interface BookingFilters {
