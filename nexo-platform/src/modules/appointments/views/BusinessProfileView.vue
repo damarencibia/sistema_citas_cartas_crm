@@ -516,9 +516,11 @@ function selectCategory(name: string) {
   searchQuery.value = '';
 }
 
-function clearCategory() {
+async function clearCategory() {
   selectedCategory.value = null;
   searchQuery.value = '';
+  await nextTick();
+  observeReveal();
 }
 
 function formatPrice(centavos: number): string {
