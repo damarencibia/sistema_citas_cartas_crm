@@ -118,8 +118,11 @@
                       class="stat-enter d-flex flex-column align-center text-center py-2 px-md-8"
                       :class="`stat-delay-${i}`"
                     >
-                      <div class="text-h3 font-weight-bold public-text-gradient">
-                        {{ stat.count != null ? (counts[stat.label] ?? 0) : stat.value }}
+                      <div class="text-h3 font-weight-bold stat-value">
+                        <span class="public-text-gradient">
+                          {{ stat.count != null ? (counts[stat.label] ?? 0) : stat.value }}
+                        </span>
+                        <span v-if="stat.unit" class="stat-unit">{{ stat.unit }}</span>
                       </div>
                       <div class="text-caption text-medium-emphasis mt-1">{{ stat.label }}</div>
                     </div>
@@ -360,7 +363,7 @@ const counts = reactive<Record<string, number>>({});
 let countersStarted = false;
 
 const stats = computed(() => {
-  const list: { label: string; value: string; count?: number }[] = [];
+  const list: { label: string; value: string; count?: number; unit?: string }[] = [];
   if (activeServices.value.length) {
     list.push({
       label: 'Servicios',
@@ -379,7 +382,7 @@ const stats = computed(() => {
     const minutes = activeServices.value.map((s) => s.duration_minutes);
     const min = Math.min(...minutes);
     const max = Math.max(...minutes);
-    list.push({ label: 'Duración', value: min === max ? `${min} min` : `${min}–${max} min` });
+    list.push({ label: 'Duración', value: min === max ? `${min}` : `${min}–${max}`, unit: 'min' });
   }
   return list;
 });
@@ -477,6 +480,17 @@ onMounted(async () => {
   opacity: 0;
   transform: translateY(20px) scale(0.94);
   animation: statIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stat-value {
+  line-height: 1.2;
+}
+
+.stat-unit {
+  margin-left: 3px;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: rgb(var(--v-theme-secondary));
 }
 
 .stat-delay-0 { animation-delay: 0.25s; }
