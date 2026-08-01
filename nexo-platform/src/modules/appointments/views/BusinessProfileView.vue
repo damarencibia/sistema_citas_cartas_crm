@@ -167,28 +167,86 @@
         </v-row>
       </v-container>
 
-      <section v-if="hasBooking && activeServices.length" class="py-16" style="background: rgba(var(--v-theme-primary), 0.05)">
+      <section v-if="hasBooking && groupedServices.length" class="py-16" style="background: rgba(var(--v-theme-primary), 0.05)">
         <v-container max-width="1100">
-          <div class="text-center mb-12 reveal">
+          <div class="text-center mb-10 reveal">
             <h2 class="text-h4 text-md-h3 font-weight-bold">Nuestros Servicios</h2>
             <p class="text-body-1 text-medium-emphasis mt-2">
-              Elige el servicio que mejor se adapte a ti.
+              Elige una categoría y encuentra el servicio perfecto.
             </p>
           </div>
 
-          <template v-for="group in groupedServices" :key="group.name">
-            <div v-if="group.services.length" class="d-flex align-center ga-2 mb-4 mt-8 reveal">
-              <v-icon color="primary">{{ group.icon }}</v-icon>
-              <span class="text-h6 font-weight-bold">{{ group.name }}</span>
-            </div>
+          <div v-if="!selectedCategory">
             <v-row>
               <v-col
-                v-for="svc in group.services"
-                :key="svc.id"
+                v-for="(group, i) in groupedServices"
+                :key="group.name"
                 cols="12"
                 sm="6"
                 lg="4"
                 class="reveal"
+                :class="`reveal-delay-${(i % 3) + 1}`"
+              >
+                <v-card
+                  class="soft-shadow hover-lift h-100 rounded-xl category-card"
+                  @click="selectCategory(group.name)"
+                >
+                  <v-card-text class="pa-6">
+                    <div class="d-flex align-center justify-space-between mb-4">
+                      <v-avatar :color="`rgba(var(--v-theme-primary), 0.12)`" size="56">
+                        <v-icon size="26" color="primary">{{ group.icon }}</v-icon>
+                      </v-avatar>
+                      <v-icon size="22" class="text-medium-emphasis">mdi-arrow-right</v-icon>
+                    </div>
+                    <div class="text-h6 font-weight-bold">{{ group.name }}</div>
+                    <p v-if="group.description" class="text-body-2 text-medium-emphasis mt-1 mb-0">
+                      {{ group.description }}
+                    </p>
+                    <div class="d-flex align-center ga-1 mt-3">
+                      <v-icon size="16" class="text-medium-emphasis">mdi-spa-outline</v-icon>
+                      <span class="text-caption text-medium-emphasis">
+                        {{ group.services.length }}
+                        {{ group.services.length === 1 ? 'servicio' : 'servicios' }}
+                      </span>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
+
+          <div v-else :key="selectedCategory" class="fade-in">
+            <div class="d-flex align-center ga-2 mb-4">
+              <v-btn
+                icon
+                variant="tonal"
+                aria-label="Volver a categorías"
+                @click="clearCategory"
+              >
+                <v-icon>mdi-arrow-left</v-icon>
+              </v-btn>
+              <v-icon color="primary">{{ selectedGroup?.icon }}</v-icon>
+              <span class="text-h6 font-weight-bold">{{ selectedGroup?.name }}</span>
+            </div>
+
+            <v-text-field
+              v-model="searchQuery"
+              prepend-inner-icon="mdi-magnify"
+              label="Buscar servicio..."
+              variant="outlined"
+              density="comfortable"
+              clearable
+              hide-details
+              class="mb-6 category-search"
+            />
+
+            <v-row v-if="filteredServices.length">
+              <v-col
+                v-for="svc in filteredServices"
+                :key="svc.id"
+                cols="12"
+                sm="6"
+                lg="4"
               >
                 <v-card
                   class="soft-shadow hover-lift h-100 rounded-xl overflow-hidden"
@@ -224,7 +282,12 @@
                 </v-card>
               </v-col>
             </v-row>
-          </template>
+            <v-empty
+              v-else
+              icon="mdi-magnify-close"
+              text="No hay servicios que coincidan con tu búsqueda."
+            />
+          </div>
         </v-container>
       </section>
 
@@ -405,22 +468,58 @@ function startCounters() {
   }
 }
 
+const selectedCategory = ref<string | null>(null);
+const searchQuery = ref('');
+
 const groupedServices = computed(() => {
   const groups = new Map<
     string,
-    { name: string; icon: string; services: typeof activeServices.value }
+    {
+      name: string;
+      icon: string;
+      description: string | null;
+      services: typeof activeServices.value;
+    }
   >();
   for (const svc of activeServices.value) {
     const name = svc.category_name || 'General';
     if (!groups.has(name)) {
-      const icon =
-        categoryStore.categories.find((c) => c.id === svc.category_id)?.icon ?? 'mdi-tag-outline';
-      groups.set(name, { name, icon, services: [] });
+      const cat = categoryStore.categories.find((c) => c.id === svc.category_id);
+      groups.set(name, {
+        name,
+        icon: cat?.icon ?? 'mdi-tag-outline',
+        description: cat?.description ?? null,
+        services: [],
+      });
     }
     groups.get(name)!.services.push(svc);
   }
   return Array.from(groups.values());
 });
+
+const selectedGroup = computed(
+  () => groupedServices.value.find((g) => g.name === selectedCategory.value) ?? null,
+);
+
+const filteredServices = computed(() => {
+  const base = selectedGroup.value?.services ?? [];
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return base;
+  return base.filter(
+    (s) =>
+      s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q),
+  );
+});
+
+function selectCategory(name: string) {
+  selectedCategory.value = name;
+  searchQuery.value = '';
+}
+
+function clearCategory() {
+  selectedCategory.value = null;
+  searchQuery.value = '';
+}
 
 function formatPrice(centavos: number): string {
   return `$${(centavos / 100).toFixed(2)}`;
@@ -467,6 +566,30 @@ onMounted(async () => {
 
 .relative {
   position: relative;
+}
+
+.category-card {
+  cursor: pointer;
+}
+
+.category-search {
+  max-width: 420px;
+}
+
+.fade-in {
+  animation: fadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .stats-card-enter {
