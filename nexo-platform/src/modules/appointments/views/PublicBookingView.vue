@@ -3,8 +3,24 @@
   <div class="public-layout">
     <v-container class="py-8" max-width="800">
       <div class="text-center mb-6">
+        <div v-if="tenant" class="d-flex align-center justify-center ga-2 mb-3">
+          <v-avatar v-if="tenant.logo_url" :image="tenant.logo_url" size="40" />
+          <v-avatar v-else color="primary" size="40">
+            <span class="text-white font-weight-bold">{{ (tenant.name || 'N')[0] }}</span>
+          </v-avatar>
+          <span class="font-weight-bold text-body-1">{{ tenant.name }}</span>
+        </div>
         <h1 class="text-h4 font-weight-bold">Reserva tu Cita</h1>
-        <p class="text-body-1 text-medium-emphasis">Selecciona el servicio, empleado y horario</p>
+        <p class="text-body-1 text-medium-emphasis">En pocos pasos, sin complicaciones.</p>
+        <v-progress-linear
+          v-if="!confirmed"
+          :model-value="bookingProgress"
+          color="primary"
+          height="6"
+          rounded
+          class="mx-auto mt-4"
+          style="max-width: 420px"
+        />
       </div>
 
       <v-alert
@@ -19,6 +35,7 @@
       </v-alert>
 
       <v-stepper
+        v-if="!confirmed"
         v-model="step"
         :items="steps"
         alt-labels
@@ -38,18 +55,30 @@
               <v-card
                 v-for="svc in servicesByCategory(cat.id)"
                 :key="svc.id"
-                class="mb-2"
-                :color="selectedService?.id === svc.id ? 'primary' : undefined"
+                class="mb-3 rounded-xl service-select-card"
+                :class="{
+                  'hover-lift': selectedService?.id !== svc.id,
+                  'is-selected': selectedService?.id === svc.id,
+                }"
                 :variant="selectedService?.id === svc.id ? 'flat' : 'outlined'"
+                :color="selectedService?.id === svc.id ? 'primary' : undefined"
                 @click="selectService(svc)"
               >
                 <v-card-text class="d-flex align-center ga-3">
                   <div class="color-dot" :style="{ backgroundColor: svc.color }" />
                   <div class="flex-grow-1">
-                    <div class="text-subtitle-1">{{ svc.name }}</div>
-                    <div class="text-caption">{{ svc.duration_minutes }} min</div>
+                    <div class="text-subtitle-1 font-weight-medium">{{ svc.name }}</div>
+                    <div v-if="svc.description" class="text-caption text-medium-emphasis">
+                      {{ svc.description }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">{{ svc.duration_minutes }} min</div>
                   </div>
-                  <div class="text-subtitle-2">{{ formatPrice(svc.price) }}</div>
+                  <div class="text-end">
+                    <div class="text-subtitle-2 font-weight-bold">{{ formatPrice(svc.price) }}</div>
+                    <v-icon v-if="selectedService?.id === svc.id" size="20" class="mt-1">
+                      mdi-check-circle
+                    </v-icon>
+                  </div>
                 </v-card-text>
               </v-card>
             </template>
@@ -70,9 +99,13 @@
             <v-card
               v-for="employee in employeesForService"
               :key="employee.id"
-              class="mb-2"
-              :color="selectedEmployee?.id === employee.id ? 'primary' : undefined"
+              class="mb-3 rounded-xl service-select-card"
+              :class="{
+                'hover-lift': selectedEmployee?.id !== employee.id,
+                'is-selected': selectedEmployee?.id === employee.id,
+              }"
               :variant="selectedEmployee?.id === employee.id ? 'flat' : 'outlined'"
+              :color="selectedEmployee?.id === employee.id ? 'primary' : undefined"
               @click="selectEmployee(employee)"
             >
               <v-card-text class="d-flex align-center ga-3">
@@ -81,7 +114,12 @@
                     {{ (employee.first_name || '')[0] }}{{ (employee.last_name || '')[0] }}
                   </span>
                 </v-avatar>
-                <div>{{ employee.first_name }} {{ employee.last_name }}</div>
+                <div class="flex-grow-1 font-weight-medium">
+                  {{ employee.first_name }} {{ employee.last_name }}
+                </div>
+                <v-icon v-if="selectedEmployee?.id === employee.id" size="20">
+                  mdi-check-circle
+                </v-icon>
               </v-card-text>
             </v-card>
           </div>
@@ -140,46 +178,57 @@
         <template #item.6>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Confirma tu reserva</h3>
-            <v-card variant="outlined" class="pa-4 mb-4">
-              <div class="d-flex flex-column ga-2">
-                <div class="d-flex justify-space-between">
-                  <span class="text-body-2 text-medium-emphasis">Servicio</span>
-                  <span class="text-body-2 font-weight-medium">{{ selectedService?.name }}</span>
+            <v-card variant="outlined" class="rounded-xl overflow-hidden mb-4">
+              <div class="d-flex flex-column">
+                <div class="pa-4 d-flex align-center ga-3" style="background: rgba(var(--v-theme-primary), 0.06)">
+                  <div class="color-dot" :style="{ backgroundColor: selectedService?.color }" />
+                  <div class="flex-grow-1">
+                    <div class="text-subtitle-1 font-weight-bold">{{ selectedService?.name }}</div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ selectedEmployee?.first_name }} {{ selectedEmployee?.last_name }}
+                    </div>
+                  </div>
+                  <div class="text-subtitle-1 font-weight-bold">{{ formatPrice(selectedService?.price ?? 0) }}</div>
                 </div>
                 <v-divider />
-                <div class="d-flex justify-space-between">
-                  <span class="text-body-2 text-medium-emphasis">Empleado</span>
-                  <span class="text-body-2 font-weight-medium">{{ selectedEmployee?.first_name }} {{ selectedEmployee?.last_name }}</span>
-                </div>
-                <v-divider />
-                <div class="d-flex justify-space-between">
-                  <span class="text-body-2 text-medium-emphasis">Fecha</span>
-                  <span class="text-body-2 font-weight-medium">{{ formatDate(selectedDate) }}</span>
-                </div>
-                <v-divider />
-                <div class="d-flex justify-space-between">
-                  <span class="text-body-2 text-medium-emphasis">Hora</span>
-                  <span class="text-body-2 font-weight-medium">{{ selectedTime?.slice(0, 5) }}</span>
-                </div>
-                <v-divider />
-                <div class="d-flex justify-space-between">
-                  <span class="text-body-2 text-medium-emphasis">Duración</span>
-                  <span class="text-body-2 font-weight-medium">{{ selectedService?.duration_minutes }} min</span>
-                </div>
-                <v-divider />
-                <div class="d-flex justify-space-between">
-                  <span class="text-body-2 text-medium-emphasis">Nombre</span>
-                  <span class="text-body-2 font-weight-medium">{{ customerName }}</span>
-                </div>
-                <v-divider />
-                <div class="d-flex justify-space-between">
-                  <span class="text-body-2 text-medium-emphasis">Email</span>
-                  <span class="text-body-2 font-weight-medium">{{ customerEmail }}</span>
-                </div>
-                <v-divider />
-                <div class="d-flex justify-space-between">
-                  <span class="text-body-2 text-medium-emphasis">Teléfono</span>
-                  <span class="text-body-2 font-weight-medium">{{ customerPhone }}</span>
+                <div class="pa-4 d-flex flex-column ga-3">
+                  <div class="d-flex justify-space-between">
+                    <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
+                      <v-icon size="16">mdi-calendar</v-icon>Fecha
+                    </span>
+                    <span class="text-body-2 font-weight-medium">{{ formatDate(selectedDate) }}</span>
+                  </div>
+                  <div class="d-flex justify-space-between">
+                    <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
+                      <v-icon size="16">mdi-clock-outline</v-icon>Hora
+                    </span>
+                    <span class="text-body-2 font-weight-medium">{{ selectedTime?.slice(0, 5) }}</span>
+                  </div>
+                  <div class="d-flex justify-space-between">
+                    <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
+                      <v-icon size="16">mdi-timer-outline</v-icon>Duración
+                    </span>
+                    <span class="text-body-2 font-weight-medium">{{ selectedService?.duration_minutes }} min</span>
+                  </div>
+                  <v-divider />
+                  <div class="d-flex justify-space-between">
+                    <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
+                      <v-icon size="16">mdi-account</v-icon>Nombre
+                    </span>
+                    <span class="text-body-2 font-weight-medium text-end">{{ customerName }}</span>
+                  </div>
+                  <div class="d-flex justify-space-between">
+                    <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
+                      <v-icon size="16">mdi-email-outline</v-icon>Email
+                    </span>
+                    <span class="text-body-2 font-weight-medium text-end">{{ customerEmail }}</span>
+                  </div>
+                  <div class="d-flex justify-space-between">
+                    <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
+                      <v-icon size="16">mdi-phone-outline</v-icon>Teléfono
+                    </span>
+                    <span class="text-body-2 font-weight-medium text-end">{{ customerPhone }}</span>
+                  </div>
                 </div>
               </div>
             </v-card>
@@ -187,43 +236,53 @@
         </template>
 
         <template #actions>
-          <div class="d-flex justify-space-between pa-4">
-            <v-btn v-if="step > 1 && !confirmed" variant="text" @click="goBack">Atrás</v-btn>
+          <div class="booking-actions pa-4">
+            <v-btn v-if="step > 1" variant="text" @click="goBack">
+              <v-icon start>mdi-arrow-left</v-icon>
+              Atrás
+            </v-btn>
             <v-spacer />
             <v-btn
-              v-if="step < 6 && !confirmed"
+              v-if="step < 6"
               color="primary"
               variant="flat"
               :disabled="!canProceed"
               @click="step++"
             >
               Siguiente
+              <v-icon end>mdi-arrow-right</v-icon>
             </v-btn>
             <v-btn
-              v-if="step === 6 && !confirmed"
+              v-else
               color="success"
               variant="flat"
+              size="large"
               :loading="submitting"
               :disabled="submitting"
               @click="onConfirm"
             >
+              <v-icon start>mdi-check</v-icon>
               Confirmar Reserva
-            </v-btn>
-            <v-btn
-              v-if="confirmed"
-              color="primary"
-              variant="flat"
-              @click="resetForm"
-            >
-              Reservar otra cita
             </v-btn>
           </div>
         </template>
       </v-stepper>
 
-      <v-alert v-if="confirmed" type="success" class="mt-4">
-        ¡Reserva confirmada! Recibirás un email de confirmación.
-      </v-alert>
+      <v-card v-if="confirmed" class="mt-4 pa-8 text-center rounded-xl">
+        <v-avatar color="success" size="72" class="mx-auto mb-4">
+          <v-icon size="40" color="white">mdi-check</v-icon>
+        </v-avatar>
+        <h2 class="text-h5 font-weight-bold mb-2">¡Reserva confirmada!</h2>
+        <p class="text-body-1 text-medium-emphasis mb-0">
+          Recibirás un email de confirmación en <strong>{{ customerEmail }}</strong>.
+        </p>
+        <div class="d-flex justify-center mt-6">
+          <v-btn color="primary" variant="flat" @click="resetForm">
+            <v-icon start>mdi-calendar-plus</v-icon>
+            Reservar otra cita
+          </v-btn>
+        </div>
+      </v-card>
     </v-container>
 
     <WaitlistDialog
@@ -276,7 +335,11 @@ const customerEmail = ref('');
 const customerPhone = ref('');
 const customerNotes = ref('');
 
+const tenant = computed(() => tenantStore.tenant);
+
 const steps = ['Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
+
+const bookingProgress = computed(() => Math.round(((step.value - 1) / (steps.length - 1)) * 100));
 
 const minDate = new Date().toISOString().split('T')[0];
 
@@ -439,5 +502,26 @@ function formatDate(dateStr: string): string {
   height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.service-select-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.service-select-card.is-selected {
+  border: 2px solid rgb(var(--v-theme-primary)) !important;
+  background-color: rgba(var(--v-theme-primary), 0.08) !important;
+}
+
+.booking-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgb(var(--v-theme-surface));
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 </style>

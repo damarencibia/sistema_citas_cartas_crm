@@ -19,6 +19,7 @@ export interface Tenant {
   email: string;
   phone?: string;
   address?: string;
+  description?: string;
   logo_url?: string;
   primary_color: string;
   secondary_color: string;

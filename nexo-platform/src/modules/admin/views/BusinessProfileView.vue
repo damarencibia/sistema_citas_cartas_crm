@@ -77,6 +77,17 @@
             <v-col cols="12">
               <v-textarea v-model="form.address" label="Dirección" rows="2" />
             </v-col>
+            <v-col cols="12">
+              <v-textarea
+                v-model="form.description"
+                label="Descripción / Tagline"
+                rows="2"
+                counter
+                maxlength="220"
+                hint="Frase corta que aparece en el encabezado de tu página pública"
+                persistent-hint
+              />
+            </v-col>
           </v-row>
         </FormSection>
       </v-card>
@@ -203,6 +214,7 @@ const form = reactive({
   email: '',
   phone: '',
   address: '',
+  description: '',
   logo_url: '',
   primary_color: '#1976D2',
   secondary_color: '#424242',
@@ -240,6 +252,7 @@ onMounted(() => {
     form.email = tenant.value.email || '';
     form.phone = tenant.value.phone || '';
     form.address = tenant.value.address || '';
+    form.description = tenant.value.description || '';
     form.logo_url = tenant.value.logo_url || '';
     form.primary_color = tenant.value.primary_color || '#1976D2';
     form.secondary_color = tenant.value.secondary_color || '#424242';

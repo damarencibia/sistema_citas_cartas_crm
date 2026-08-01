@@ -1,126 +1,315 @@
 <template>
   <div>
-    <v-container v-if="loading" max-width="900" class="py-16 text-center">
+    <div v-if="loading" class="py-16 text-center">
       <v-progress-circular indeterminate color="primary" />
-    </v-container>
+    </div>
 
-    <v-container v-else-if="notFound" max-width="600" class="py-16 text-center">
+    <div v-else-if="notFound" class="py-16 text-center">
       <h1 class="text-h5 font-weight-bold mb-2">Negocio no encontrado</h1>
       <p class="text-body-1 text-medium-emphasis">Verifica la dirección o contacta al negocio.</p>
-    </v-container>
+    </div>
 
-    <v-container v-else max-width="900" class="py-10">
-      <div class="text-center mb-10">
-        <v-avatar
-          v-if="tenant?.logo_url"
-          :image="tenant.logo_url"
-          size="96"
-          class="mb-4"
+    <div v-else>
+      <section class="public-hero">
+        <div
+          class="public-blob"
+          style="width: 420px; height: 420px; top: -140px; left: -120px; background: rgb(var(--v-theme-primary)); opacity: 0.25"
         />
-        <v-avatar
-          v-else
-          color="primary"
-          size="96"
-          class="mb-4"
-        >
-          <span class="text-white text-h4 font-weight-bold">{{ (tenant?.name || 'N')[0] }}</span>
-        </v-avatar>
-        <h1 class="text-h4 font-weight-bold">{{ tenant?.name }}</h1>
-        <p v-if="tenant?.address" class="text-body-1 text-medium-emphasis mt-1">
-          <v-icon size="16" class="mr-1">mdi-map-marker</v-icon>{{ tenant.address }}
-        </p>
-        <p v-if="tenant?.phone" class="text-body-1 text-medium-emphasis">
-          <v-icon size="16" class="mr-1">mdi-phone</v-icon>{{ tenant.phone }}
-        </p>
-        <div class="d-flex justify-center ga-3 mt-6 flex-wrap">
-          <v-btn
-            v-if="tenant?.modules?.appointments"
-            color="primary"
-            size="large"
-            :to="`/${slug}/booking`"
-          >
-            <v-icon start>mdi-calendar-check</v-icon>
-            Reservar Cita
-          </v-btn>
-          <v-btn
-            v-if="tenant?.modules?.digital_menu"
-            variant="outlined"
-            size="large"
-            :to="`/${slug}/menu`"
-          >
-            <v-icon start>mdi-menu</v-icon>
-            Ver Menú
-          </v-btn>
-          <v-btn
-            v-if="tenant?.modules?.crm"
-            variant="tonal"
-            size="large"
-            :to="`/${slug}/portal`"
-          >
-            <v-icon start>mdi-account-heart</v-icon>
-            Mi Portal
-          </v-btn>
-        </div>
-      </div>
+        <div
+          class="public-blob"
+          style="width: 360px; height: 360px; bottom: -120px; right: -100px; background: rgb(var(--v-theme-secondary)); opacity: 0.22"
+        />
+        <v-container class="relative" max-width="1100">
+          <div class="text-center pt-16 pb-14 px-4">
+            <div class="reveal">
+              <v-avatar
+                v-if="tenant?.logo_url"
+                :image="tenant.logo_url"
+                size="96"
+                class="elevation-6"
+              />
+              <v-avatar
+                v-else
+                color="primary"
+                size="96"
+                class="elevation-6"
+              >
+                <span class="text-white text-h4 font-weight-bold">{{ (tenant?.name || 'N')[0] }}</span>
+              </v-avatar>
+            </div>
 
-      <template v-if="tenant?.modules?.appointments && activeServices.length">
-        <h2 class="text-h5 font-weight-bold mb-2">Nuestros Servicios</h2>
-        <template v-for="group in groupedServices" :key="group.name">
-          <div class="d-flex align-center ga-2 mb-2 mt-4">
-            <v-icon size="18">{{ group.icon }}</v-icon>
-            <span class="text-subtitle-2 font-weight-medium">{{ group.name }}</span>
-          </div>
-          <v-card
-            v-for="svc in group.services"
-            :key="svc.id"
-            variant="outlined"
-            class="mb-2"
-            :to="`/${slug}/booking`"
-          >
-            <v-card-text class="d-flex align-center ga-3">
-              <div class="color-dot" :style="{ backgroundColor: svc.color }" />
-              <div class="flex-grow-1">
-                <div class="text-subtitle-1">{{ svc.name }}</div>
-                <div class="text-caption text-medium-emphasis">{{ svc.duration_minutes }} min</div>
-              </div>
-              <div class="text-subtitle-2">{{ formatPrice(svc.price) }}</div>
-            </v-card-text>
-          </v-card>
-        </template>
-      </template>
+            <h1 class="text-h3 text-md-h2 font-weight-bold mt-6 reveal reveal-delay-1">
+              {{ tenant?.name }}
+            </h1>
+            <p
+              v-if="tenant?.description"
+              class="text-subtitle-1 text-medium-emphasis mx-auto mt-3 reveal reveal-delay-2"
+              style="max-width: 560px"
+            >
+              {{ tenant.description }}
+            </p>
 
-      <template v-if="tenant?.modules?.appointments && activeEmployees.length">
-        <h2 class="text-h5 font-weight-bold mt-10 mb-4">Nuestro Equipo</h2>
-        <div class="d-flex flex-wrap ga-3">
-          <v-card
-            v-for="emp in activeEmployees"
-            :key="emp.id"
-            variant="outlined"
-            class="pa-3 d-flex align-center ga-3"
-          >
-            <v-avatar :color="emp.color" size="40">
-              <span class="text-white text-body-2">{{ initials(emp) }}</span>
-            </v-avatar>
-            <div>
-              <div class="font-weight-medium">{{ emp.first_name }} {{ emp.last_name }}</div>
-              <div class="text-caption text-medium-emphasis">
-                {{ emp.email || emp.phone || '' }}
+            <div class="d-flex justify-center flex-wrap ga-2 mt-6 reveal reveal-delay-3">
+              <v-chip
+                v-if="tenant?.address"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-map-marker"
+              >
+                {{ tenant.address }}
+              </v-chip>
+              <v-chip
+                v-if="tenant?.phone"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-phone"
+              >
+                {{ tenant.phone }}
+              </v-chip>
+              <v-chip
+                v-if="whatsappLink"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-whatsapp"
+              >
+                WhatsApp
+              </v-chip>
+            </div>
+
+            <div class="d-flex justify-center flex-wrap ga-3 mt-8 reveal reveal-delay-4">
+              <v-btn
+                v-if="tenant?.modules?.appointments"
+                color="primary"
+                size="x-large"
+                rounded="lg"
+                elevation="4"
+                :to="`/${slug}/booking`"
+              >
+                <v-icon start>mdi-calendar-check</v-icon>
+                Reservar Cita
+              </v-btn>
+              <v-btn
+                v-if="tenant?.modules?.digital_menu"
+                variant="tonal"
+                size="x-large"
+                rounded="lg"
+                :to="`/${slug}/menu`"
+              >
+                <v-icon start>mdi-menu</v-icon>
+                Ver Menú
+              </v-btn>
+              <v-btn
+                v-if="tenant?.modules?.crm"
+                variant="outlined"
+                size="x-large"
+                rounded="lg"
+                :to="`/${slug}/portal`"
+              >
+                <v-icon start>mdi-account-heart</v-icon>
+                Mi Portal
+              </v-btn>
+            </div>
+
+            <div v-if="stats.length" class="d-flex justify-center flex-wrap gap-8 mt-12 reveal reveal-delay-5">
+              <div v-for="stat in stats" :key="stat.label" class="text-center">
+                <div class="text-h4 font-weight-bold public-text-gradient">{{ stat.value }}</div>
+                <div class="text-caption text-medium-emphasis mt-1">{{ stat.label }}</div>
               </div>
             </div>
-          </v-card>
+          </div>
+        </v-container>
+      </section>
+
+      <v-container v-if="hasBooking" max-width="1100" class="py-16">
+        <div class="text-center mb-12 reveal">
+          <h2 class="text-h4 text-md-h3 font-weight-bold">¿Cómo funciona?</h2>
+          <p class="text-body-1 text-medium-emphasis mt-2">Reserva tu cita en menos de un minuto.</p>
         </div>
-      </template>
-    </v-container>
+        <v-row>
+          <v-col
+            v-for="(step, i) in steps"
+            :key="step.title"
+            cols="12"
+            md="4"
+            class="reveal"
+            :class="`reveal-delay-${i + 1}`"
+          >
+            <v-card class="soft-shadow h-100 hover-lift pa-6 text-center rounded-xl">
+              <v-avatar :color="`rgba(var(--v-theme-primary), 0.12)`" size="64" class="mx-auto mb-4">
+                <v-icon size="28" color="primary">{{ step.icon }}</v-icon>
+              </v-avatar>
+              <div class="text-caption font-weight-bold text-primary mb-1">
+                PASO {{ i + 1 }}
+              </div>
+              <h3 class="text-h6 font-weight-bold mb-1">{{ step.title }}</h3>
+              <p class="text-body-2 text-medium-emphasis mb-0">{{ step.text }}</p>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
+
+      <section v-if="hasBooking && activeServices.length" class="py-16" style="background: rgba(var(--v-theme-primary), 0.05)">
+        <v-container max-width="1100">
+          <div class="text-center mb-12 reveal">
+            <h2 class="text-h4 text-md-h3 font-weight-bold">Nuestros Servicios</h2>
+            <p class="text-body-1 text-medium-emphasis mt-2">
+              Elige el servicio que mejor se adapte a ti.
+            </p>
+          </div>
+
+          <template v-for="group in groupedServices" :key="group.name">
+            <div v-if="group.services.length" class="d-flex align-center ga-2 mb-4 mt-8 reveal">
+              <v-icon color="primary">{{ group.icon }}</v-icon>
+              <span class="text-h6 font-weight-bold">{{ group.name }}</span>
+            </div>
+            <v-row>
+              <v-col
+                v-for="svc in group.services"
+                :key="svc.id"
+                cols="12"
+                sm="6"
+                lg="4"
+                class="reveal"
+              >
+                <v-card
+                  class="soft-shadow hover-lift h-100 rounded-xl overflow-hidden"
+                  :to="`/${slug}/booking`"
+                >
+                  <div
+                    v-if="svc.image_url"
+                    class="service-image"
+                    :style="{ backgroundImage: `url(${svc.image_url})` }"
+                  />
+                  <div
+                    v-else
+                    class="service-cover"
+                    :style="{
+                      backgroundImage: `linear-gradient(135deg, ${svc.color}, ${svc.color}99)`,
+                    }"
+                  >
+                    <v-icon size="44" color="white" class="opacity-75">mdi-spa</v-icon>
+                  </div>
+                  <v-card-text class="pa-5">
+                    <div class="text-h6 font-weight-bold">{{ svc.name }}</div>
+                    <p v-if="svc.description" class="text-body-2 text-medium-emphasis mt-1 mb-0">
+                      {{ svc.description }}
+                    </p>
+                    <div class="d-flex align-center justify-space-between mt-4">
+                      <div class="d-flex align-center ga-1 text-body-2 text-medium-emphasis">
+                        <v-icon size="16">mdi-clock-outline</v-icon>
+                        {{ svc.duration_minutes }} min
+                      </div>
+                      <div class="text-subtitle-1 font-weight-bold">{{ formatPrice(svc.price) }}</div>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </template>
+        </v-container>
+      </section>
+
+      <section v-if="hasBooking && activeEmployees.length" class="py-16">
+        <v-container max-width="1100">
+          <div class="text-center mb-12 reveal">
+            <h2 class="text-h4 text-md-h3 font-weight-bold">Nuestro Equipo</h2>
+            <p class="text-body-1 text-medium-emphasis mt-2">
+              Profesionales listos para atenderte.
+            </p>
+          </div>
+          <v-row>
+            <v-col
+              v-for="(emp, i) in activeEmployees"
+              :key="emp.id"
+              cols="6"
+              md="3"
+              class="reveal"
+              :class="`reveal-delay-${(i % 4) + 1}`"
+            >
+              <v-card class="soft-shadow hover-lift pa-5 text-center rounded-xl h-100">
+                <v-avatar :color="emp.color" size="72" class="mx-auto mb-3">
+                  <span class="text-white text-h6 font-weight-bold">{{ initials(emp) }}</span>
+                </v-avatar>
+                <div class="text-subtitle-1 font-weight-bold">
+                  {{ emp.first_name }} {{ emp.last_name }}
+                </div>
+                <div class="text-caption text-medium-emphasis mt-1">{{ emp.role || 'Especialista' }}</div>
+                <div v-if="emp.email" class="text-caption text-medium-emphasis mt-1">{{ emp.email }}</div>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
+      </section>
+
+      <section v-if="hasBooking" class="pb-16 px-4">
+        <v-container max-width="900">
+          <v-card class="public-gradient rounded-2xl pa-8 text-center reveal">
+            <h2 class="text-h4 font-weight-bold text-white">¿Listo para reservar?</h2>
+            <p class="text-white opacity-80 mt-2 mb-0">
+              Agenda tu cita ahora y ocúpate de lo que realmente importa.
+            </p>
+            <v-btn
+              color="white"
+              size="x-large"
+              rounded="lg"
+              variant="flat"
+              class="mt-6 text-primary font-weight-bold"
+              :to="`/${slug}/booking`"
+            >
+              <v-icon start>mdi-calendar-check</v-icon>
+              Reservar Cita
+            </v-btn>
+          </v-card>
+        </v-container>
+      </section>
+
+      <footer class="py-10" style="border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity))">
+        <v-container max-width="1100">
+          <div class="d-flex flex-column flex-md-row align-center ga-4">
+            <div class="d-flex align-center ga-2">
+              <v-avatar v-if="tenant?.logo_url" :image="tenant.logo_url" size="32" />
+              <v-avatar v-else color="primary" size="32">
+                <span class="text-white text-body-2 font-weight-bold">{{ (tenant?.name || 'N')[0] }}</span>
+              </v-avatar>
+              <span class="font-weight-bold">{{ tenant?.name }}</span>
+            </div>
+            <v-spacer />
+            <div class="d-flex flex-wrap justify-center ga-3 text-body-2 text-medium-emphasis">
+              <span v-if="tenant?.address" class="d-flex align-center ga-1">
+                <v-icon size="16">mdi-map-marker</v-icon>{{ tenant.address }}
+              </span>
+              <a
+                v-if="tenant?.phone"
+                :href="`tel:${tenant.phone}`"
+                class="d-flex align-center ga-1 text-decoration-none"
+              >
+                <v-icon size="16">mdi-phone</v-icon>{{ tenant.phone }}
+              </a>
+              <a
+                v-if="whatsappLink"
+                :href="whatsappLink"
+                target="_blank"
+                rel="noopener"
+                class="d-flex align-center ga-1 text-decoration-none"
+              >
+                <v-icon size="16">mdi-whatsapp</v-icon>WhatsApp
+              </a>
+            </div>
+          </div>
+        </v-container>
+      </footer>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useServiceStore } from '../stores/service.store';
 import { useEmployeeStore } from '../stores/employee.store';
 import { useServiceCategoryStore } from '../stores/service-category.store';
+import { useReveal } from '@/shared/composables/useReveal';
 import type { Employee } from '../types/employee.types';
 
 const route = useRoute();
@@ -128,6 +317,7 @@ const tenantStore = useTenantStore();
 const serviceStore = useServiceStore();
 const employeeStore = useEmployeeStore();
 const categoryStore = useServiceCategoryStore();
+const { observeReveal } = useReveal();
 
 const slug = computed(() => route.params.slug as string);
 const tenant = computed(() => tenantStore.tenant);
@@ -135,8 +325,33 @@ const tenant = computed(() => tenantStore.tenant);
 const loading = ref(false);
 const notFound = ref(false);
 
+const hasBooking = computed(() => !!tenant.value?.modules?.appointments);
 const activeServices = computed(() => serviceStore.services.filter((s) => s.is_active));
 const activeEmployees = computed(() => employeeStore.activeEmployees);
+
+const whatsappLink = computed(() => {
+  const digits = (tenant.value?.phone || '').replace(/\D/g, '');
+  return digits ? `https://wa.me/${digits}` : '';
+});
+
+const steps = [
+  { icon: 'mdi-spa-outline', title: 'Elige tu servicio', text: 'Explora el catálogo y encuentra lo que necesitas.' },
+  { icon: 'mdi-calendar-check-outline', title: 'Elige fecha y hora', text: 'Selecciona el momento que mejor te acomode.' },
+  { icon: 'mdi-check-decagram', title: 'Confirma en segundos', text: 'Recibe tu confirmación y listo, ¡nos vemos!' },
+];
+
+const stats = computed(() => {
+  const list: { value: string; label: string }[] = [];
+  if (activeServices.value.length) list.push({ value: String(activeServices.value.length), label: 'Servicios' });
+  if (activeEmployees.value.length) list.push({ value: String(activeEmployees.value.length), label: 'Especialistas' });
+  if (activeServices.value.length) {
+    const minutes = activeServices.value.map((s) => s.duration_minutes);
+    const min = Math.min(...minutes);
+    const max = Math.max(...minutes);
+    list.push({ value: min === max ? `${min} min` : `${min}–${max} min`, label: 'Duración' });
+  }
+  return list;
+});
 
 const groupedServices = computed(() => {
   const groups = new Map<
@@ -177,15 +392,27 @@ onMounted(async () => {
     }
   } finally {
     loading.value = false;
+    await nextTick();
+    observeReveal();
   }
 });
 </script>
 
 <style scoped>
-.color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.service-cover {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.service-image {
+  height: 140px;
+  background-size: cover;
+  background-position: center;
+}
+
+.relative {
+  position: relative;
 }
 </style>
