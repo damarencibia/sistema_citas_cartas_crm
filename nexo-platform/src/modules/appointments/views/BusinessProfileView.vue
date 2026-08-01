@@ -10,7 +10,7 @@
     </div>
 
     <div v-else>
-      <section class="public-hero">
+      <section id="inicio" class="public-hero">
         <div
           class="public-blob"
           style="width: 420px; height: 420px; top: -140px; left: -120px; background: rgb(var(--v-theme-primary)); opacity: 0.25"
@@ -106,7 +106,7 @@
         </v-container>
       </section>
 
-      <section v-if="tenant?.description" class="py-16">
+      <section v-if="tenant?.description" id="sobre" class="py-16">
         <v-container max-width="1100">
           <div class="about-card rounded-2xl reveal">
             <div class="about-blob" />
@@ -191,7 +191,12 @@
         </v-row>
       </v-container>
 
-      <section v-if="hasBooking && groupedServices.length" class="py-16" style="background: rgba(var(--v-theme-primary), 0.05)">
+      <section
+        v-if="hasBooking && groupedServices.length"
+        id="servicios"
+        class="py-16"
+        style="background: rgba(var(--v-theme-primary), 0.05)"
+      >
         <v-container max-width="1100">
           <div class="text-center mb-10 reveal">
             <h2 class="text-h4 text-md-h3 font-weight-bold">Nuestros Servicios</h2>
@@ -315,7 +320,7 @@
         </v-container>
       </section>
 
-      <section v-if="hasBooking && activeEmployees.length" class="py-16">
+      <section v-if="hasBooking && activeEmployees.length" id="equipo" class="py-16">
         <v-container max-width="1100">
           <div class="text-center mb-12 reveal">
             <h2 class="text-h4 text-md-h3 font-weight-bold">Nuestro Equipo</h2>
@@ -341,6 +346,17 @@
                 </div>
                 <div class="text-caption text-medium-emphasis mt-1">{{ emp.role || 'Especialista' }}</div>
                 <div v-if="emp.email" class="text-caption text-medium-emphasis mt-1">{{ emp.email }}</div>
+                <v-btn
+                  variant="tonal"
+                  color="primary"
+                  size="small"
+                  rounded="pill"
+                  class="mt-3"
+                  :to="`/${slug}/booking?employee_id=${emp.id}`"
+                >
+                  <v-icon start size="16">mdi-calendar-check</v-icon>
+                  Reservar con {{ emp.first_name }}
+                </v-btn>
               </v-card>
             </v-col>
           </v-row>
@@ -363,11 +379,13 @@
               :to="`/${slug}/booking`"
             >
               <v-icon start>mdi-calendar-check</v-icon>
-              Reservar Cita
+              Agenda tu cita
             </v-btn>
           </v-card>
         </v-container>
       </section>
+
+      <div v-if="hasBooking" class="d-sm-none" style="height: 84px" />
 
       <footer class="py-10" style="border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity))">
         <v-container max-width="1100">
@@ -404,12 +422,45 @@
           </div>
         </v-container>
       </footer>
+
+      <v-btn
+        v-if="hasBooking"
+        class="booking-fab d-none d-sm-flex"
+        :class="{ 'is-visible': scrolled }"
+        color="primary"
+        rounded="xl"
+        elevation="6"
+        size="large"
+        aria-label="Reservar cita"
+        :to="`/${slug}/booking`"
+      >
+        <v-icon start>mdi-calendar-check</v-icon>
+        Reservar
+      </v-btn>
+
+      <div
+        v-if="hasBooking"
+        class="booking-bottom-bar d-flex d-sm-none"
+        :class="{ 'is-visible': scrolled }"
+      >
+        <v-btn
+          block
+          color="primary"
+          rounded="lg"
+          elevation="4"
+          size="large"
+          :to="`/${slug}/booking`"
+        >
+          <v-icon start>mdi-calendar-check</v-icon>
+          Reservar Cita
+        </v-btn>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useServiceStore } from '../stores/service.store';
@@ -430,6 +481,12 @@ const tenant = computed(() => tenantStore.tenant);
 
 const loading = ref(false);
 const notFound = ref(false);
+
+const scrolled = ref(false);
+
+function onScroll() {
+  scrolled.value = window.scrollY > 480;
+}
 
 const hasBooking = computed(() => !!tenant.value?.modules?.appointments);
 const activeServices = computed(() => serviceStore.services.filter((s) => s.is_active));
@@ -600,9 +657,53 @@ onMounted(async () => {
     observeCounters();
   }
 });
+
+onMounted(() => {
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll);
+});
 </script>
 
 <style scoped>
+#inicio,
+#sobre,
+#servicios,
+#equipo {
+  scroll-margin-top: 72px;
+}
+
+.booking-fab,
+.booking-bottom-bar {
+  position: fixed;
+  z-index: 300;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.booking-fab {
+  bottom: 24px;
+  right: 24px;
+}
+
+.booking-bottom-bar {
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+}
+
+.booking-fab.is-visible,
+.booking-bottom-bar.is-visible {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
 .about-card {
   position: relative;
   overflow: hidden;

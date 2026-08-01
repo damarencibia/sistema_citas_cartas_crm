@@ -26,6 +26,18 @@
             <span class="font-weight-bold text-subtitle-1">{{ tenantStore.tenant.name }}</span>
           </router-link>
           <v-spacer />
+          <template v-if="route.name === 'public-business-profile'">
+            <v-btn
+              v-for="anchor in landingAnchors"
+              :key="anchor.id"
+              variant="text"
+              size="small"
+              class="d-none d-md-inline-flex"
+              @click="scrollToSection(anchor.id)"
+            >
+              {{ anchor.label }}
+            </v-btn>
+          </template>
           <v-btn
             v-if="tenantStore.activeModules.appointments"
             variant="text"
@@ -59,6 +71,17 @@ import { useTenantStore } from '@/shared/stores/tenant.store';
 
 const route = useRoute();
 const tenantStore = useTenantStore();
+
+const landingAnchors = [
+  { id: 'inicio', label: 'Inicio' },
+  { id: 'sobre', label: 'Sobre' },
+  { id: 'servicios', label: 'Servicios' },
+  { id: 'equipo', label: 'Equipo' },
+];
+
+function scrollToSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 async function loadTenant() {
   const slug = route.params.slug as string;

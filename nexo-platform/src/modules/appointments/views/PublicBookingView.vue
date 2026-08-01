@@ -40,6 +40,17 @@
       </div>
 
       <v-alert
+        v-if="pendingEmployeeName"
+        type="info"
+        variant="tonal"
+        class="mb-4"
+        closable
+        @click:close="pendingEmployeeId = null"
+      >
+        Reservando con <strong>{{ pendingEmployeeName }}</strong>.
+      </v-alert>
+
+      <v-alert
         v-if="bookingError"
         type="error"
         variant="tonal"
@@ -431,6 +442,7 @@ const selectedDate = ref(new Date().toISOString().split('T')[0]);
 const selectedTime = ref('');
 const waitlistTimes = ref<string[]>([]);
 const waitlistJoined = ref(false);
+const pendingEmployeeId = ref<string | null>(null);
 const customerName = ref('');
 const customerEmail = ref('');
 const customerPhone = ref('');
@@ -438,6 +450,11 @@ const customerNotes = ref('');
 const whatsappConsent = ref(false);
 
 const tenant = computed(() => tenantStore.tenant);
+
+const pendingEmployeeName = computed(() => {
+  if (!pendingEmployeeId.value) return '';
+  return employeeStore.activeEmployees.find((e) => e.id === pendingEmployeeId.value)?.first_name ?? '';
+});
 
 const steps = ['Categoría', 'Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
 
@@ -519,6 +536,11 @@ onMounted(async () => {
     employeeStore.fetchEmployees(),
     categoryStore.fetchCategories(),
   ]);
+  const qEmpId = route.query.employee_id;
+  if (typeof qEmpId === 'string') {
+    const emp = employeeStore.activeEmployees.find((e) => e.id === qEmpId);
+    if (emp) pendingEmployeeId.value = emp.id;
+  }
   loading.value = false;
 });
 
@@ -552,6 +574,15 @@ async function selectService(service: Service) {
   waitlistTimes.value = [];
   const name = service.name;
   employeesForService.value = await employeeStore.getEmployeesByServiceName(name);
+  if (pendingEmployeeId.value) {
+    const pending = employeesForService.value.find((e) => e.id === pendingEmployeeId.value);
+    pendingEmployeeId.value = null;
+    if (pending) {
+      selectedEmployee.value = pending;
+      step.value = 4;
+      return;
+    }
+  }
   step.value = 3;
 }
 
