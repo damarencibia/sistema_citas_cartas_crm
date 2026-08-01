@@ -132,19 +132,59 @@
         </v-container>
       </section>
 
-      <section v-if="tenant?.description" class="about-section">
-        <v-container max-width="860">
-          <div class="text-center py-16 py-md-20 px-4">
-            <v-icon
-              icon="mdi-format-quote-open"
-              size="44"
-              color="primary"
-              class="about-quote mb-4 reveal"
-            />
-            <div class="about-eyebrow reveal reveal-delay-1">Sobre Nosotros</div>
-            <p class="about-statement mt-4 reveal reveal-delay-2">
-              {{ tenant.description }}
-            </p>
+      <section v-if="tenant?.description" class="py-16">
+        <v-container max-width="1100">
+          <div class="about-card rounded-2xl reveal">
+            <div class="about-blob" />
+            <v-row align="center">
+              <v-col cols="12" md="7" class="pa-4 pa-md-6">
+                <div class="about-badge reveal reveal-delay-1">
+                  <v-icon size="16">mdi-heart</v-icon>
+                  Sobre Nosotros
+                </div>
+                <p class="about-statement mt-5 reveal reveal-delay-2">
+                  <span class="public-text-gradient about-lead">{{ aboutLead }}</span>
+                  <template v-if="aboutRest">{{ aboutRest }}</template>
+                </p>
+                <div class="d-flex align-center ga-3 mt-6 reveal reveal-delay-3">
+                  <span class="about-hairline" />
+                  <span class="about-signature">{{ tenant.name }}</span>
+                </div>
+              </v-col>
+              <v-col cols="12" md="5" class="pa-4 pa-md-6">
+                <div class="d-flex flex-column align-center">
+                  <div class="about-logo-wrap public-gradient mb-6 reveal reveal-delay-3">
+                    <v-avatar
+                      v-if="tenant?.logo_url"
+                      :image="tenant.logo_url"
+                      size="112"
+                    />
+                    <v-avatar v-else color="primary" size="112">
+                      <span class="text-white text-h4 font-weight-bold">{{ (tenant?.name || 'N')[0] }}</span>
+                    </v-avatar>
+                  </div>
+                  <div
+                    v-if="stats.length"
+                    class="about-stats w-100 reveal reveal-delay-4"
+                    style="max-width: 320px"
+                  >
+                    <div
+                      v-for="stat in stats"
+                      :key="stat.label"
+                      class="about-stat d-flex align-center justify-space-between ga-3 py-3"
+                    >
+                      <span class="text-body-2 text-medium-emphasis">{{ stat.label }}</span>
+                      <span class="text-subtitle-1 font-weight-bold">
+                        <span class="public-text-gradient">
+                          {{ stat.count != null ? (counts[stat.label] ?? 0) : stat.value }}
+                        </span>
+                        <span v-if="stat.unit" class="about-stat-unit text-medium-emphasis">{{ stat.unit }}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </v-col>
+            </v-row>
           </div>
         </v-container>
       </section>
@@ -421,6 +461,13 @@ const hasBooking = computed(() => !!tenant.value?.modules?.appointments);
 const activeServices = computed(() => serviceStore.services.filter((s) => s.is_active));
 const activeEmployees = computed(() => employeeStore.activeEmployees);
 
+const aboutWords = computed(() => (tenant.value?.description ?? '').trim().split(/\s+/));
+const aboutLead = computed(() => aboutWords.value.slice(0, 4).join(' '));
+const aboutRest = computed(() => {
+  const rest = aboutWords.value.slice(4).join(' ');
+  return rest ? ` ${rest}` : '';
+});
+
 const whatsappLink = computed(() => {
   const digits = (tenant.value?.phone || '').replace(/\D/g, '');
   return digits ? `https://wa.me/${digits}` : '';
@@ -563,42 +610,95 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.about-section {
+.about-card {
   position: relative;
-  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  overflow: hidden;
+  background:
+    radial-gradient(90% 120% at 8% 0%, rgba(var(--v-theme-primary), 0.12), transparent 55%),
+    rgba(var(--v-theme-primary), 0.04);
+  border: 1px solid rgba(var(--v-theme-primary), 0.15);
+  padding: clamp(24px, 4vw, 48px);
 }
 
-.about-quote {
-  opacity: 0.3;
+.about-blob {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  filter: blur(70px);
+  background: rgb(var(--v-theme-secondary));
+  opacity: 0.18;
+  bottom: -110px;
+  right: -70px;
+  pointer-events: none;
 }
 
-.about-eyebrow {
+.about-main {
+  position: relative;
+  z-index: 1;
+}
+
+.about-badge {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--v-theme-primary), 0.35);
+  background: rgba(var(--v-theme-primary), 0.08);
+  color: rgb(var(--v-theme-primary));
   font-size: 0.72rem;
   font-weight: 700;
-  color: rgb(var(--v-theme-primary));
-}
-
-.about-eyebrow::before,
-.about-eyebrow::after {
-  content: '';
-  width: 36px;
-  height: 1px;
-  background: rgba(var(--v-theme-primary), 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
 }
 
 .about-statement {
-  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
-  font-weight: 500;
-  line-height: 1.6;
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.015em;
   color: rgb(var(--v-theme-on-surface));
-  max-width: 760px;
-  margin: 0 auto;
+  margin-bottom: 0;
+}
+
+.about-lead {
+  white-space: pre-wrap;
+}
+
+.about-hairline {
+  width: 40px;
+  height: 2px;
+  border-radius: 99px;
+  background: rgb(var(--v-theme-primary));
+  flex-shrink: 0;
+}
+
+.about-signature {
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.about-logo-wrap {
+  position: relative;
+  padding: 12px;
+  border-radius: 50%;
+  box-shadow: 0 18px 50px rgba(var(--v-theme-primary), 0.35);
+  line-height: 0;
+}
+
+.about-stats {
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.about-stat + .about-stat {
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.about-stat-unit {
+  margin-left: 3px;
+  font-size: 0.78em;
+  font-weight: 600;
 }
 
 .service-cover {
