@@ -41,13 +41,6 @@
             <h1 class="text-h3 text-md-h2 font-weight-bold mt-6 reveal reveal-delay-1">
               {{ tenant?.name }}
             </h1>
-            <p
-              v-if="tenant?.description"
-              class="text-subtitle-1 text-medium-emphasis mx-auto mt-3 reveal reveal-delay-2"
-              style="max-width: 720px"
-            >
-              {{ tenant.description }}
-            </p>
 
             <div class="d-flex justify-center flex-wrap ga-2 mt-6 reveal reveal-delay-3">
               <v-chip
@@ -135,6 +128,23 @@
                 </div>
               </v-card>
             </div>
+          </div>
+        </v-container>
+      </section>
+
+      <section v-if="tenant?.description" class="about-section">
+        <v-container max-width="860">
+          <div class="text-center py-16 py-md-20 px-4">
+            <v-icon
+              icon="mdi-format-quote-open"
+              size="44"
+              color="primary"
+              class="about-quote mb-4 reveal"
+            />
+            <div class="about-eyebrow reveal reveal-delay-1">Sobre Nosotros</div>
+            <p class="about-statement mt-4 reveal reveal-delay-2">
+              {{ tenant.description }}
+            </p>
           </div>
         </v-container>
       </section>
@@ -553,6 +563,44 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.about-section {
+  position: relative;
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.about-quote {
+  opacity: 0.3;
+}
+
+.about-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
+}
+
+.about-eyebrow::before,
+.about-eyebrow::after {
+  content: '';
+  width: 36px;
+  height: 1px;
+  background: rgba(var(--v-theme-primary), 0.35);
+}
+
+.about-statement {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+  font-weight: 500;
+  line-height: 1.6;
+  color: rgb(var(--v-theme-on-surface));
+  max-width: 760px;
+  margin: 0 auto;
+}
+
 .service-cover {
   height: 140px;
   display: flex;
