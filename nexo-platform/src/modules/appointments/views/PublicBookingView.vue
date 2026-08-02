@@ -433,9 +433,9 @@
             class="text-body-1 text-medium-emphasis mt-2 mb-0 conf-step"
             style="animation-delay: 0.75s"
           >
-            Serás redirigido al WhatsApp de
+            Para notificar tu entrada al sistema, envía el resumen a
             <strong>{{ selectedEmployee.first_name }} {{ selectedEmployee.last_name }}</strong>
-            para notificar tu entrada al sistema.
+            por WhatsApp con el botón de abajo.
           </p>
           <p
             class="text-subtitle-1 font-weight-bold mt-5 mb-0 success-thanks conf-step"
@@ -465,6 +465,28 @@
           >
             Enviar resumen por WhatsApp
           </v-btn>
+          <v-btn
+            v-if="!waitlistJoined"
+            color="primary"
+            variant="outlined"
+            :loading="calendarBusy"
+            :disabled="calendarBusy"
+            prepend-icon="mdi-calendar-check"
+            @click="addToCalendar"
+          >
+            Agregar a mi calendario
+          </v-btn>
+          <v-btn
+            v-if="!waitlistJoined && googleCalendarUrl"
+            color="primary"
+            variant="text"
+            :href="googleCalendarUrl"
+            target="_blank"
+            rel="noopener"
+            prepend-icon="mdi-google"
+          >
+            Agregar a Google Calendar
+          </v-btn>
           <v-btn color="primary" variant="flat" @click="resetForm">
             <v-icon start>mdi-calendar-plus</v-icon>
             Reservar otra cita
@@ -485,6 +507,8 @@ import { useBookingStore } from '../stores/booking.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAvailability } from '../composables/useAvailability';
 import TimeSlotPicker from '../components/TimeSlotPicker.vue';
+import { useUiStore } from '@/shared/stores/ui.store';
+import { buildBookingIcs, buildGoogleCalendarUrl, downloadIcs, getIcsBlob, shareIcs } from '../utils/ics';
 import type { Service } from '../types/service.types';
 import type { Employee } from '../types/employee.types';
 
@@ -495,11 +519,13 @@ const categoryStore = useServiceCategoryStore();
 const bookingStore = useBookingStore();
 const tenantStore = useTenantStore();
 const availability = useAvailability();
+const uiStore = useUiStore();
 
 const step = ref(1);
 const loading = ref(false);
 const submitting = ref(false);
 const confirmed = ref(false);
+const calendarBusy = ref(false);
 const bookingError = ref<string | null>(null);
 const formRef = ref();
 
@@ -538,6 +564,39 @@ const waSummaryUrl = computed(() => {
     customerName.value ? `. Soy ${customerName.value}` : '.',
   ].join('');
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+});
+
+const bookingEvent = computed(() => {
+  if (!selectedService.value || !selectedEmployee.value || !selectedDate.value || !selectedTime.value) return null;
+  const workerName = `${selectedEmployee.value.first_name} ${selectedEmployee.value.last_name ?? ''}`.trim();
+  const serviceName = selectedService.value.name;
+  const start = new Date(`${selectedDate.value}T${selectedTime.value}:00`);
+  const end = new Date(start.getTime() + (selectedService.value.duration_minutes ?? 0) * 60000);
+  const summary = serviceName + (workerName ? ` — ${workerName}` : '');
+  const description = [
+    `Cita: ${serviceName}`,
+    workerName ? `Especialista: ${workerName}` : '',
+    customerName.value ? `Cliente: ${customerName.value}` : '',
+    customerNotes.value ? `Notas: ${customerNotes.value}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const location = tenant.value?.address || tenant.value?.name || undefined;
+  return {
+    summary,
+    description,
+    location,
+    organizerName: tenant.value?.name,
+    organizerEmail: tenant.value?.email,
+    start,
+    end,
+    timezone: tenant.value?.timezone ?? 'America/Mexico_City',
+  };
+});
+
+const googleCalendarUrl = computed(() => {
+  const ev = bookingEvent.value;
+  return ev ? buildGoogleCalendarUrl(ev) : '';
 });
 
 const steps = ['Categoría', 'Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
@@ -738,13 +797,30 @@ async function onConfirm() {
       whatsapp_consent: whatsappConsent.value,
     });
     confirmed.value = true;
-    if (waSummaryUrl.value) {
-      window.location.href = waSummaryUrl.value;
-    }
   } catch (e: unknown) {
     bookingError.value = e instanceof Error ? e.message : 'Error al procesar tu solicitud. Intenta de nuevo.';
   } finally {
     submitting.value = false;
+  }
+}
+
+async function addToCalendar() {
+  const ev = bookingEvent.value;
+  if (!ev) return;
+  calendarBusy.value = true;
+  try {
+    const blob = getIcsBlob(buildBookingIcs(ev));
+    const shared = await shareIcs(blob, `Mi cita · ${ev.summary}`, ev.description);
+    if (!shared) {
+      downloadIcs(`cita-${ev.summary.toLowerCase().replace(/\s+/g, '-')}-${selectedDate.value}.ics`, blob);
+      uiStore.showNotification('Archivo generado. Ábrelo para agregarlo a tu calendario.', 'info');
+    }
+  } catch (e: unknown) {
+    if ((e as DOMException)?.name !== 'AbortError') {
+      uiStore.showNotification('No se pudo agregar la cita a tu calendario.', 'error');
+    }
+  } finally {
+    calendarBusy.value = false;
   }
 }
 
