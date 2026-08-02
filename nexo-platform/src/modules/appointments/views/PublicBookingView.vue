@@ -384,19 +384,76 @@
         </template>
       </v-stepper>
 
-      <v-card v-if="confirmed" class="mt-4 pa-8 text-center rounded-xl">
-        <v-avatar color="success" size="72" class="mx-auto mb-4">
-          <v-icon size="40" color="white">mdi-check</v-icon>
-        </v-avatar>
-        <h2 v-if="!waitlistJoined" class="text-h5 font-weight-bold mb-2">¡Reserva confirmada!</h2>
-        <h2 v-else class="text-h5 font-weight-bold mb-2">¡Estás en la lista de espera!</h2>
-        <p v-if="!waitlistJoined" class="text-body-1 text-medium-emphasis mb-0">
-          Recibirás un email de confirmación en <strong>{{ customerEmail }}</strong>.
+      <v-card v-if="confirmed" class="mt-4 pa-8 text-center rounded-xl confirmation-card">
+        <div class="success-badge">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle
+              class="s-circle"
+              cx="60"
+              cy="60"
+              r="52"
+            />
+            <path class="s-check" d="M38 61 L54 78 L84 44" fill="none" />
+          </svg>
+          <span
+            v-for="p in confetti"
+            :key="p.id"
+            class="confetti-piece"
+            :style="{
+              '--dx': `${p.dx}px`,
+              '--dy': `${p.dy}px`,
+              '--rot': `${p.rot}deg`,
+              '--delay': `${p.delay}s`,
+              backgroundColor: p.color,
+            }"
+          />
+        </div>
+
+        <h2
+          v-if="!waitlistJoined"
+          class="text-h5 font-weight-bold mb-2 conf-step"
+          style="animation-delay: 0.45s"
+        >
+          ¡Reserva confirmada!
+        </h2>
+        <h2
+          v-else
+          class="text-h5 font-weight-bold mb-2 conf-step"
+          style="animation-delay: 0.45s"
+        >
+          ¡Estás en la lista de espera!
+        </h2>
+
+        <template v-if="!waitlistJoined">
+          <p class="text-body-1 text-medium-emphasis mb-0 conf-step" style="animation-delay: 0.6s">
+            Se ha agendado correctamente en nuestro sistema.
+          </p>
+          <p
+            v-if="waSummaryUrl && selectedEmployee"
+            class="text-body-1 text-medium-emphasis mt-2 mb-0 conf-step"
+            style="animation-delay: 0.75s"
+          >
+            Serás redirigido al WhatsApp de
+            <strong>{{ selectedEmployee.first_name }} {{ selectedEmployee.last_name }}</strong>
+            para notificar tu entrada al sistema.
+          </p>
+          <p
+            class="text-subtitle-1 font-weight-bold mt-5 mb-0 success-thanks conf-step"
+            style="animation-delay: 0.9s"
+          >
+            ¡Muchas gracias por preferirnos!
+          </p>
+        </template>
+        <p
+          v-else
+          class="text-body-1 text-medium-emphasis mb-0 conf-step"
+          style="animation-delay: 0.6s"
+        >
+          Te notificaremos a <strong>{{ customerEmail }}</strong> cuando alguno de tus horarios
+          seleccionados se libere.
         </p>
-        <p v-else class="text-body-1 text-medium-emphasis mb-0">
-          Te notificaremos a <strong>{{ customerEmail }}</strong> cuando alguno de tus horarios seleccionados se libere.
-        </p>
-        <div class="d-flex flex-column align-center mt-6 ga-3">
+
+        <div class="d-flex flex-column align-center mt-6 ga-3 conf-step" style="animation-delay: 1.05s">
           <v-btn
             v-if="!waitlistJoined && waSummaryUrl"
             color="green"
@@ -484,6 +541,19 @@ const waSummaryUrl = computed(() => {
 });
 
 const steps = ['Categoría', 'Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
+
+const confetti = [
+  { id: 1, dx: -64, dy: -62, rot: -40, delay: 0, color: '#FFB300' },
+  { id: 2, dx: 58, dy: -70, rot: 50, delay: 0.08, color: '#E53935' },
+  { id: 3, dx: 72, dy: -12, rot: 120, delay: 0.16, color: '#26A69A' },
+  { id: 4, dx: -74, dy: -8, rot: -100, delay: 0.05, color: '#7E57C2' },
+  { id: 5, dx: -12, dy: -84, rot: 70, delay: 0.12, color: '#43A047' },
+  { id: 6, dx: 34, dy: -78, rot: -140, delay: 0.2, color: '#FB8C00' },
+  { id: 7, dx: -44, dy: -70, rot: 90, delay: 0.14, color: '#EC407A' },
+  { id: 8, dx: 66, dy: -42, rot: -60, delay: 0.02, color: '#29B6F6' },
+  { id: 9, dx: -10, dy: -60, rot: 160, delay: 0.1, color: '#9CCC65' },
+  { id: 10, dx: 22, dy: -52, rot: -30, delay: 0.18, color: '#F4511E' },
+];
 
 const progressFraction = computed(() => {
   if (steps.length <= 1) return 0;
@@ -846,5 +916,151 @@ function formatDate(dateStr: string): string {
   gap: 8px;
   background: rgb(var(--v-theme-surface));
   border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.confirmation-card {
+  overflow: hidden;
+}
+
+.success-badge {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 16px;
+  animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.success-badge::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--v-theme-success), 0.22) 0%, rgba(var(--v-theme-success), 0) 70%);
+  z-index: 0;
+  animation: successPulse 1.8s ease-out infinite;
+}
+
+.success-badge svg {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+}
+
+.s-circle {
+  fill: none;
+  stroke: rgb(var(--v-theme-success));
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 327;
+  stroke-dashoffset: 327;
+  animation: sDraw 0.65s cubic-bezier(0.65, 0, 0.45, 1) 0.15s both;
+}
+
+.s-check {
+  fill: none;
+  stroke: rgb(var(--v-theme-success));
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 58;
+  stroke-dashoffset: 58;
+  animation: sDraw 0.4s ease 0.6s both;
+}
+
+.confetti-piece {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  animation: confettiFly 0.9s cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+.conf-step {
+  opacity: 0;
+  animation: confFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.success-thanks {
+  color: rgb(var(--v-theme-success));
+}
+
+@keyframes sDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes successPop {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  40% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+@keyframes confettiFly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4) rotate(0deg);
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(1)
+      rotate(var(--rot, 0deg));
+  }
+}
+
+@keyframes confFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .success-badge,
+  .s-circle,
+  .s-check,
+  .confetti-piece,
+  .conf-step {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 </style>
