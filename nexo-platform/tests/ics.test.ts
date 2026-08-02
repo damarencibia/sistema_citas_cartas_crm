@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildBookingIcs, buildGoogleCalendarUrl, wallClockToUTC } from '@/modules/appointments/utils/ics';
+import { uuid } from '@/shared/utils/helpers';
 
 const baseParams = {
   summary: 'Corte de cabello, barba — Diana',
@@ -13,13 +14,18 @@ const baseParams = {
 };
 
 describe('buildBookingIcs', () => {
-  it('genera un VCALENDAR con DTSTART/DTEND, TZID, VALARM y SUMMARY escapado', () => {
+  it('genera un VCALENDAR con DTSTART/DTEND UTC, VTIMEZONE, VALARM y SUMMARY escapado', () => {
     const ics = buildBookingIcs(baseParams);
 
     expect(ics).toContain('BEGIN:VCALENDAR');
     expect(ics).toContain('BEGIN:VEVENT');
-    expect(ics).toContain('DTSTART;TZID=America/Mexico_City:20260901T090000');
-    expect(ics).toContain('DTEND;TZID=America/Mexico_City:20260901T093000');
+    // 09:00 en America/Mexico_City (UTC-6) = 15:00Z
+    expect(ics).toContain('DTSTART:20260901T150000Z');
+    expect(ics).toContain('DTEND:20260901T153000Z');
+    expect(ics).toContain('BEGIN:VTIMEZONE');
+    expect(ics).toContain('TZID:America/Mexico_City');
+    expect(ics).toContain('TZOFFSETFROM:-0600');
+    expect(ics).toContain('TZOFFSETTO:-0600');
     expect(ics).toContain('BEGIN:VALARM');
     expect(ics).toContain('TRIGGER:-PT30M');
     expect(ics).toContain('SUMMARY:Corte de cabello\\, barba — Diana');
@@ -80,5 +86,18 @@ describe('wallClockToUTC', () => {
   it('devuelve la misma fecha inválida sin lanzar', () => {
     const invalid = new Date('invalid');
     expect(wallClockToUTC(invalid, 'America/Mexico_City')).toBe(invalid);
+  });
+});
+
+describe('uuid', () => {
+  it('genera un UUID v4 sin crypto.randomUUID (fallback)', () => {
+    const original = (globalThis as { crypto?: Crypto }).crypto?.randomUUID;
+    try {
+      Object.defineProperty(globalThis.crypto, 'randomUUID', { value: undefined, configurable: true });
+      const id = uuid();
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    } finally {
+      Object.defineProperty(globalThis.crypto, 'randomUUID', { value: original, configurable: true });
+    }
   });
 });

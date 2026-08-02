@@ -811,15 +811,19 @@ async function addToCalendar() {
   calendarBusy.value = true;
   try {
     const blob = getIcsBlob(buildBookingIcs(ev));
-    const shared = await shareIcs(blob, `Mi cita · ${ev.summary}`, ev.description);
+    let shared = false;
+    try {
+      shared = await shareIcs(blob, `Mi cita · ${ev.summary}`, ev.description);
+    } catch (e) {
+      if ((e as DOMException)?.name === 'AbortError') return;
+    }
     if (!shared) {
       downloadIcs(`cita-${ev.summary.toLowerCase().replace(/\s+/g, '-')}-${selectedDate.value}.ics`, blob);
       uiStore.showNotification('Archivo generado. Ábrelo para agregarlo a tu calendario.', 'info');
     }
-  } catch (e: unknown) {
-    if ((e as DOMException)?.name !== 'AbortError') {
-      uiStore.showNotification('No se pudo agregar la cita a tu calendario.', 'error');
-    }
+  } catch (e) {
+    console.error('No se pudo generar el evento de calendario:', e);
+    uiStore.showNotification('No se pudo agregar la cita a tu calendario.', 'error');
   } finally {
     calendarBusy.value = false;
   }

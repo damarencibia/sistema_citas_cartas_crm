@@ -1,3 +1,5 @@
+import { uuid } from '@/shared/utils/helpers';
+
 export interface BookingEventParams {
   summary: string;
   description: string;
@@ -67,9 +69,55 @@ export function wallClockToUTC(carrier: Date, timeZone: string): Date {
   return new Date(wall.getTime() - offsetMinutes * 60000);
 }
 
+function tzOffsetMinutes(date: Date, timeZone: string): number {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = Object.fromEntries(dtf.formatToParts(date).map((p) => [p.type, p.value]));
+  let hour = Number(parts.hour);
+  if (hour === 24) hour = 0;
+  const asUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    hour,
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  return Math.round((asUtc - date.getTime()) / 60000);
+}
+
+function buildVTimezone(timeZone: string, date: Date): string {
+  if (Number.isNaN(date.getTime())) return '';
+  const offset = tzOffsetMinutes(date, timeZone);
+  const sign = offset < 0 ? '-' : '+';
+  const abs = Math.abs(offset);
+  const utcOffset = `${sign}${pad(Math.floor(abs / 60))}${pad(abs % 60)}`;
+  const localDate = formatIcsDate(new Date(date.getTime() + offset * 60000));
+  return [
+    'BEGIN:VTIMEZONE',
+    `TZID:${timeZone}`,
+    'BEGIN:STANDARD',
+    `DTSTART:${localDate}T000000`,
+    `TZOFFSETFROM:${utcOffset}`,
+    `TZOFFSETTO:${utcOffset}`,
+    'END:STANDARD',
+    'END:VTIMEZONE',
+  ].join('\r\n');
+}
+
 export function buildBookingIcs(params: BookingEventParams): string {
-  const uid = params.uid ?? `${crypto.randomUUID()}@nexo.booking`;
+  const uid = params.uid ?? `${uuid()}@nexo.booking`;
   const dtstamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const startUtc = wallClockToUTC(params.start, params.timezone);
+  const endUtc = wallClockToUTC(params.end, params.timezone);
 
   const lines = [
     'BEGIN:VCALENDAR',
@@ -77,14 +125,20 @@ export function buildBookingIcs(params: BookingEventParams): string {
     'PRODID:-//Nexo Platform//Booking//ES',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
+  ];
+
+  const vtimezone = buildVTimezone(params.timezone, params.start);
+  if (vtimezone) lines.push(vtimezone);
+
+  lines.push(
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${dtstamp}`,
-    `DTSTART;TZID=${params.timezone}:${formatIcsDate(params.start)}`,
-    `DTEND;TZID=${params.timezone}:${formatIcsDate(params.end)}`,
+    `DTSTART:${formatIcsDate(startUtc)}Z`,
+    `DTEND:${formatIcsDate(endUtc)}Z`,
     `SUMMARY:${escapeIcs(params.summary)}`,
     `DESCRIPTION:${escapeIcs(params.description)}`,
-  ];
+  );
 
   if (params.location) lines.push(`LOCATION:${escapeIcs(params.location)}`);
   if (params.organizerName && params.organizerEmail) {
@@ -116,15 +170,20 @@ export function downloadIcs(fileName: string, blob: Blob): void {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export async function shareIcs(blob: Blob, title: string, text: string): Promise<boolean> {
-  if (typeof navigator === 'undefined' || !navigator.canShare) return false;
+  if (typeof navigator === 'undefined' || !navigator.share) return false;
   const file = new File([blob], 'cita.ics', { type: 'text/calendar;charset=utf-8' });
-  if (!navigator.canShare({ files: [file] })) return false;
-  await navigator.share({ files: [file], title, text });
-  return true;
+  if (!navigator.canShare || !navigator.canShare({ files: [file] })) return false;
+  try {
+    await navigator.share({ files: [file], title, text });
+    return true;
+  } catch (e) {
+    if ((e as DOMException)?.name === 'AbortError') return true;
+    return false;
+  }
 }
 
 export function buildGoogleCalendarUrl(params: BookingEventParams): string {
