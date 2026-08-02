@@ -414,7 +414,7 @@
           class="text-h5 font-weight-bold mb-2 conf-step"
           style="animation-delay: 0.45s"
         >
-          ¡Reserva confirmada!
+          ¡Solicitud recibida!
         </h2>
         <h2
           v-else
@@ -426,7 +426,7 @@
 
         <template v-if="!waitlistJoined">
           <p class="text-body-1 text-medium-emphasis mb-0 conf-step" style="animation-delay: 0.6s">
-            Se ha agendado correctamente en nuestro sistema.
+            Tu solicitud está en revisión. El negocio la confirmará próximamente y te notificaremos.
           </p>
           <p
             v-if="waSummaryUrl && selectedEmployee"

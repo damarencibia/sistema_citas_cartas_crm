@@ -1,6 +1,6 @@
 import type { BaseEntity } from '@/shared/types';
 
-export type BookingStatus = 'confirmed' | 'in_progress' | 'completed' | 'no_show' | 'cancelled' | 'pending_approval';
+export type BookingStatus = 'confirmed' | 'in_progress' | 'completed' | 'no_show' | 'cancelled' | 'pending_approval' | 'pending_confirmation';
 export type BookingSource = 'online' | 'manual' | 'phone' | 'walk_in';
 export type CancelledBy = 'customer' | 'employee' | 'system';
 export type StatusChangedBy = 'employee' | 'system' | 'customer';
@@ -43,6 +43,21 @@ export interface CreateBookingDTO {
   customer_phone?: string;
   notes?: string;
   source?: BookingSource;
+  custom_duration_minutes?: number;
+  participant_count?: number;
+  resource_id?: string;
+  whatsapp_consent?: boolean;
+}
+
+export interface UpdateBookingDTO {
+  service_id?: string;
+  employee_id?: string;
+  date?: string;
+  start_time?: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  notes?: string;
   custom_duration_minutes?: number;
   participant_count?: number;
   resource_id?: string;
@@ -242,4 +257,30 @@ export interface CreateDailyExtraDTO {
   customer_name: string;
   service_id?: string;
   notes?: string;
+}
+
+export interface DailyClosure {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  date: string;
+  closed_by: string | null;
+  total_bookings: number;
+  attended: number;
+  no_shows: number;
+  extras: number;
+  total_attended: number;
+  closed_at: string;
+  reopened_at: string | null;
+}
+
+export interface CloseDayDTO {
+  employee_id: string;
+  date: string;
+  closed_by: string | null;
+  total_bookings: number;
+  attended: number;
+  no_shows: number;
+  extras: number;
+  total_attended: number;
 }

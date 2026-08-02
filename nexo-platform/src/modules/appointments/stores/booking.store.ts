@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { bookingRepository } from '../repositories/booking.repository';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
-import type { Booking, CreateBookingDTO, BookingFilters, BookingStatus, ClientBlockCheck, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance } from '../types/booking.types';
+import type { Booking, CreateBookingDTO, UpdateBookingDTO, BookingFilters, BookingStatus, ClientBlockCheck, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance } from '../types/booking.types';
 
 interface BookingStoreState {
   bookings: Booking[];
@@ -45,7 +45,9 @@ export const useBookingStore = defineStore('appointments/bookings', {
       return state.bookings.filter((b) => b.date === today);
     },
     pendingBookings: (state) =>
-      state.bookings.filter((b) => b.status === 'confirmed'),
+      state.bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending_confirmation'),
+    pendingConfirmationBookings: (state) =>
+      state.bookings.filter((b) => b.status === 'pending_confirmation'),
     pendingApprovalBookings: (state) =>
       state.bookings.filter((b) => b.status === 'pending_approval'),
     filteredBookings: (state) => {
@@ -96,6 +98,14 @@ export const useBookingStore = defineStore('appointments/bookings', {
       const booking = await bookingRepository.create(dto, tenantId);
       this.bookings.push(booking);
       return booking;
+    },
+
+    async updateBooking(id: string, dto: UpdateBookingDTO): Promise<Booking> {
+      const updated = await bookingRepository.update(id, dto);
+      const index = this.bookings.findIndex((b) => b.id === id);
+      if (index !== -1) this.bookings[index] = updated;
+      if (this.currentBooking?.id === id) this.currentBooking = updated;
+      return updated;
     },
 
     async updateStatus(id: string, status: BookingStatus, reason?: string, cancelledBy?: 'customer' | 'employee' | 'system'): Promise<Booking> {

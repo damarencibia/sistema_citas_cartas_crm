@@ -2,7 +2,7 @@
   <div>
     <PageHeader title="Reservas" subtitle="Todas las reservas del negocio">
       <template #actions>
-        <v-btn color="primary" @click="showForm = true">
+        <v-btn color="primary" @click="openCreateForm">
           <v-icon start>mdi-plus</v-icon>
           Nueva Reserva
         </v-btn>
@@ -94,8 +94,9 @@
 
     <BookingForm
       :visible="showForm"
-      @close="showForm = false"
-      @save="onCreateBooking"
+      :booking="editingBooking"
+      @close="onCloseForm"
+      @save="onSaveBooking"
     />
 
     <BookingDetailDialog
@@ -107,6 +108,7 @@
       @cancel="onCancelBooking"
       @reassign="onReassignBooking"
       @delete="onDeleteBooking"
+      @edit="onEditBooking"
     />
   </div>
 </template>
@@ -131,6 +133,7 @@ const activeTab = ref('all');
 const showForm = ref(false);
 const showDetail = ref(false);
 const selectedBooking = ref<Booking | null>(null);
+const editingBooking = ref<Booking | null>(null);
 
 const filters = reactive({
   date: null as string | null,
@@ -152,6 +155,7 @@ const statusOptions = [
   { value: 'no_show', text: 'No Asistió' },
   { value: 'cancelled', text: 'Cancelada' },
   { value: 'pending_approval', text: 'Pendiente Aprobación' },
+  { value: 'pending_confirmation', text: 'Pendiente Confirmación' },
 ];
 
 onMounted(async () => {
@@ -171,6 +175,50 @@ watch(filters, () => {
 function openDetail(booking: Booking) {
   selectedBooking.value = booking;
   showDetail.value = true;
+}
+
+function openCreateForm() {
+  editingBooking.value = null;
+  showForm.value = true;
+}
+
+function onEditBooking(booking: Booking) {
+  showDetail.value = false;
+  editingBooking.value = booking;
+  showForm.value = true;
+}
+
+function onCloseForm() {
+  showForm.value = false;
+  editingBooking.value = null;
+}
+
+async function onSaveBooking(data: CreateBookingDTO) {
+  if (editingBooking.value) {
+    try {
+      await bookingStore.updateBooking(editingBooking.value.id, {
+        service_id: data.service_id,
+        employee_id: data.employee_id,
+        date: data.date,
+        start_time: data.start_time,
+        customer_name: data.customer_name,
+        customer_email: data.customer_email,
+        customer_phone: data.customer_phone,
+        notes: data.notes,
+        custom_duration_minutes: data.custom_duration_minutes,
+        participant_count: data.participant_count,
+        resource_id: data.resource_id,
+        whatsapp_consent: data.whatsapp_consent,
+      });
+      onCloseForm();
+      await bookingStore.fetchBookings();
+      notification.success('Reserva actualizada');
+    } catch {
+      notification.error('Error al actualizar reserva');
+    }
+    return;
+  }
+  await onCreateBooking(data);
 }
 
 async function onCreateBooking(data: CreateBookingDTO) {

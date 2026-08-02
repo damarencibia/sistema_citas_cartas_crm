@@ -125,13 +125,14 @@ onMounted(async () => {
   try {
     const today = new Date().toISOString().split('T')[0];
 
-    const [{ count: bookingsToday }, { count: customers }, { count: services }, { count: employees }, { data: todayBookings }, { count: pending }, { count: confirmed }, { count: completed }, { count: cancelled }] = await Promise.all([
+    const [{ count: bookingsToday }, { count: customers }, { count: services }, { count: employees }, { data: todayBookings }, { count: pendingApproval }, { count: pendingConfirmation }, { count: confirmed }, { count: completed }, { count: cancelled }] = await Promise.all([
       supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('date', today),
       supabase.from('customers').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       supabase.from('services').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       supabase.from('employees').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       supabase.from('bookings').select('*, services(name)').eq('tenant_id', tenantId).eq('date', today).order('start_time', { ascending: true }).limit(10),
-      supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'pending'),
+      supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'pending_approval'),
+      supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'pending_confirmation'),
       supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'confirmed'),
       supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'completed'),
       supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'cancelled'),
@@ -142,7 +143,7 @@ onMounted(async () => {
     stats[2].value = String(services ?? 0);
     stats[3].value = String(employees ?? 0);
 
-    summary[0].value = String(pending ?? 0);
+    summary[0].value = String((pendingApproval ?? 0) + (pendingConfirmation ?? 0));
     summary[1].value = String(confirmed ?? 0);
     summary[2].value = String(completed ?? 0);
     summary[3].value = String(cancelled ?? 0);

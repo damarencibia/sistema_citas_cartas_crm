@@ -18,7 +18,8 @@
           variant="flat"
           size="small"
           prepend-icon="mdi-check-decagram"
-          :disabled="!canClose"
+          :loading="saving"
+          :disabled="!canClose || saving"
           :title="canClose ? 'Finalizar el cierre del día' : 'Faltan citas por atender'"
           @click="showCloseDialog = true"
         >
@@ -40,7 +41,14 @@
           Día cerrado — <strong>{{ summary.totalAttended }}</strong> atendidos
           ({{ summary.attended }} citas + {{ summary.extras }} extras)
         </span>
-        <v-btn size="small" variant="text" @click="closed = false">Reabrir</v-btn>
+        <v-btn
+          size="small"
+          variant="text"
+          :loading="saving"
+          @click="onReopen"
+        >
+          Reabrir
+        </v-btn>
       </div>
     </v-alert>
 
@@ -196,15 +204,26 @@
         <div class="mb-4">
           <div class="d-flex align-center justify-space-between mb-2">
             <div class="text-caption text-medium-emphasis font-weight-medium">EXTRAS ATENDIDOS</div>
-            <v-btn
-              size="x-small"
-              variant="text"
-              color="primary"
-              prepend-icon="mdi-plus"
-              @click="showAddExtra = true"
-            >
-              Agregar
-            </v-btn>
+            <div class="d-flex align-center ga-1">
+              <v-btn
+                size="x-small"
+                variant="text"
+                color="primary"
+                prepend-icon="mdi-layers"
+                @click="showAddExtraBatch = true"
+              >
+                Por lote
+              </v-btn>
+              <v-btn
+                size="x-small"
+                variant="text"
+                color="primary"
+                prepend-icon="mdi-plus"
+                @click="showAddExtra = true"
+              >
+                Agregar
+              </v-btn>
+            </div>
           </div>
 
           <div v-if="extras.length === 0" class="text-body-2 text-medium-emphasis text-center pa-2">
@@ -308,6 +327,7 @@
           <v-btn
             color="primary"
             variant="flat"
+            :loading="saving"
             @click="confirmClose"
           >
             Confirmar cierre
@@ -352,14 +372,54 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <!-- Add extra batch dialog -->
+    <v-dialog v-model="showAddExtraBatch" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6">Agregar extras por lote</v-card-title>
+        <v-card-text>
+          <v-select
+            v-model="batchForm.service_id"
+            :items="serviceOptions"
+            item-title="text"
+            item-value="value"
+            label="Servicio"
+            density="compact"
+            class="mb-3"
+          />
+          <v-text-field
+            v-model.number="batchForm.count"
+            label="Número de clientes atendidos"
+            type="number"
+            density="compact"
+            min="1"
+            :rules="[batchForm.count >= 1 || 'Ingresa al menos 1']"
+          />
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showAddExtraBatch = false">Cancelar</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="saving"
+            :disabled="!batchForm.service_id || !batchForm.count || batchForm.count < 1"
+            @click="onAddExtraBatch"
+          >
+            Agregar {{ batchForm.count }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
-import { useServiceStore } from '../stores/service.store';
+import { dailyClosureRepository } from '../repositories/daily-closure.repository';
+import { useEmployeeStore } from '../stores/employee.store';
 import { useBookingStore } from '../stores/booking.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 import type { Booking, DailyExtra } from '../types/booking.types';
 
 const props = defineProps<{
@@ -377,12 +437,16 @@ defineEmits<{
 }>();
 
 const bookingStore = useBookingStore();
-const serviceStore = useServiceStore();
+const employeeStore = useEmployeeStore();
+const authStore = useAuthStore();
 
 const loading = ref(false);
+const saving = ref(false);
 const extras = ref<DailyExtra[]>([]);
 const showAddExtra = ref(false);
 const extraForm = ref({ customer_name: '', service_id: '' as string | '' });
+const showAddExtraBatch = ref(false);
+const batchForm = ref({ service_id: '' as string | '', count: 1 as number });
 const filter = ref<'all' | 'pending' | 'attended' | 'no_show'>('all');
 const showCloseDialog = ref(false);
 const closed = ref(false);
@@ -394,7 +458,8 @@ const bookings = computed(() => {
   );
 });
 
-const isPending = (b: Booking) => b.status === 'confirmed' || b.status === 'in_progress';
+const isPending = (b: Booking) =>
+  b.status === 'confirmed' || b.status === 'in_progress' || b.status === 'pending_confirmation';
 
 const summary = computed(() => {
   const total = bookings.value.length;
@@ -458,7 +523,7 @@ const formattedDate = computed(() => {
 });
 
 const serviceOptions = computed(() =>
-  serviceStore.services.map((s) => ({
+  employeeStore.employeeServices.map((s) => ({
     value: s.id,
     text: `${s.name} (${s.duration_minutes}m)`,
   })),
@@ -474,9 +539,53 @@ function bookingBgClass(b: Booking): string {
   return '';
 }
 
-function confirmClose() {
-  showCloseDialog.value = false;
-  closed.value = true;
+async function confirmClose() {
+  if (!props.employeeId) return;
+  saving.value = true;
+  try {
+    await dailyClosureRepository.close(props.tenantId, {
+      employee_id: props.employeeId,
+      date: props.date,
+      closed_by: authStore.user?.id ?? null,
+      total_bookings: summary.value.total,
+      attended: summary.value.attended,
+      no_shows: summary.value.noShows,
+      extras: summary.value.extras,
+      total_attended: summary.value.totalAttended,
+    });
+    closed.value = true;
+    showCloseDialog.value = false;
+  } catch {
+    closed.value = false;
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function onReopen() {
+  if (!props.employeeId) return;
+  saving.value = true;
+  try {
+    await dailyClosureRepository.reopen(props.employeeId, props.date);
+    closed.value = false;
+  } catch {
+    /* empty */
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function loadClosure() {
+  if (!props.employeeId || !props.date) {
+    closed.value = false;
+    return;
+  }
+  try {
+    const closure = await dailyClosureRepository.getByEmployeeAndDate(props.employeeId, props.date);
+    closed.value = !!closure;
+  } catch {
+    closed.value = false;
+  }
 }
 
 async function loadExtras() {
@@ -508,10 +617,36 @@ async function onAddExtra() {
   }
 }
 
+async function onAddExtraBatch() {
+  if (!props.employeeId || !batchForm.value.service_id) return;
+  saving.value = true;
+  try {
+    const count = Math.max(1, Math.floor(batchForm.value.count) || 1);
+    for (let i = 1; i <= count; i++) {
+      await dailyExtrasRepository.create(props.tenantId, {
+        employee_id: props.employeeId,
+        date: props.date,
+        customer_name: `Cliente extra ${i}`,
+        service_id: batchForm.value.service_id,
+      });
+    }
+    batchForm.value = { service_id: '', count: 1 };
+    showAddExtraBatch.value = false;
+    await loadExtras();
+  } catch {
+    /* empty */
+  } finally {
+    saving.value = false;
+  }
+}
+
 watch(() => [props.employeeId, props.date], () => {
-  closed.value = false;
   filter.value = 'all';
+  loadClosure();
   loadExtras();
+  if (props.employeeId) {
+    employeeStore.fetchEmployeeServices(props.employeeId);
+  }
 }, { immediate: true });
 
 defineExpose({ loadExtras });

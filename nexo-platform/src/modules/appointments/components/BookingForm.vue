@@ -355,18 +355,22 @@ watch(
 
 watch(
   () => props.visible,
-  (v) => {
+  async (v) => {
     if (!v) {
       availability.clear();
     } else {
-      categoryStore.fetchCategories();
-      serviceStore.fetchServices();
-      resourceStore.fetchResources();
+      await Promise.all([
+        categoryStore.fetchCategories(),
+        serviceStore.fetchServices(),
+        resourceStore.fetchResources(),
+      ]);
       if (!editing.value) {
         form.date = new Date().toISOString().split('T')[0];
         if (form.service_id && form.employee_id) {
           loadSlots();
         }
+      } else if (form.service_id && form.employee_id && form.date) {
+        loadSlots();
       }
     }
   },

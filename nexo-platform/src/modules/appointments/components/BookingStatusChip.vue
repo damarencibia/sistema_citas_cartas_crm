@@ -20,6 +20,7 @@ const statusMap: Record<BookingStatus, { label: string; color: string; icon: str
   no_show: { label: 'No Asistió', color: 'error', icon: 'mdi-cancel' },
   cancelled: { label: 'Cancelada', color: 'grey', icon: 'mdi-close-circle' },
   pending_approval: { label: 'Pendiente Aprobación', color: 'amber', icon: 'mdi-clock-alert' },
+  pending_confirmation: { label: 'Pendiente Confirmación', color: 'orange', icon: 'mdi-message-clock-outline' },
 };
 
 const config = computed(() => statusMap[props.status] ?? { label: props.status, color: 'grey', icon: 'mdi-help' });

@@ -3,6 +3,7 @@ import type { Database } from '@/shared/types/supabase.gen';
 import type {
   Booking,
   CreateBookingDTO,
+  UpdateBookingDTO,
   BookingFilters,
   AvailableSlot,
   ClientBlockCheck,
@@ -15,6 +16,7 @@ import type {
   CreateRecurringDTO,
   RecurringInstance,
   BookingStatus,
+  BookingStatusLog,
 } from '../types/booking.types';
 
 const TABLE = 'bookings' as const;
@@ -24,7 +26,8 @@ type BookingInsert = Database['public']['Tables']['bookings']['Insert'];
 
 const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   pending_approval: ['confirmed', 'cancelled'],
-  confirmed: ['in_progress', 'cancelled', 'no_show'],
+  pending_confirmation: ['confirmed', 'cancelled'],
+  confirmed: ['in_progress', 'completed', 'cancelled', 'no_show'],
   in_progress: ['completed', 'cancelled', 'no_show'],
   completed: [],
   no_show: [],
@@ -101,7 +104,11 @@ export const bookingRepository = {
     const duration = dto.custom_duration_minutes ?? serviceData.duration_minutes;
     const endTime = computeEndTime(dto.start_time, duration);
 
-    const initialStatus = serviceData.requires_approval ? 'pending_approval' : 'confirmed';
+    const initialStatus: BookingStatus = serviceData.requires_approval
+      ? 'pending_approval'
+      : dto.source === 'online'
+        ? 'pending_confirmation'
+        : 'confirmed';
 
     let customerId: string | null = null;
     if (dto.customer_email) {
@@ -142,6 +149,70 @@ export const bookingRepository = {
       }
       throw error;
     }
+    return data as Booking;
+  },
+
+  async update(id: string, dto: UpdateBookingDTO): Promise<Booking> {
+    const { data: current, error: fetchError } = await supabase
+      .from(TABLE)
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (fetchError) throw fetchError;
+
+    let duration: number;
+    const customDuration = dto.custom_duration_minutes ?? current.custom_duration_minutes;
+    if (customDuration != null) {
+      duration = customDuration;
+    } else {
+      const serviceId = dto.service_id ?? current.service_id;
+      const { data: serviceData, error: serviceError } = await supabase
+        .from('services')
+        .select('duration_minutes')
+        .eq('id', serviceId)
+        .single();
+      if (serviceError) throw serviceError;
+      duration = serviceData.duration_minutes;
+    }
+
+    const startTime = dto.start_time ?? current.start_time;
+    const endTime = computeEndTime(startTime, duration);
+
+    const payload: BookingUpdate = {
+      updated_at: new Date().toISOString(),
+      end_time: endTime,
+    };
+    if (dto.service_id) payload.service_id = dto.service_id;
+    if (dto.employee_id) payload.employee_id = dto.employee_id;
+    if (dto.date) payload.date = dto.date;
+    if (dto.start_time) payload.start_time = dto.start_time;
+    if (dto.custom_duration_minutes !== undefined) payload.custom_duration_minutes = dto.custom_duration_minutes;
+    if (dto.resource_id !== undefined) payload.resource_id = dto.resource_id;
+    if (dto.participant_count !== undefined) payload.participant_count = dto.participant_count;
+    if (dto.whatsapp_consent !== undefined) payload.whatsapp_consent = dto.whatsapp_consent;
+    if (dto.customer_name !== undefined) payload.customer_name = dto.customer_name;
+    if (dto.customer_email !== undefined) payload.customer_email = dto.customer_email;
+    if (dto.customer_phone !== undefined) payload.customer_phone = dto.customer_phone;
+    if (dto.notes !== undefined) payload.notes = dto.notes;
+
+    if (dto.customer_email && dto.customer_email !== current.customer_email) {
+      const { data: cid, error: customerError } = await supabase.rpc('upsert_booking_customer', {
+        p_tenant_id: current.tenant_id,
+        p_customer_name: dto.customer_name ?? current.customer_name ?? '',
+        p_customer_email: dto.customer_email,
+        p_customer_phone: dto.customer_phone ?? current.customer_phone ?? '',
+      });
+      if (customerError) throw customerError;
+      payload.customer_id = (cid as string) ?? null;
+    }
+
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
     return data as Booking;
   },
 
@@ -205,6 +276,16 @@ export const bookingRepository = {
       reason: reason ?? null,
     });
     if (error) throw error;
+  },
+
+  async getStatusLogByBooking(bookingId: string): Promise<BookingStatusLog[]> {
+    const { data, error } = await supabase
+      .from('booking_status_log')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as unknown as BookingStatusLog[];
   },
 
   async checkClientBlock(tenantId: string, customerEmail: string): Promise<ClientBlockCheck> {

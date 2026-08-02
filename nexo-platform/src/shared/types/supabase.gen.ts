@@ -615,6 +615,73 @@ export type Database = {
           },
         ];
       };
+      daily_closures: {
+        Row: {
+          attended: number;
+          closed_at: string;
+          closed_by: string | null;
+          date: string;
+          employee_id: string;
+          extras: number;
+          id: string;
+          no_shows: number;
+          reopened_at: string | null;
+          tenant_id: string;
+          total_attended: number;
+          total_bookings: number;
+        };
+        Insert: {
+          attended?: number;
+          closed_at?: string;
+          closed_by?: string | null;
+          date: string;
+          employee_id: string;
+          extras?: number;
+          id?: string;
+          no_shows?: number;
+          reopened_at?: string | null;
+          tenant_id: string;
+          total_attended?: number;
+          total_bookings?: number;
+        };
+        Update: {
+          attended?: number;
+          closed_at?: string;
+          closed_by?: string | null;
+          date?: string;
+          employee_id?: string;
+          extras?: number;
+          id?: string;
+          no_shows?: number;
+          reopened_at?: string | null;
+          tenant_id?: string;
+          total_attended?: number;
+          total_bookings?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'daily_closures_closed_by_fkey';
+            columns: ['closed_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'daily_closures_employee_id_fkey';
+            columns: ['employee_id'];
+            isOneToOne: false;
+            referencedRelation: 'employees';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'daily_closures_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       daily_extras: {
         Row: {
           created_at: string;

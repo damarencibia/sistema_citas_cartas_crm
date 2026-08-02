@@ -1,5 +1,5 @@
 <template>
-  <v-dialog :model-value="visible" max-width="480" @update:model-value="emit('close')">
+  <v-dialog :model-value="visible" max-width="520" @update:model-value="emit('close')">
     <v-card v-if="booking">
       <v-card-title class="text-h6 d-flex align-center">
         Detalle de Cita
@@ -22,26 +22,77 @@
             prepend-icon="mdi-account-tie"
             :title="`${booking.employee.first_name} ${booking.employee.last_name}`"
           />
-          <v-list-item v-if="booking.notes" prepend-icon="mdi-note-text" :title="booking.notes" />
-          <v-list-item v-if="booking.source === 'walk_in'" prepend-icon="mdi-walk">
-            <v-chip size="x-small" color="teal" variant="tonal">Walk-in</v-chip>
+          <v-list-item
+            v-if="booking.participant_count > 1"
+            prepend-icon="mdi-account-group"
+            :title="`${booking.participant_count} participantes`"
+          />
+          <v-list-item prepend-icon="mdi-web">
+            <v-chip size="x-small" :color="sourceConfig.color" variant="tonal">
+              {{ sourceConfig.label }}
+            </v-chip>
           </v-list-item>
+          <v-list-item v-if="booking.notes" prepend-icon="mdi-note-text" :title="booking.notes" />
         </v-list>
+
+        <div v-if="statusLog.length" class="mt-2">
+          <div class="text-subtitle-2 font-weight-bold mb-1">
+            <v-icon size="small" class="mr-1">mdi-history</v-icon>
+            Historial de estados
+          </div>
+          <v-list density="compact" class="bg-transparent">
+            <v-list-item v-for="entry in statusLog" :key="entry.id" class="px-0">
+              <template #prepend>
+                <v-icon size="small" :icon="statusMeta(entry.new_status).icon" :color="statusMeta(entry.new_status).color" />
+              </template>
+              <v-list-item-title class="text-body-2">
+                {{ statusMeta(entry.old_status).label }} → {{ statusMeta(entry.new_status).label }}
+              </v-list-item-title>
+              <v-list-item-subtitle class="text-caption">
+                {{ formatDate(entry.created_at) }} · {{ entry.changed_by_name || entry.changed_by }}
+                <span v-if="entry.reason"> · {{ entry.reason }}</span>
+              </v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
+        </div>
       </v-card-text>
-      <v-card-text v-if="whatsappUrl" class="pt-0">
-        <v-btn
-          color="green"
-          variant="tonal"
-          block
-          prepend-icon="mdi-whatsapp"
-          :href="whatsappUrl"
-          target="_blank"
-          rel="noopener"
-        >
-          Contactar por WhatsApp
-        </v-btn>
+
+      <v-card-text v-if="hasPhone || hasWhatsapp" class="pt-0">
+        <div class="d-flex ga-2">
+          <v-btn
+            v-if="hasWhatsapp"
+            color="green"
+            variant="tonal"
+            block
+            prepend-icon="mdi-whatsapp"
+            :href="whatsappUrl"
+            target="_blank"
+            rel="noopener"
+          >
+            WhatsApp
+          </v-btn>
+          <v-btn
+            v-if="hasPhone"
+            color="teal"
+            variant="tonal"
+            block
+            prepend-icon="mdi-phone"
+            :href="telUrl"
+          >
+            Llamar
+          </v-btn>
+        </div>
       </v-card-text>
       <v-card-actions v-if="showActions && canUpdate" class="pa-4 pt-0">
+        <v-btn
+          v-if="booking.status === 'pending_confirmation'"
+          color="success"
+          variant="flat"
+          prepend-icon="mdi-check-circle"
+          @click="emit('statusChange', booking, 'confirmed')"
+        >
+          Confirmar
+        </v-btn>
         <v-btn
           v-if="booking.status === 'confirmed' || booking.status === 'in_progress'"
           color="success"
@@ -61,6 +112,15 @@
           Cancelar
         </v-btn>
         <v-btn
+          v-if="['confirmed', 'in_progress', 'pending_confirmation'].includes(booking.status)"
+          color="warning"
+          variant="outlined"
+          prepend-icon="mdi-account-remove"
+          @click="emit('statusChange', booking, 'no_show')"
+        >
+          No Asistió
+        </v-btn>
+        <v-btn
           v-if="booking.status === 'confirmed'"
           color="primary"
           variant="tonal"
@@ -70,6 +130,15 @@
           Reasignar
         </v-btn>
         <v-spacer />
+        <v-btn
+          color="primary"
+          variant="text"
+          prepend-icon="mdi-pencil"
+          size="small"
+          @click="emit('edit', booking)"
+        >
+          Editar
+        </v-btn>
         <v-btn
           color="error"
           variant="text"
@@ -131,12 +200,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { bookingRepository } from '../repositories/booking.repository';
 import BookingStatusChip from './BookingStatusChip.vue';
 import CancelBookingDialog from './CancelBookingDialog.vue';
 import ReassignBookingDialog from './ReassignBookingDialog.vue';
-import type { Booking } from '../types/booking.types';
+import type { Booking, BookingSource, BookingStatus, BookingStatusLog } from '../types/booking.types';
 
 const props = defineProps<{
   visible: boolean;
@@ -155,6 +225,7 @@ const emit = defineEmits<{
   ];
   reassign: [booking: Booking, newDate: string, newStartTime: string];
   delete: [booking: Booking];
+  edit: [booking: Booking];
 }>();
 
 const authStore = useAuthStore();
@@ -162,23 +233,80 @@ const showCancelDialog = ref(false);
 const showReassignDialog = ref(false);
 const showDeleteDialog = ref(false);
 const deleting = ref(false);
+const statusLog = ref<BookingStatusLog[]>([]);
 
 const canUpdate = computed(() =>
   ['owner', 'admin', 'employee', 'super_admin'].includes(authStore.userRole ?? ''),
 );
 
-const whatsappUrl = computed(() => {
-  if (!props.booking?.whatsapp_consent) return null;
+const sourceMap: Record<BookingSource, { label: string; color: string }> = {
+  online: { label: 'Portal', color: 'info' },
+  manual: { label: 'Manual', color: 'grey' },
+  phone: { label: 'Teléfono', color: 'teal' },
+  walk_in: { label: 'Walk-in', color: 'orange' },
+};
+
+const statusMetaMap: Record<BookingStatus, { label: string; color: string; icon: string }> = {
+  confirmed: { label: 'Confirmada', color: 'info', icon: 'mdi-check-circle' },
+  in_progress: { label: 'En Progreso', color: 'warning', icon: 'mdi-progress-clock' },
+  completed: { label: 'Completada', color: 'success', icon: 'mdi-check-all' },
+  no_show: { label: 'No Asistió', color: 'error', icon: 'mdi-cancel' },
+  cancelled: { label: 'Cancelada', color: 'grey', icon: 'mdi-close-circle' },
+  pending_approval: { label: 'Pendiente Aprobación', color: 'amber', icon: 'mdi-clock-alert' },
+  pending_confirmation: { label: 'Pendiente Confirmación', color: 'orange', icon: 'mdi-message-clock-outline' },
+};
+
+function statusMeta(status: string | null): { label: string; color: string; icon: string } {
+  if (!status) return { label: '—', color: 'grey', icon: 'mdi-circle-outline' };
+  return statusMetaMap[status as BookingStatus] ?? { label: status, color: 'grey', icon: 'mdi-help' };
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+const sourceConfig = computed(() => sourceMap[props.booking?.source ?? 'manual'] ?? sourceMap.manual);
+
+const whatsappUrl = computed<string | undefined>(() => {
+  if (!props.booking?.whatsapp_consent) return undefined;
   const phone = props.booking.customer_phone;
-  if (!phone) return null;
+  if (!phone) return undefined;
   const digits = phone.replace(/\D/g, '');
-  if (!digits) return null;
+  if (!digits) return undefined;
   const service = props.booking.service?.name ?? '';
   const date = props.booking.date;
   const time = props.booking.start_time?.slice(0, 5) ?? '';
   const text = `Hola ${props.booking.customer_name ?? ''}, te escribo respecto a tu cita${service ? ` de ${service}` : ''} del ${date}${time ? ` a las ${time}` : ''}.`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 });
+
+const telUrl = computed<string | undefined>(() => {
+  const digits = props.booking?.customer_phone?.replace(/\D/g, '');
+  return digits ? `tel:${digits}` : undefined;
+});
+
+const hasWhatsapp = computed(() => !!whatsappUrl.value);
+const hasPhone = computed(() => !!telUrl.value);
+
+watch(
+  () => [props.visible, props.booking?.id] as const,
+  async ([visible, bookingId]) => {
+    if (visible && bookingId) {
+      try {
+        statusLog.value = await bookingRepository.getStatusLogByBooking(bookingId);
+      } catch {
+        statusLog.value = [];
+      }
+    } else {
+      statusLog.value = [];
+    }
+  },
+);
 
 function onCancelConfirm(data: {
   reason: string;

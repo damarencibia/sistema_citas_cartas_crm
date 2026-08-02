@@ -126,8 +126,9 @@
 
     <BookingForm
       :visible="showForm"
+      :booking="editingBooking"
       @close="closeForm"
-      @save="onCreateBooking"
+      @save="onSaveBooking"
     />
 
     <BookingDetailDialog
@@ -139,6 +140,7 @@
       @cancel="onCancelBooking"
       @reassign="onReassignBooking"
       @delete="onDeleteBooking"
+      @edit="onEditBooking"
     />
   </div>
 </template>
@@ -168,6 +170,7 @@ const agenda = useAgenda();
 const showForm = ref(false);
 const showDetail = ref(false);
 const selectedBooking = ref<Booking | null>(null);
+const editingBooking = ref<Booking | null>(null);
 const activeTab = ref('agenda');
 const closurePanelRef = ref<InstanceType<typeof DailyClosurePanel> | null>(null);
 const pendingWaitlistConversion = ref<WaitlistEntry | null>(null);
@@ -204,17 +207,53 @@ watch([agenda.selectedDate, agenda.viewMode, agenda.selectedEmployeeId], () => {
 
 function openCreateForm() {
   pendingWaitlistConversion.value = null;
+  editingBooking.value = null;
   showForm.value = true;
 }
 
 function closeForm() {
   showForm.value = false;
+  editingBooking.value = null;
   pendingWaitlistConversion.value = null;
 }
 
 function openDetail(booking: Booking) {
   selectedBooking.value = booking;
   showDetail.value = true;
+}
+
+function onEditBooking(booking: Booking) {
+  showDetail.value = false;
+  editingBooking.value = booking;
+  showForm.value = true;
+}
+
+async function onSaveBooking(data: CreateBookingDTO) {
+  if (editingBooking.value) {
+    try {
+      await bookingStore.updateBooking(editingBooking.value.id, {
+        service_id: data.service_id,
+        employee_id: data.employee_id,
+        date: data.date,
+        start_time: data.start_time,
+        customer_name: data.customer_name,
+        customer_email: data.customer_email,
+        customer_phone: data.customer_phone,
+        notes: data.notes,
+        custom_duration_minutes: data.custom_duration_minutes,
+        participant_count: data.participant_count,
+        resource_id: data.resource_id,
+        whatsapp_consent: data.whatsapp_consent,
+      });
+      closeForm();
+      notification.success('Reserva actualizada');
+      await agenda.loadAgenda();
+    } catch {
+      notification.error('Error al actualizar reserva');
+    }
+    return;
+  }
+  await onCreateBooking(data);
 }
 
 async function onCreateBooking(data: CreateBookingDTO) {
@@ -248,8 +287,8 @@ async function onStatusChange(booking: Booking, status: string) {
     notification.success('Estado actualizado');
     showDetail.value = false;
     await agenda.loadAgenda();
-  } catch {
-    notification.error('Error al actualizar');
+  } catch (e) {
+    notification.error((e as Error).message || 'Error al actualizar');
   }
 }
 
@@ -331,6 +370,7 @@ async function onWaitlistCancel(entry: WaitlistEntry) {
 
 function onWaitlistConvert(entry: WaitlistEntry) {
   pendingWaitlistConversion.value = entry;
+  editingBooking.value = null;
   showForm.value = true;
 }
 
@@ -341,8 +381,8 @@ async function onMarkAttended(booking: Booking) {
     notification.success(`${booking.customer_name || 'Cliente'} marcado como asistido`);
     await agenda.loadAgenda();
     closurePanelRef.value?.loadExtras();
-  } catch {
-    notification.error('Error al actualizar estado');
+  } catch (e) {
+    notification.error((e as Error).message || 'Error al actualizar estado');
   }
 }
 
@@ -352,8 +392,8 @@ async function onMarkNoShow(booking: Booking) {
     notification.success(`${booking.customer_name || 'Cliente'} marcado como no asistido`);
     await agenda.loadAgenda();
     closurePanelRef.value?.loadExtras();
-  } catch {
-    notification.error('Error al actualizar estado');
+  } catch (e) {
+    notification.error((e as Error).message || 'Error al actualizar estado');
   }
 }
 
@@ -365,8 +405,8 @@ async function onMarkAllAttended(bookings: Booking[]) {
     notification.success(`${bookings.length} citas marcadas como asistidas`);
     await agenda.loadAgenda();
     closurePanelRef.value?.loadExtras();
-  } catch {
-    notification.error('Error al actualizar estados');
+  } catch (e) {
+    notification.error((e as Error).message || 'Error al actualizar estados');
   }
 }
 
@@ -375,8 +415,8 @@ async function onRemoveExtra(extra: DailyExtra) {
     await dailyExtrasRepository.remove(extra.id);
     notification.success('Extra eliminado');
     closurePanelRef.value?.loadExtras();
-  } catch {
-    notification.error('Error al eliminar extra');
+  } catch (e) {
+    notification.error((e as Error).message || 'Error al eliminar extra');
   }
 }
 </script>

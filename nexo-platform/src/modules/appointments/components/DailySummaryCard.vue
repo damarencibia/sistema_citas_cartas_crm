@@ -134,7 +134,7 @@ async function load() {
       row.total++;
       if (b.status === 'completed') row.completed++;
       else if (b.status === 'no_show') row.no_show++;
-      else if (['pending', 'confirmed', 'in_progress'].includes(b.status)) row.pending++;
+      else if (['confirmed', 'in_progress', 'pending_confirmation'].includes(b.status)) row.pending++;
     }
 
     rows.value = Array.from(grouped.values()).sort((a, b) => b.total - a.total);
