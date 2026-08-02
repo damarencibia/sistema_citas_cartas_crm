@@ -23,13 +23,25 @@ function escapeIcs(value: string): string {
 }
 
 function formatIcsDate(date: Date): string {
+  if (Number.isNaN(date.getTime())) return '';
   return (
     `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}` +
     `T${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}${pad(date.getUTCSeconds())}`
   );
 }
 
-export function zonedDateToUTC(date: Date, timeZone: string): Date {
+export function wallClockToUTC(carrier: Date, timeZone: string): Date {
+  if (Number.isNaN(carrier.getTime())) return carrier;
+  const wall = new Date(
+    Date.UTC(
+      carrier.getUTCFullYear(),
+      carrier.getUTCMonth(),
+      carrier.getUTCDate(),
+      carrier.getUTCHours(),
+      carrier.getUTCMinutes(),
+      carrier.getUTCSeconds(),
+    ),
+  );
   const dtf = new Intl.DateTimeFormat('en-US', {
     timeZone,
     year: 'numeric',
@@ -40,19 +52,19 @@ export function zonedDateToUTC(date: Date, timeZone: string): Date {
     second: '2-digit',
     hour12: false,
   });
-  const parts = Object.fromEntries(dtf.formatToParts(date).map((p) => [p.type, p.value]));
+  const parts = Object.fromEntries(dtf.formatToParts(wall).map((p) => [p.type, p.value]));
   let hour = Number(parts.hour);
   if (hour === 24) hour = 0;
-  return new Date(
-    Date.UTC(
-      Number(parts.year),
-      Number(parts.month) - 1,
-      Number(parts.day),
-      hour,
-      Number(parts.minute),
-      Number(parts.second),
-    ),
+  const wallInTz = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    hour,
+    Number(parts.minute),
+    Number(parts.second),
   );
+  const offsetMinutes = (wallInTz - wall.getTime()) / 60000;
+  return new Date(wall.getTime() - offsetMinutes * 60000);
 }
 
 export function buildBookingIcs(params: BookingEventParams): string {
@@ -116,7 +128,8 @@ export async function shareIcs(blob: Blob, title: string, text: string): Promise
 }
 
 export function buildGoogleCalendarUrl(params: BookingEventParams): string {
-  const utc = (d: Date) => zonedDateToUTC(d, params.timezone).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  if (Number.isNaN(params.start.getTime()) || Number.isNaN(params.end.getTime())) return '';
+  const utc = (d: Date) => wallClockToUTC(d, params.timezone).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const search = new URLSearchParams({
     action: 'TEMPLATE',
     text: params.summary,

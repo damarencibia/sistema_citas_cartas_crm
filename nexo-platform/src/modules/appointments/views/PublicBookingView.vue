@@ -570,7 +570,8 @@ const bookingEvent = computed(() => {
   if (!selectedService.value || !selectedEmployee.value || !selectedDate.value || !selectedTime.value) return null;
   const workerName = `${selectedEmployee.value.first_name} ${selectedEmployee.value.last_name ?? ''}`.trim();
   const serviceName = selectedService.value.name;
-  const start = new Date(`${selectedDate.value}T${selectedTime.value}:00`);
+  const time = selectedTime.value.slice(0, 5);
+  const start = new Date(`${selectedDate.value}T${time}:00Z`);
   const end = new Date(start.getTime() + (selectedService.value.duration_minutes ?? 0) * 60000);
   const summary = serviceName + (workerName ? ` — ${workerName}` : '');
   const description = [
