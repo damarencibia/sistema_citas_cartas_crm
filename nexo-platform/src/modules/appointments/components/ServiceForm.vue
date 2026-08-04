@@ -3,6 +3,7 @@
     :model-value="visible"
     max-width="520"
     persistent
+    :fullscreen="$vuetify.display.smAndDown"
     @update:model-value="emit('close')"
   >
     <v-card>
@@ -46,7 +47,7 @@
             :rules="[(v) => !!v || 'Requerido']"
           />
           <v-row>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <v-text-field
                 v-model.number="localForm.duration_minutes"
                 label="Duración (min)"
@@ -54,7 +55,7 @@
                 :rules="[(v) => (v >= 5 && v <= 480) || 'Entre 5 y 480 min']"
               />
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <v-text-field
                 v-model.number="localForm.price"
                 label="Precio (centavos)"

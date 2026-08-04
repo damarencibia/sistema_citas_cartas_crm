@@ -108,7 +108,7 @@
     </v-card>
 
     <!-- Create Dialog -->
-    <v-dialog v-model="createDialog" max-width="560" persistent>
+    <v-dialog v-model="createDialog" max-width="560" persistent :fullscreen="$vuetify.display.smAndDown">
       <v-card>
         <v-card-title class="text-h6 d-flex align-center">
           Agregar Empleado
@@ -133,7 +133,7 @@
           </v-alert>
           <v-form ref="formRef">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="6">
                 <v-text-field
                   v-model="form.first_name"
                   label="Nombre *"
@@ -141,7 +141,7 @@
                   density="comfortable"
                 />
               </v-col>
-              <v-col cols="6">
+              <v-col cols="12" sm="6">
                 <v-text-field
                   v-model="form.last_name"
                   label="Apellidos *"

@@ -2,12 +2,12 @@
   <v-dialog
     :model-value="modelValue"
     persistent
-    width="640"
+    max-width="640"
     no-click-animation
   >
     <template #default>
-      <v-card class="module-dialog pa-6">
-        <div class="text-center mb-6">
+      <v-card class="module-dialog pa-4 pa-sm-6">
+        <div class="text-center mb-4 mb-sm-6">
           <h2 class="text-h6 font-weight-semibold">Selecciona un módulo</h2>
           <p class="text-body-2 mt-1" style="color: var(--text-muted);">
             Elige el módulo al que deseas acceder
@@ -15,7 +15,7 @@
         </div>
 
         <v-row dense>
-          <v-col cols="6">
+          <v-col cols="12" sm="6">
             <v-card
               :variant="selected === 'appointments' ? 'tonal' : 'outlined'"
               :color="selected === 'appointments' ? 'primary' : undefined"
@@ -24,7 +24,7 @@
               :style="{
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                height: '240px',
+                minHeight: '180px',
                 borderWidth: selected === 'appointments' ? '2px' : '1px',
               }"
               @click="selected = 'appointments'"
@@ -59,12 +59,12 @@
             </v-card>
           </v-col>
 
-          <v-col cols="6">
+          <v-col cols="12" sm="6">
             <v-card
               variant="outlined"
               disabled
               class="module-card d-flex flex-column align-center text-center justify-center pa-6"
-              :style="{ height: '240px', opacity: 0.55 }"
+              :style="{ minHeight: '180px', opacity: 0.55 }"
             >
               <v-avatar
                 color="grey-lighten-3"

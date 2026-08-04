@@ -1,14 +1,14 @@
 <template>
   <div class="booking-calendar">
-    <div class="d-flex align-center justify-space-between mb-4">
-      <div class="d-flex align-center ga-2">
+    <div class="calendar-header mb-4">
+      <div class="d-flex align-center ga-1">
         <v-btn
           icon="mdi-chevron-left"
           size="small"
           variant="text"
           @click="onPrev"
         />
-        <h3 class="text-subtitle-1 font-weight-medium" style="min-width: 200px; text-align: center">
+        <h3 class="calendar-title text-subtitle-1 font-weight-medium">
           {{ displayTitle }}
         </h3>
         <v-btn
@@ -17,17 +17,19 @@
           variant="text"
           @click="onNext"
         />
-        <v-btn size="small" variant="outlined" @click="onToday">Hoy</v-btn>
       </div>
-      <v-btn-toggle
-        v-model="localView"
-        mandatory
-        density="compact"
-        color="primary"
-      >
-        <v-btn value="day" size="small">Día</v-btn>
-        <v-btn value="week" size="small">Semana</v-btn>
-      </v-btn-toggle>
+      <div class="d-flex align-center ga-2 flex-wrap">
+        <v-btn size="small" variant="outlined" @click="onToday">Hoy</v-btn>
+        <v-btn-toggle
+          v-model="localView"
+          mandatory
+          density="compact"
+          color="primary"
+        >
+          <v-btn value="day" size="small">Día</v-btn>
+          <v-btn value="week" size="small">Semana</v-btn>
+        </v-btn-toggle>
+      </div>
     </div>
 
     <div v-if="localView === 'day'" class="day-view">
@@ -37,7 +39,7 @@
         class="hour-row d-flex"
         :style="{ height: '48px' }"
       >
-        <div class="hour-label text-caption text-medium-emphasis" style="width: 60px">
+        <div class="hour-label text-caption text-medium-emphasis">
           {{ formatHour(hour) }}
         </div>
         <v-divider vertical />
@@ -53,40 +55,43 @@
       </div>
     </div>
 
-    <div v-else class="week-view">
-      <div class="d-flex">
-        <div style="width: 60px" />
-        <div
-          v-for="(date, i) in weekDates"
-          :key="date"
-          class="flex-grow-1 text-center text-caption"
-          :class="{ 'text-primary font-weight-bold': date === today }"
-        >
-          {{ weekDayLabels[i] }} {{ parseDate(date).getDate() }}
-        </div>
-      </div>
-      <div
-        v-for="hour in hours"
-        :key="hour"
-        class="hour-row d-flex"
-        :style="{ height: '40px' }"
-      >
-        <div class="hour-label text-caption text-medium-emphasis" style="width: 60px">
-          {{ formatHour(hour) }}
+    <div v-else class="week-scroll">
+      <div class="week-view">
+        <div class="d-flex">
+          <div class="week-hour-header" />
+          <div
+            v-for="(date, i) in weekDates"
+            :key="date"
+            class="flex-grow-1 text-center text-caption"
+            :class="{ 'text-primary font-weight-bold': date === today }"
+          >
+            {{ weekDayLabels[i] }} {{ parseDate(date).getDate() }}
+          </div>
         </div>
         <div
-          v-for="date in weekDates"
-          :key="`${date}-${hour}`"
-          class="flex-grow-1 hour-cell"
-          :class="{ 'today-col': date === today }"
+          v-for="hour in hours"
+          :key="hour"
+          class="hour-row d-flex"
+          :style="{ height: '40px' }"
         >
-          <BookingCard
-            v-for="booking in getBookingsForDateHour(date, hour)"
-            :key="booking.id"
-            :booking="booking"
-            class="hour-booking week-booking"
-            @detail="emit('detail', $event)"
-          />
+          <div class="hour-label text-caption text-medium-emphasis">
+            {{ formatHour(hour) }}
+          </div>
+          <div
+            v-for="date in weekDates"
+            :key="`${date}-${hour}`"
+            class="flex-grow-1 hour-cell"
+            :class="{ 'today-col': date === today }"
+          >
+            <BookingCard
+              v-for="booking in getBookingsForDateHour(date, hour)"
+              :key="booking.id"
+              :booking="booking"
+              compact
+              class="hour-booking week-booking"
+              @detail="emit('detail', $event)"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -189,10 +194,26 @@ function formatHour(hour: number): string {
 </script>
 
 <style scoped>
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+}
+
+.calendar-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: center;
+}
+
 .hour-row {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 .hour-label {
+  width: 60px;
+  flex-shrink: 0;
   padding: 4px 8px;
 }
 .hour-content {
@@ -209,5 +230,34 @@ function formatHour(hour: number): string {
 }
 .today-col {
   background-color: rgba(var(--v-theme-primary), 0.04);
+}
+
+.week-scroll {
+  overflow-x: auto;
+}
+
+.week-view {
+  min-width: 720px;
+}
+
+.week-hour-header {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .calendar-title {
+    flex-basis: auto;
+  }
+  .hour-label {
+    width: 48px;
+    padding: 4px 4px;
+  }
+  .week-hour-header {
+    width: 48px;
+  }
+  .week-view {
+    min-width: 680px;
+  }
 }
 </style>

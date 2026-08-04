@@ -1,5 +1,10 @@
 <template>
-  <v-dialog :model-value="visible" max-width="520" @update:model-value="emit('close')">
+  <v-dialog
+    :model-value="visible"
+    max-width="520"
+    :fullscreen="$vuetify.display.smAndDown"
+    @update:model-value="emit('close')"
+  >
     <v-card v-if="booking">
       <v-card-title class="text-h6 d-flex align-center">
         Detalle de Cita
@@ -83,7 +88,7 @@
           </v-btn>
         </div>
       </v-card-text>
-      <v-card-actions v-if="showActions && canUpdate" class="pa-4 pt-0">
+      <v-card-actions v-if="showActions && canUpdate" class="pa-4 pt-0 flex-wrap ga-2">
         <v-btn
           v-if="booking.status === 'pending_confirmation'"
           color="success"
@@ -129,26 +134,27 @@
         >
           Reasignar
         </v-btn>
-        <v-spacer />
-        <v-btn
-          color="primary"
-          variant="text"
-          prepend-icon="mdi-pencil"
-          size="small"
-          @click="emit('edit', booking)"
-        >
-          Editar
-        </v-btn>
-        <v-btn
-          color="error"
-          variant="text"
-          prepend-icon="mdi-delete-forever"
-          size="small"
-          @click="showDeleteDialog = true"
-        >
-          Eliminar
-        </v-btn>
-        <v-btn variant="text" @click="emit('close')">Cerrar</v-btn>
+        <span class="ms-auto d-flex flex-wrap ga-1">
+          <v-btn
+            color="primary"
+            variant="text"
+            prepend-icon="mdi-pencil"
+            size="small"
+            @click="emit('edit', booking)"
+          >
+            Editar
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="text"
+            prepend-icon="mdi-delete-forever"
+            size="small"
+            @click="showDeleteDialog = true"
+          >
+            Eliminar
+          </v-btn>
+          <v-btn variant="text" @click="emit('close')">Cerrar</v-btn>
+        </span>
       </v-card-actions>
     </v-card>
 

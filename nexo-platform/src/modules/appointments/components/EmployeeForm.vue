@@ -3,6 +3,7 @@
     :model-value="visible"
     max-width="560"
     persistent
+    :fullscreen="$vuetify.display.smAndDown"
     @update:model-value="emit('close')"
   >
     <v-card>
@@ -19,7 +20,7 @@
       <v-card-text>
         <v-form ref="formRef" @submit.prevent="onSubmit">
           <v-row>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <v-text-field
                 v-model="localForm.first_name"
                 label="Nombre *"
@@ -27,7 +28,7 @@
                 density="comfortable"
               />
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <v-text-field
                 v-model="localForm.last_name"
                 label="Apellidos *"

@@ -3,6 +3,7 @@
     :model-value="visible"
     max-width="560"
     persistent
+    :fullscreen="$vuetify.display.smAndDown"
     @update:model-value="emit('close')"
   >
     <v-card>
@@ -122,14 +123,14 @@
               class="mb-2"
             />
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="6">
                 <v-text-field
                   v-model="form.customer_phone"
                   label="Teléfono *"
                   :rules="[(v) => !!v || 'Requerido']"
                 />
               </v-col>
-              <v-col cols="6">
+              <v-col cols="12" sm="6">
                 <v-text-field
                   v-model="form.customer_email"
                   :label="joiningWaitlist ? 'Email *' : 'Email (opcional)'"

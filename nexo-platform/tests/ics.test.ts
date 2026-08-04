@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildBookingIcs, buildGoogleCalendarUrl, wallClockToUTC } from '@/modules/appointments/utils/ics';
+import { buildBookingIcs, buildBookingIcsFromRow, buildGoogleCalendarUrl, wallClockToUTC } from '@/modules/appointments/utils/ics';
 import { uuid } from '@/shared/utils/helpers';
 
 const baseParams = {
@@ -86,6 +86,39 @@ describe('wallClockToUTC', () => {
   it('devuelve la misma fecha inválida sin lanzar', () => {
     const invalid = new Date('invalid');
     expect(wallClockToUTC(invalid, 'America/Mexico_City')).toBe(invalid);
+  });
+});
+
+describe('buildBookingIcsFromRow', () => {
+  const row = {
+    date: '2026-09-01',
+    start_time: '09:00:00',
+    custom_duration_minutes: null,
+    customer_name: 'Ana Pérez',
+    notes: 'Prefiere barbero hombre',
+    services: { name: 'Corte de cabello', duration_minutes: 30 },
+    employees: { first_name: 'Diana', last_name: 'Mora' },
+    tenants: { name: 'Mora Barber Studio', address: 'Av. Reforma 123', email: 'admin@nexo.com', timezone: 'America/Mexico_City' },
+  };
+
+  it('genera el evento con summary, descripción y UTC correctos', () => {
+    const ics = buildBookingIcsFromRow(row);
+
+    expect(ics).toContain('DTSTART:20260901T150000Z');
+    expect(ics).toContain('DTEND:20260901T153000Z');
+    expect(ics).toContain('SUMMARY:Corte de cabello — Diana');
+    expect(ics).toContain('LOCATION:Av. Reforma 123');
+    expect(ics).toContain('ORGANIZER;CN=Mora Barber Studio:mailto:admin@nexo.com');
+    expect(ics).toContain('Especialista: Diana');
+    expect(ics).toContain('Cliente: Ana Pérez');
+  });
+
+  it('respeta custom_duration_minutes y usa zona horaria por defecto si no hay tenant', () => {
+    const ics = buildBookingIcsFromRow({ ...row, custom_duration_minutes: 60, tenants: null });
+
+    expect(ics).toContain('DTSTART:20260901T150000Z');
+    expect(ics).toContain('DTEND:20260901T160000Z');
+    expect(ics).toContain('TZID:America/Mexico_City');
   });
 });
 

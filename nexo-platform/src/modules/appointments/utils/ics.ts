@@ -1,4 +1,4 @@
-import { uuid } from '@/shared/utils/helpers';
+import { uuid } from '../../../shared/utils/helpers';
 
 export interface BookingEventParams {
   summary: string;
@@ -197,4 +197,42 @@ export function buildGoogleCalendarUrl(params: BookingEventParams): string {
   });
   if (params.location) search.set('location', params.location);
   return `https://calendar.google.com/calendar/render?${search.toString()}`;
+}
+
+export interface BookingIcsRow {
+  date: string;
+  start_time: string;
+  custom_duration_minutes?: number | null;
+  customer_name?: string | null;
+  notes?: string | null;
+  services?: { name?: string; duration_minutes?: number } | null;
+  employees?: { first_name?: string; last_name?: string } | null;
+  tenants?: { name?: string; address?: string; email?: string; timezone?: string | null } | null;
+}
+
+export function buildBookingIcsFromRow(row: BookingIcsRow): string {
+  const startTime = row.start_time.slice(0, 5);
+  const start = new Date(`${row.date}T${startTime}:00Z`);
+  const duration = row.custom_duration_minutes ?? row.services?.duration_minutes ?? 30;
+  const end = new Date(start.getTime() + duration * 60000);
+  const serviceName = row.services?.name ?? 'Cita';
+  const workerName = `${row.employees?.first_name ?? ''} ${row.employees?.last_name ?? ''}`.trim();
+  const description = [
+    `Cita: ${serviceName}`,
+    workerName ? `Especialista: ${workerName}` : '',
+    row.customer_name ? `Cliente: ${row.customer_name}` : '',
+    row.notes ? `Notas: ${row.notes}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return buildBookingIcs({
+    summary: serviceName + (workerName ? ` — ${workerName}` : ''),
+    description,
+    location: row.tenants?.address || row.tenants?.name || undefined,
+    organizerName: row.tenants?.name,
+    organizerEmail: row.tenants?.email,
+    start,
+    end,
+    timezone: row.tenants?.timezone ?? 'America/Mexico_City',
+  });
 }

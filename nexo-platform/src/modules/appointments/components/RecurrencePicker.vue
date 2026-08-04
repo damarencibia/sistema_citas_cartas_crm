@@ -54,7 +54,7 @@
       />
 
       <v-row dense class="mt-1">
-        <v-col cols="6">
+        <v-col cols="12" sm="6">
           <v-text-field
             v-model="form.start_date"
             label="Desde"
@@ -64,7 +64,7 @@
             hide-details
           />
         </v-col>
-        <v-col cols="6">
+        <v-col cols="12" sm="6">
           <v-text-field
             v-model="form.end_date"
             label="Hasta"

@@ -1,6 +1,6 @@
 <template>
   <div class="schedule-editor">
-    <div class="d-flex align-center ga-2 mb-4">
+    <div class="d-flex align-center ga-2 mb-4 flex-wrap">
       <EmployeeSelect
         v-model="selectedEmployeeId"
         label="Empleado"

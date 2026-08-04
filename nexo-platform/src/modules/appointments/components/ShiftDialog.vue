@@ -8,7 +8,7 @@
         <div class="text-body-2 text-medium-emphasis mb-4">{{ dayLabel }}</div>
 
         <v-row>
-          <v-col cols="6">
+          <v-col cols="12" sm="6">
             <v-text-field
               v-model="form.start_time"
               label="Hora inicio"
@@ -17,7 +17,7 @@
               density="compact"
             />
           </v-col>
-          <v-col cols="6">
+          <v-col cols="12" sm="6">
             <v-text-field
               v-model="form.end_time"
               label="Hora fin"
@@ -114,7 +114,7 @@
         />
 
         <v-row dense class="mt-2">
-          <v-col cols="6">
+          <v-col cols="12" sm="6">
             <v-text-field
               v-model.number="form.advance_booking_days"
               label="Días máx. anticipación"
@@ -125,7 +125,7 @@
               hide-details
             />
           </v-col>
-          <v-col cols="6">
+          <v-col cols="12" sm="6">
             <v-text-field
               v-model.number="form.min_advance_minutes"
               label="Mín. anticipación (min)"

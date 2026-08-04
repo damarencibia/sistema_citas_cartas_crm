@@ -1,32 +1,34 @@
 <template>
   <div class="schedule-week-grid">
-    <v-table density="compact">
-      <thead>
-        <tr>
-          <th class="text-left" style="width: 100px">Hora</th>
-          <th v-for="day in daysOfWeek" :key="day.value" class="text-center">
-            <div class="text-caption">{{ day.label }}</div>
-            <v-switch
-              :model-value="isDayActive(day.value)"
-              density="compact"
-              color="primary"
-              hide-details
-              @update:model-value="emit('toggleDay', day.value)"
+    <div class="schedule-week-grid__scroll">
+      <v-table density="compact" class="schedule-week-grid__table">
+        <thead>
+          <tr>
+            <th class="text-left" style="width: 100px">Hora</th>
+            <th v-for="day in daysOfWeek" :key="day.value" class="text-center">
+              <div class="text-caption">{{ day.label }}</div>
+              <v-switch
+                :model-value="isDayActive(day.value)"
+                density="compact"
+                color="primary"
+                hide-details
+                @update:model-value="emit('toggleDay', day.value)"
+              />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="hour in visibleHours" :key="hour">
+            <td class="text-caption text-medium-emphasis">{{ formatHour(hour) }}</td>
+            <td
+              v-for="day in daysOfWeek"
+              :key="`${day.value}-${hour}`"
+              :class="getCellClass(day.value, hour)"
             />
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="hour in visibleHours" :key="hour">
-          <td class="text-caption text-medium-emphasis">{{ formatHour(hour) }}</td>
-          <td
-            v-for="day in daysOfWeek"
-            :key="`${day.value}-${hour}`"
-            :class="getCellClass(day.value, hour)"
-          />
-        </tr>
-      </tbody>
-    </v-table>
+          </tr>
+        </tbody>
+      </v-table>
+    </div>
   </div>
 </template>
 
@@ -76,6 +78,14 @@ function formatHour(hour: number): string {
 </script>
 
 <style scoped>
+.schedule-week-grid__scroll {
+  overflow-x: auto;
+}
+
+.schedule-week-grid__table {
+  min-width: 560px;
+}
+
 .active-cell {
   background-color: rgb(var(--v-theme-primary));
   opacity: 0.3;

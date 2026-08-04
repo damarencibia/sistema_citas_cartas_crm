@@ -60,10 +60,10 @@
           />
           <template v-if="!form.is_closed">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="6">
                 <v-text-field v-model="form.start_time" label="Hora inicio" type="time" />
               </v-col>
-              <v-col cols="6">
+              <v-col cols="12" sm="6">
                 <v-text-field v-model="form.end_time" label="Hora fin" type="time" />
               </v-col>
             </v-row>

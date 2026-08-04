@@ -466,18 +466,29 @@
             Enviar resumen por WhatsApp
           </v-btn>
           <v-btn
+            v-if="!waitlistJoined && isAndroid && googleCalendarUrl"
+            color="primary"
+            variant="flat"
+            :href="googleCalendarUrl"
+            target="_blank"
+            rel="noopener"
+            prepend-icon="mdi-google"
+          >
+            Agregar a Google Calendar
+          </v-btn>
+          <v-btn
             v-if="!waitlistJoined"
             color="primary"
-            variant="outlined"
+            :variant="isAndroid ? 'outlined' : 'flat'"
             :loading="calendarBusy"
             :disabled="calendarBusy"
             prepend-icon="mdi-calendar-check"
-            @click="addToCalendar"
+            @click="openCalendar"
           >
             Agregar a mi calendario
           </v-btn>
           <v-btn
-            v-if="!waitlistJoined && googleCalendarUrl"
+            v-if="!waitlistJoined && !isAndroid && googleCalendarUrl"
             color="primary"
             variant="text"
             :href="googleCalendarUrl"
@@ -527,6 +538,7 @@ const submitting = ref(false);
 const confirmed = ref(false);
 const calendarBusy = ref(false);
 const bookingError = ref<string | null>(null);
+const createdBookingId = ref<string | null>(null);
 const formRef = ref();
 
 const selectedCategory = ref<string | null>(null);
@@ -544,6 +556,11 @@ const customerNotes = ref('');
 const whatsappConsent = ref(false);
 
 const tenant = computed(() => tenantStore.tenant);
+
+const isIOS =
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/.test(navigator.userAgent);
 
 const pendingEmployeeName = computed(() => {
   if (!pendingEmployeeId.value) return '';
@@ -785,7 +802,7 @@ async function onConfirm() {
       confirmed.value = true;
       return;
     }
-    await bookingStore.createBooking({
+    const created = await bookingStore.createBooking({
       service_id: selectedService.value!.id,
       employee_id: selectedEmployee.value!.id,
       date: selectedDate.value,
@@ -797,6 +814,7 @@ async function onConfirm() {
       source: 'online',
       whatsapp_consent: whatsappConsent.value,
     });
+    createdBookingId.value = created?.id ?? null;
     confirmed.value = true;
   } catch (e: unknown) {
     bookingError.value = e instanceof Error ? e.message : 'Error al procesar tu solicitud. Intenta de nuevo.';
@@ -805,9 +823,13 @@ async function onConfirm() {
   }
 }
 
-async function addToCalendar() {
+async function openCalendar() {
   const ev = bookingEvent.value;
   if (!ev) return;
+  if (isIOS && createdBookingId.value && import.meta.env.PROD) {
+    window.location.href = `/api/ics/${createdBookingId.value}?inline=1`;
+    return;
+  }
   calendarBusy.value = true;
   try {
     const blob = getIcsBlob(buildBookingIcs(ev));
@@ -818,8 +840,12 @@ async function addToCalendar() {
       if ((e as DOMException)?.name === 'AbortError') return;
     }
     if (!shared) {
-      downloadIcs(`cita-${ev.summary.toLowerCase().replace(/\s+/g, '-')}-${selectedDate.value}.ics`, blob);
-      uiStore.showNotification('Archivo generado. Ábrelo para agregarlo a tu calendario.', 'info');
+      if (createdBookingId.value && import.meta.env.PROD) {
+        window.location.href = `/api/ics/${createdBookingId.value}`;
+      } else {
+        downloadIcs(`cita-${ev.summary.toLowerCase().replace(/\s+/g, '-')}-${selectedDate.value}.ics`, blob);
+        uiStore.showNotification('Archivo generado. Ábrelo para agregarlo a tu calendario.', 'info');
+      }
     }
   } catch (e) {
     console.error('No se pudo generar el evento de calendario:', e);
@@ -833,6 +859,7 @@ function resetForm() {
   step.value = 1;
   confirmed.value = false;
   waitlistJoined.value = false;
+  createdBookingId.value = null;
   bookingError.value = null;
   selectedCategory.value = null;
   selectedService.value = null;

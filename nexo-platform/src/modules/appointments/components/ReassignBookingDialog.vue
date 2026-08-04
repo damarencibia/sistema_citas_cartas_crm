@@ -13,7 +13,7 @@
         </div>
 
         <v-row>
-          <v-col cols="6">
+          <v-col cols="12" sm="6">
             <v-text-field
               v-model="newDate"
               label="Nueva fecha"
@@ -22,7 +22,7 @@
               density="compact"
             />
           </v-col>
-          <v-col cols="6">
+          <v-col cols="12" sm="6">
             <v-text-field
               v-model="newTime"
               label="Nueva hora"

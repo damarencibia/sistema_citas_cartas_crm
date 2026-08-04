@@ -2,6 +2,7 @@
   <v-layout>
     <AppSidebar />
     <AppTopbar />
+    <PushOptInBanner />
     <v-main>
       <div class="main-content pa-4 pa-md-6">
         <router-view v-slot="{ Component }">
@@ -17,6 +18,7 @@
 <script setup lang="ts">
 import AppSidebar from '@/shared/components/AppSidebar.vue';
 import AppTopbar from '@/shared/components/AppTopbar.vue';
+import PushOptInBanner from '@/shared/components/PushOptInBanner.vue';
 </script>
 
 <style scoped>
