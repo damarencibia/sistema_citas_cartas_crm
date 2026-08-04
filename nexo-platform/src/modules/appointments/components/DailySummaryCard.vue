@@ -21,34 +21,36 @@
     </div>
 
     <template v-else>
-      <v-table density="compact" class="bg-transparent">
-        <thead>
-          <tr>
-            <th class="text-left text-caption font-weight-bold text-medium-emphasis">Empleado</th>
-            <th class="text-center text-caption font-weight-bold text-medium-emphasis">Total</th>
-            <th class="text-center text-caption font-weight-bold text-medium-emphasis">Asistió</th>
-            <th class="text-center text-caption font-weight-bold text-medium-emphasis">No Show</th>
-            <th class="text-center text-caption font-weight-bold text-medium-emphasis">Pendiente</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.employee_id">
-            <td class="font-weight-medium" style="font-size: 13px;">{{ row.employee_name }}</td>
-            <td class="text-center">
-              <v-chip size="x-small" variant="tonal" color="default">{{ row.total }}</v-chip>
-            </td>
-            <td class="text-center">
-              <v-chip size="x-small" variant="tonal" color="success">{{ row.completed }}</v-chip>
-            </td>
-            <td class="text-center">
-              <v-chip size="x-small" variant="tonal" :color="row.no_show > 0 ? 'error' : 'default'">{{ row.no_show }}</v-chip>
-            </td>
-            <td class="text-center">
-              <v-chip size="x-small" variant="tonal" :color="row.pending > 0 ? 'warning' : 'default'">{{ row.pending }}</v-chip>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
+      <div class="daily-summary__scroll">
+        <v-table density="compact" class="bg-transparent daily-summary__table">
+          <thead>
+            <tr>
+              <th class="text-left text-caption font-weight-bold text-medium-emphasis">Empleado</th>
+              <th class="text-center text-caption font-weight-bold text-medium-emphasis">Total</th>
+              <th class="text-center text-caption font-weight-bold text-medium-emphasis">Asistió</th>
+              <th class="text-center text-caption font-weight-bold text-medium-emphasis">No Show</th>
+              <th class="text-center text-caption font-weight-bold text-medium-emphasis">Pendiente</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in rows" :key="row.employee_id">
+              <td class="font-weight-medium" style="font-size: 13px;">{{ row.employee_name }}</td>
+              <td class="text-center">
+                <v-chip size="x-small" variant="tonal" color="default">{{ row.total }}</v-chip>
+              </td>
+              <td class="text-center">
+                <v-chip size="x-small" variant="tonal" color="success">{{ row.completed }}</v-chip>
+              </td>
+              <td class="text-center">
+                <v-chip size="x-small" variant="tonal" :color="row.no_show > 0 ? 'error' : 'default'">{{ row.no_show }}</v-chip>
+              </td>
+              <td class="text-center">
+                <v-chip size="x-small" variant="tonal" :color="row.pending > 0 ? 'warning' : 'default'">{{ row.pending }}</v-chip>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </div>
 
       <v-divider v-if="extrasTotal > 0" class="my-3" />
 
@@ -151,3 +153,13 @@ defineExpose({ load });
 
 onMounted(load);
 </script>
+
+<style scoped>
+.daily-summary__scroll {
+  overflow-x: auto;
+}
+
+.daily-summary__table {
+  min-width: 480px;
+}
+</style>

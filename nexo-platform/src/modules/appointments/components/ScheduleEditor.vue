@@ -31,7 +31,7 @@
     <template v-else>
       <v-card v-for="day in daysOfWeek" :key="day.value" class="mb-2">
         <v-card-text class="py-3">
-          <div class="d-flex align-center ga-3">
+          <div class="d-flex align-center ga-3 flex-wrap">
             <v-checkbox
               :model-value="isDayActive(day.value)"
               :label="day.label"
@@ -56,7 +56,7 @@
             <div
               v-for="(shift, idx) in getShifts(day.value)"
               :key="`shift-${day.value}-${idx}`"
-              class="d-flex align-center ga-2 mb-1"
+              class="d-flex align-center ga-2 mb-1 flex-wrap"
             >
               <v-chip
                 size="small"

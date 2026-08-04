@@ -1,6 +1,6 @@
 <template>
   <div class="holiday-calendar">
-    <div class="d-flex align-center justify-space-between mb-4">
+    <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-2">
       <h3 class="text-subtitle-1 font-weight-medium">Días Festivos / Cierres</h3>
       <v-btn
         color="primary"
