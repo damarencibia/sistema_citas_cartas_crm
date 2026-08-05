@@ -1,6 +1,10 @@
 import { supabase } from '@/shared/api/supabase.client';
 
-const VAPID_PUBLIC_KEY: string | undefined = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+const VAPID_PUBLIC_KEY_FALLBACK =
+  'BFiFQS_39s6Todi0HcECGSLUwRAUV9_YQAMu4pt83rHse5cVN0vJpsjogtXKcswOARyEGdHQ2N5q2X96W7_jo-M';
+
+const VAPID_PUBLIC_KEY: string =
+  import.meta.env.VITE_VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY_FALLBACK;
 
 export function isPushSupported(): boolean {
   return (
