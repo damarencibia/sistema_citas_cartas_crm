@@ -1,36 +1,42 @@
 <template>
   <v-navigation-drawer
     v-model="uiStore.sidebar"
+    temporary
     :rail="rail"
-    permanent
+    :expand-on-hover="isDesktop"
     :width="240"
     :rail-width="60"
+    :scrim="!isDesktop"
+    :disable-route-watcher="isDesktop"
     class="app-sidebar"
+    :class="{ 'app-sidebar--overlay': isDesktop }"
+    @update:rail="onRailUpdate"
   >
     <template #prepend>
-      <div class="d-flex align-center pa-3" :class="rail ? 'justify-center' : 'justify-space-between'">
-        <div v-if="!rail" class="d-flex align-center ga-2 overflow-hidden">
-          <v-avatar color="primary" size="32" variant="flat">
-            <span class="text-white font-weight-bold text-body-2">N</span>
-          </v-avatar>
-          <div class="overflow-hidden">
-            <div class="text-body-2 font-weight-semibold text-truncate" style="line-height: 1.2;">
-              {{ tenantStore.tenant?.name || 'Nexo' }}
-            </div>
-            <div class="text-caption" style="color: var(--text-faint); line-height: 1.2;">
-              {{ authStore.userRole }}
+      <div class="sidebar-brand d-flex align-center pa-3" :class="rail ? 'justify-center' : 'justify-space-between'">
+        <template v-if="!rail">
+          <div class="d-flex align-center ga-2 overflow-hidden">
+            <v-avatar color="primary" size="32" variant="flat">
+              <span class="text-white font-weight-bold text-body-2">N</span>
+            </v-avatar>
+            <div class="overflow-hidden">
+              <div class="text-body-2 font-weight-semibold text-truncate" style="line-height: 1.2;">
+                {{ tenantStore.tenant?.name || 'Nexo' }}
+              </div>
+              <div class="text-caption" style="color: var(--text-faint); line-height: 1.2;">
+                {{ authStore.userRole }}
+              </div>
             </div>
           </div>
-        </div>
-        <v-btn
-          icon
-          variant="text"
-          size="x-small"
-          class="sidebar-toggle"
-          @click.stop="rail = !rail"
+        </template>
+        <v-avatar
+          v-else
+          color="primary"
+          size="32"
+          variant="flat"
         >
-          <v-icon size="18">{{ rail ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
-        </v-btn>
+          <span class="text-white font-weight-bold text-body-2">N</span>
+        </v-avatar>
       </div>
     </template>
 
@@ -75,8 +81,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useDisplay } from 'vuetify';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useUiStore } from '@/shared/stores/ui.store';
@@ -85,7 +92,24 @@ const authStore = useAuthStore();
 const tenantStore = useTenantStore();
 const uiStore = useUiStore();
 const route = useRoute();
-const rail = ref(false);
+const { smAndDown } = useDisplay();
+
+const isDesktop = computed(() => !smAndDown.value);
+const isRail = ref(true);
+const rail = computed(() => (isDesktop.value ? isRail.value : false));
+
+function onRailUpdate(val: boolean) {
+  isRail.value = val;
+}
+
+onMounted(() => {
+  if (!isDesktop.value) uiStore.sidebar = false;
+});
+
+watch(isDesktop, (val) => {
+  if (val) isRail.value = true;
+  uiStore.sidebar = val;
+});
 
 function isActive(to?: string) {
   if (!to) return false;
@@ -166,13 +190,8 @@ const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...se
   background-color: rgb(var(--v-theme-surface)) !important;
 }
 
-.sidebar-toggle {
-  opacity: 0.6;
-  transition: opacity 0.15s ease;
-}
-
-.sidebar-toggle:hover {
-  opacity: 1;
+.app-sidebar--overlay {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
 .sidebar-item {

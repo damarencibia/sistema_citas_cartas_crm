@@ -100,10 +100,6 @@ const props = defineProps<{
   modelValue: RecurrenceData;
 }>();
 
-const emit = defineEmits<{
-  'update:modelValue': [value: RecurrenceData];
-}>();
-
 const enabled = ref(props.modelValue.enabled);
 const minDate = new Date().toISOString().split('T')[0];
 

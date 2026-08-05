@@ -108,7 +108,12 @@
     </v-card>
 
     <!-- Create Dialog -->
-    <v-dialog v-model="createDialog" max-width="560" persistent :fullscreen="$vuetify.display.smAndDown">
+    <v-dialog
+      v-model="createDialog"
+      max-width="560"
+      persistent
+      :fullscreen="$vuetify.display.smAndDown"
+    >
       <v-card>
         <v-card-title class="text-h6 d-flex align-center">
           Agregar Empleado
