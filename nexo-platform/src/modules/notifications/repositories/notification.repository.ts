@@ -1,11 +1,18 @@
 import { supabase } from '@/shared/api/supabase.client';
 import type { AppNotification } from '../types/notification.types';
 
+const NOTIFICATIONS_TTL_MS = 24 * 60 * 60 * 1000;
+
+function ttlCutoff(): string {
+  return new Date(Date.now() - NOTIFICATIONS_TTL_MS).toISOString();
+}
+
 export const notificationRepository = {
   async getMine(limit = 50): Promise<AppNotification[]> {
     const { data, error } = await (supabase as any)
       .from('notifications')
       .select('*')
+      .gte('created_at', ttlCutoff())
       .order('created_at', { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -16,7 +23,8 @@ export const notificationRepository = {
     const { count, error } = await (supabase as any)
       .from('notifications')
       .select('id', { count: 'exact', head: true })
-      .eq('is_read', false);
+      .eq('is_read', false)
+      .gte('created_at', ttlCutoff());
     if (error) throw error;
     return count ?? 0;
   },
