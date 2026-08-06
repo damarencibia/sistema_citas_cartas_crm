@@ -88,14 +88,26 @@
       </v-list>
 
       <v-divider />
-      <v-card-actions class="py-1">
+      <v-card-actions class="py-1 ga-2">
         <v-btn
           size="small"
           variant="text"
           block
+          :disabled="notificationStore.unreadCount === 0"
           @click="markAllRead"
         >
           Marcar todas como leídas
+        </v-btn>
+        <v-btn
+          size="small"
+          variant="text"
+          block
+          color="error"
+          :disabled="notificationStore.items.length === 0"
+          @click="clearAll"
+        >
+          <v-icon start size="18">mdi-trash-can-outline</v-icon>
+          Limpiar
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -160,6 +172,10 @@ function goToAll() {
 
 async function markAllRead() {
   await notificationStore.markAllAsRead();
+}
+
+async function clearAll() {
+  await notificationStore.clearAll();
 }
 
 onMounted(() => {

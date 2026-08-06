@@ -13,16 +13,28 @@
               : 'Todo leído'
           }}
         </span>
-        <v-btn
-          size="small"
-          variant="text"
-          color="primary"
-          :disabled="notificationStore.unreadCount === 0"
-          @click="markAllRead"
-        >
-          <v-icon start size="18">mdi-check-all</v-icon>
-          Marcar todas como leídas
-        </v-btn>
+        <div class="d-flex ga-2">
+          <v-btn
+            size="small"
+            variant="text"
+            color="primary"
+            :disabled="notificationStore.unreadCount === 0"
+            @click="markAllRead"
+          >
+            <v-icon start size="18">mdi-check-all</v-icon>
+            Marcar todas como leídas
+          </v-btn>
+          <v-btn
+            size="small"
+            variant="text"
+            color="error"
+            :disabled="notificationStore.items.length === 0"
+            @click="clearAll"
+          >
+            <v-icon start size="18">mdi-trash-can-outline</v-icon>
+            Limpiar
+          </v-btn>
+        </div>
       </v-card-title>
       <v-divider />
 
@@ -129,6 +141,10 @@ async function openNotification(n: AppNotification) {
 
 async function markAllRead() {
   await notificationStore.markAllAsRead();
+}
+
+async function clearAll() {
+  await notificationStore.clearAll();
 }
 
 onMounted(() => {

@@ -68,6 +68,19 @@ export const useNotificationStore = defineStore('notifications', {
       }
     },
 
+    async clearAll() {
+      const previousItems = this.items;
+      const previousUnread = this.unreadCount;
+      this.items = [];
+      this.unreadCount = 0;
+      try {
+        await notificationRepository.clearAll();
+      } catch {
+        this.items = previousItems;
+        this.unreadCount = previousUnread;
+      }
+    },
+
     subscribe() {
       if (this.channel) return;
       this.channel = supabase
