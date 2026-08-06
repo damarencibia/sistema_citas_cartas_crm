@@ -54,10 +54,11 @@ interface ServiceWorkerScope {
 const CACHE_NAME = 'nexo-v1';
 const ctx = self as unknown as ServiceWorkerScope;
 
-const precacheUrls = (self as unknown as ServiceWorkerScope).__WB_MANIFEST.map((entry) => {
+const manifestUrls = (self as unknown as ServiceWorkerScope).__WB_MANIFEST.map((entry) => {
   const url = typeof entry === 'string' ? entry : entry.url;
   return new URL(url, ctx.location.origin).href;
 });
+const precacheUrls = [...new Set(manifestUrls)];
 
 const appShellUrl = new URL('index.html', ctx.location.origin).href;
 

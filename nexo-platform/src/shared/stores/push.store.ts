@@ -83,7 +83,9 @@ export const usePushStore = defineStore('push', {
           typeof Notification !== 'undefined' ? Notification.permission : 'unsupported';
       } catch (err) {
         console.error('push.enable:', err);
-        if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+        if (import.meta.env.DEV) {
+          this.error = 'Las notificaciones push se activan solo en el despliegue (no en local).';
+        } else if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
           this.error = 'Permiso de notificaciones denegado en el navegador.';
         } else {
           this.error = 'No se pudieron activar las notificaciones. Inténtalo de nuevo.';

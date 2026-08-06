@@ -28,6 +28,9 @@ export function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
 }
 
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration> {
+  if (import.meta.env.DEV) {
+    throw new Error('Las notificaciones push se activan solo en el despliegue.');
+  }
   const swUrl = `${import.meta.env.BASE_URL}sw.js`;
   return navigator.serviceWorker.register(swUrl);
 }
