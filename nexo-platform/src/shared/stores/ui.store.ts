@@ -15,7 +15,7 @@ interface UiStoreState {
 
 export const useUiStore = defineStore('ui', {
   state: (): UiStoreState => ({
-    sidebar: true,
+    sidebar: false,
     theme: 'light',
     globalLoading: false,
     snackbar: { visible: false, message: '', color: 'info' },

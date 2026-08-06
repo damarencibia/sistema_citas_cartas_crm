@@ -1,7 +1,7 @@
 <template>
   <v-navigation-drawer
     v-model="uiStore.sidebar"
-    temporary
+    :temporary="!isDesktop"
     :rail="rail"
     :expand-on-hover="isDesktop"
     :width="240"
@@ -9,7 +9,6 @@
     :scrim="!isDesktop"
     :disable-route-watcher="isDesktop"
     class="app-sidebar"
-    :class="{ 'app-sidebar--overlay': isDesktop }"
     @update:rail="onRailUpdate"
   >
     <template #prepend>
@@ -103,7 +102,7 @@ function onRailUpdate(val: boolean) {
 }
 
 onMounted(() => {
-  if (!isDesktop.value) uiStore.sidebar = false;
+  uiStore.sidebar = isDesktop.value;
 });
 
 watch(isDesktop, (val) => {
@@ -188,10 +187,6 @@ const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...se
 .app-sidebar {
   border-right: 1px solid rgb(var(--v-border)) !important;
   background-color: rgb(var(--v-theme-surface)) !important;
-}
-
-.app-sidebar--overlay {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
 .sidebar-item {

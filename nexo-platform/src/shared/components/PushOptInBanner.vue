@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="push-banner-wrap" :class="{ 'push-banner-wrap--desktop': isDesktop }">
     <v-banner
       v-if="pushStore.canPrompt"
       color="primary"
@@ -43,10 +43,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useDisplay } from 'vuetify';
 import { usePushStore } from '@/shared/stores/push.store';
 
 const pushStore = usePushStore();
 const showError = ref(false);
+const { smAndDown } = useDisplay();
+
+const isDesktop = computed(() => !smAndDown.value);
 
 const isIos = computed(() => {
   if (typeof navigator === 'undefined') return false;
@@ -78,7 +82,21 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.push-banner-wrap {
+  position: fixed;
+  top: 56px;
+  left: 8px;
+  right: 8px;
+  z-index: 900;
+}
+
+.push-banner-wrap--desktop {
+  left: 68px;
+}
+
 .push-banner {
-  border-bottom: 1px solid rgb(var(--v-border));
+  border: 1px solid rgb(var(--v-border)) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 </style>

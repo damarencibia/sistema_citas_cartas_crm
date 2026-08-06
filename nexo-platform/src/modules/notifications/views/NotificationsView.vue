@@ -2,6 +2,8 @@
   <div>
     <PageHeader title="Notificaciones" subtitle="Notificaciones de tu agenda y lista de espera" />
 
+    <PushSettingsCard />
+
     <v-card>
       <v-card-title class="d-flex align-center justify-space-between">
         <span class="text-body-1">
@@ -71,6 +73,7 @@
 import { onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import PageHeader from '@/shared/components/PageHeader.vue';
+import PushSettingsCard from '@/shared/components/PushSettingsCard.vue';
 import { useNotificationStore } from '../stores/notification.store';
 import type { AppNotification, NotificationType } from '../types/notification.types';
 
