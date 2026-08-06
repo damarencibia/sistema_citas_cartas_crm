@@ -52,34 +52,39 @@
         max-height="380"
         class="overflow-y-auto pa-1"
       >
-        <v-list-item
+        <SwipeToDelete
           v-for="n in notificationStore.items"
           :key="n.id"
-          class="notification-item mb-1"
-          :class="{ 'notification-item--unread': !n.is_read }"
-          rounded="md"
-          @click="openNotification(n)"
+          class="mb-1"
+          @delete="notificationStore.remove(n.id)"
         >
-          <template #prepend>
-            <v-icon
-              :icon="iconFor(n.type)"
-              :color="colorFor(n.type)"
-              size="20"
-              class="mt-1"
-            />
-          </template>
-          <v-list-item-title class="text-body-2 font-weight-medium">
-            {{ n.title }}
-          </v-list-item-title>
-          <v-list-item-subtitle class="text-caption mt-1">
-            {{ n.body }}
-          </v-list-item-subtitle>
-          <template #append>
-            <span class="text-caption" style="color: var(--text-faint)">{{
-              timeAgo(n.created_at)
-            }}</span>
-          </template>
-        </v-list-item>
+          <v-list-item
+            class="notification-item"
+            :class="{ 'notification-item--unread': !n.is_read }"
+            rounded="md"
+            @click="openNotification(n)"
+          >
+            <template #prepend>
+              <v-icon
+                :icon="iconFor(n.type)"
+                :color="colorFor(n.type)"
+                size="20"
+                class="mt-1"
+              />
+            </template>
+            <v-list-item-title class="text-body-2 font-weight-medium">
+              {{ n.title }}
+            </v-list-item-title>
+            <v-list-item-subtitle class="text-caption mt-1">
+              {{ n.body }}
+            </v-list-item-subtitle>
+            <template #append>
+              <span class="text-caption" style="color: var(--text-faint)">{{
+                timeAgo(n.created_at)
+              }}</span>
+            </template>
+          </v-list-item>
+        </SwipeToDelete>
       </v-list>
 
       <v-divider />
@@ -100,6 +105,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
+import SwipeToDelete from '@/shared/components/SwipeToDelete.vue';
 import { useNotificationStore } from '../stores/notification.store';
 import type { AppNotification, NotificationType } from '../types/notification.types';
 

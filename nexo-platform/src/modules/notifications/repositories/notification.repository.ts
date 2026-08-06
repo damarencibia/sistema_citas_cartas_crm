@@ -44,4 +44,9 @@ export const notificationRepository = {
       .eq('is_read', false);
     if (error) throw error;
   },
+
+  async remove(id: string): Promise<void> {
+    const { error } = await (supabase as any).from('notifications').delete().eq('id', id);
+    if (error) throw error;
+  },
 };

@@ -38,32 +38,36 @@
       </div>
 
       <v-list v-else lines="two">
-        <v-list-item
+        <SwipeToDelete
           v-for="n in notificationStore.items"
           :key="n.id"
-          :class="{ 'notification-item--unread': !n.is_read }"
-          @click="openNotification(n)"
+          @delete="notificationStore.remove(n.id)"
         >
-          <template #prepend>
-            <v-avatar :color="colorFor(n.type)" variant="tonal" size="40">
-              <v-icon :icon="iconFor(n.type)" size="20" />
-            </v-avatar>
-          </template>
-          <v-list-item-title class="text-body-1 font-weight-medium">
-            {{ n.title }}
-          </v-list-item-title>
-          <v-list-item-subtitle class="text-body-2">
-            {{ n.body }}
-          </v-list-item-subtitle>
-          <template #append>
-            <div class="d-flex flex-column align-end ga-1">
-              <span class="text-caption" style="color: var(--text-faint)">{{
-                timeAgo(n.created_at)
-              }}</span>
-              <v-icon v-if="!n.is_read" size="12" color="primary">mdi-circle</v-icon>
-            </div>
-          </template>
-        </v-list-item>
+          <v-list-item
+            :class="{ 'notification-item--unread': !n.is_read }"
+            @click="openNotification(n)"
+          >
+            <template #prepend>
+              <v-avatar :color="colorFor(n.type)" variant="tonal" size="40">
+                <v-icon :icon="iconFor(n.type)" size="20" />
+              </v-avatar>
+            </template>
+            <v-list-item-title class="text-body-1 font-weight-medium">
+              {{ n.title }}
+            </v-list-item-title>
+            <v-list-item-subtitle class="text-body-2">
+              {{ n.body }}
+            </v-list-item-subtitle>
+            <template #append>
+              <div class="d-flex flex-column align-end ga-1">
+                <span class="text-caption" style="color: var(--text-faint)">{{
+                  timeAgo(n.created_at)
+                }}</span>
+                <v-icon v-if="!n.is_read" size="12" color="primary">mdi-circle</v-icon>
+              </div>
+            </template>
+          </v-list-item>
+        </SwipeToDelete>
       </v-list>
     </v-card>
   </div>
@@ -74,6 +78,7 @@ import { onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import PushSettingsCard from '@/shared/components/PushSettingsCard.vue';
+import SwipeToDelete from '@/shared/components/SwipeToDelete.vue';
 import { useNotificationStore } from '../stores/notification.store';
 import type { AppNotification, NotificationType } from '../types/notification.types';
 

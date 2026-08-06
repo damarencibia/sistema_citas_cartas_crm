@@ -55,6 +55,19 @@ export const useNotificationStore = defineStore('notifications', {
       this.unreadCount = 0;
     },
 
+    async remove(id: string) {
+      const item = this.items.find((n) => n.id === id);
+      this.items = this.items.filter((n) => n.id !== id);
+      if (item && !item.is_read) {
+        this.unreadCount = Math.max(0, this.unreadCount - 1);
+      }
+      try {
+        await notificationRepository.remove(id);
+      } catch {
+        await this.fetch();
+      }
+    },
+
     subscribe() {
       if (this.channel) return;
       this.channel = supabase
@@ -69,6 +82,19 @@ export const useNotificationStore = defineStore('notifications', {
               this.items.unshift(incoming);
               this.items = this.items.slice(0, 50);
               this.unreadCount += 1;
+            }
+          },
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'notifications' },
+          (payload) => {
+            const id = (payload.old as AppNotification).id;
+            const item = this.items.find((n) => n.id === id);
+            if (!item) return;
+            this.items = this.items.filter((n) => n.id !== id);
+            if (!item.is_read) {
+              this.unreadCount = Math.max(0, this.unreadCount - 1);
             }
           },
         )
