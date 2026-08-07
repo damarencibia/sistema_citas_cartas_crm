@@ -189,6 +189,12 @@ const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...se
   background-color: rgb(var(--v-theme-surface)) !important;
 }
 
+@media (max-width: 959.98px) {
+  .app-sidebar {
+    width: 100% !important;
+  }
+}
+
 .sidebar-item {
   font-size: 13px;
   font-weight: 450;
