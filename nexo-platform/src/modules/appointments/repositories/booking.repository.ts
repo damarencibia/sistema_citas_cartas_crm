@@ -51,6 +51,19 @@ function normalizeTime(t: string): string {
   return t.length === 5 ? `${t}:00` : t;
 }
 
+function extractCustomerUpsert(
+  result: unknown,
+): { customerId: string | null; accessToken: string | null } {
+  if (Array.isArray(result) && result.length > 0) {
+    const row = result[0] as { id?: string; access_token?: string | null };
+    return { customerId: row?.id ?? null, accessToken: row?.access_token ?? null };
+  }
+  if (typeof result === 'string') {
+    return { customerId: result, accessToken: null };
+  }
+  return { customerId: null, accessToken: null };
+}
+
 export const bookingRepository = {
   async getByFilters(filters: BookingFilters): Promise<Booking[]> {
     let query = supabase
@@ -133,9 +146,10 @@ export const bookingRepository = {
         },
       );
       if (customerError) throw customerError;
-      const row = (customer as unknown as { id: string; access_token: string }[] | null)?.[0];
-      customerId = row?.id ?? null;
-      accessToken = row?.access_token ?? null;
+      const { customerId: upsertedId, accessToken: upsertedToken } =
+        extractCustomerUpsert(customer);
+      customerId = upsertedId;
+      accessToken = upsertedToken;
     }
 
     const insertPayload: BookingInsert = {
@@ -223,8 +237,7 @@ export const bookingRepository = {
         },
       );
       if (customerError) throw customerError;
-      const row = (customer as unknown as { id: string; access_token: string }[] | null)?.[0];
-      payload.customer_id = row?.id ?? null;
+      payload.customer_id = extractCustomerUpsert(customer).customerId;
     }
 
     const { data, error } = await supabase
