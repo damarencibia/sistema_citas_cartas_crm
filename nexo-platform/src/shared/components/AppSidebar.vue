@@ -280,6 +280,10 @@ const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...se
   .app-sidebar {
     width: 100% !important;
   }
+
+  .app-sidebar:not(.v-navigation-drawer--active) {
+    transform: translateX(-100%) !important;
+  }
 }
 
 .sidebar-item {
