@@ -1,6 +1,13 @@
 import type { BaseEntity } from '@/shared/types';
 
-export type BookingStatus = 'confirmed' | 'in_progress' | 'completed' | 'no_show' | 'cancelled' | 'pending_approval' | 'pending_confirmation';
+export type BookingStatus =
+  | 'confirmed'
+  | 'in_progress'
+  | 'completed'
+  | 'no_show'
+  | 'cancelled'
+  | 'pending_approval'
+  | 'pending_confirmation';
 export type BookingSource = 'online' | 'manual' | 'phone' | 'walk_in';
 export type CancelledBy = 'customer' | 'employee' | 'system';
 export type StatusChangedBy = 'employee' | 'system' | 'customer';
@@ -47,6 +54,23 @@ export interface CreateBookingDTO {
   participant_count?: number;
   resource_id?: string;
   whatsapp_consent?: boolean;
+}
+
+export interface CreateBookingResult {
+  booking: Booking;
+  accessToken: string | null;
+}
+
+export interface CustomerBookingSummary {
+  booking_id: string;
+  tenant_id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  status: BookingStatus;
+  service_name: string;
+  employee_name: string;
+  cancelled_at: string | null;
 }
 
 export interface UpdateBookingDTO {

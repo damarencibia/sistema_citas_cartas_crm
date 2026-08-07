@@ -2302,6 +2302,20 @@ export type Database = {
           waitlist_count: number;
         }[];
       };
+      get_customer_bookings_by_token: {
+        Args: { p_token: string };
+        Returns: {
+          booking_id: string;
+          cancelled_at: string | null;
+          date: string;
+          employee_name: string;
+          end_time: string;
+          service_name: string;
+          start_time: string;
+          status: string;
+          tenant_id: string;
+        }[];
+      };
       get_waitlist_count: {
         Args: {
           p_date: string;
@@ -2347,7 +2361,10 @@ export type Database = {
           p_customer_phone: string;
           p_tenant_id: string;
         };
-        Returns: string;
+        Returns: {
+          access_token: string;
+          id: string;
+        }[];
       };
     };
     Enums: {

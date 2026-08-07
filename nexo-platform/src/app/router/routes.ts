@@ -240,6 +240,12 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/appointments/views/WaitlistOfferView.vue'),
         meta: { title: 'Lista de Espera' },
       },
+      {
+        path: 'reservas/:token',
+        name: 'my-bookings',
+        component: () => import('@/modules/appointments/views/MyBookingsView.vue'),
+        meta: { title: 'Mis Reservas' },
+      },
     ],
   },
   {

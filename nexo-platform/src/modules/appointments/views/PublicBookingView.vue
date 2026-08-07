@@ -14,10 +14,7 @@
         <p class="text-body-1 text-medium-emphasis">En pocos pasos, sin complicaciones.</p>
         <div v-if="!confirmed" class="booking-stepper-track mx-auto mt-4">
           <div class="booking-stepper-line">
-            <div
-              class="booking-stepper-fill"
-              :style="{ width: `${progressFraction * 100}%` }"
-            />
+            <div class="booking-stepper-fill" :style="{ width: `${progressFraction * 100}%` }" />
           </div>
           <div class="booking-stepper-steps">
             <div
@@ -47,7 +44,8 @@
         closable
         @click:close="pendingEmployeeId = null"
       >
-        Reservando con <strong>{{ pendingEmployeeName }}</strong>.
+        Reservando con <strong>{{ pendingEmployeeName }}</strong
+        >.
       </v-alert>
 
       <v-alert
@@ -61,13 +59,7 @@
         {{ bookingError }}
       </v-alert>
 
-      <v-stepper
-        v-if="!confirmed"
-        v-model="step"
-        :items="steps"
-        alt-labels
-        non-linear
-      >
+      <v-stepper v-if="!confirmed" v-model="step" :items="steps" alt-labels non-linear>
         <template #item.1>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona una categoría</h3>
@@ -75,13 +67,7 @@
               <v-progress-circular indeterminate color="primary" />
             </div>
             <v-row v-else>
-              <v-col
-                v-for="cat in categoryOptions"
-                :key="cat.id"
-                cols="12"
-                sm="6"
-                md="4"
-              >
+              <v-col v-for="cat in categoryOptions" :key="cat.id" cols="12" sm="6" md="4">
                 <v-card
                   class="mb-3 rounded-xl service-select-card h-100"
                   :class="{
@@ -126,12 +112,7 @@
               <h3 class="text-subtitle-1 font-weight-medium mb-0">
                 Servicios de {{ selectedCategoryName }}
               </h3>
-              <v-btn
-                variant="text"
-                size="small"
-                color="primary"
-                @click="step = 1"
-              >
+              <v-btn variant="text" size="small" color="primary" @click="step = 1">
                 <v-icon start size="16">mdi-swap-horizontal</v-icon>
                 Cambiar categoría
               </v-btn>
@@ -155,7 +136,9 @@
                   <div v-if="svc.description" class="text-caption text-medium-emphasis">
                     {{ svc.description }}
                   </div>
-                  <div class="text-caption text-medium-emphasis">{{ svc.duration_minutes }} min</div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ svc.duration_minutes }} min
+                  </div>
                 </div>
                 <div class="text-end">
                   <div class="text-subtitle-2 font-weight-bold">{{ formatPrice(svc.price) }}</div>
@@ -176,12 +159,7 @@
         <template #item.3>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona un empleado</h3>
-            <v-alert
-              color="info"
-              variant="tonal"
-              class="mb-4"
-              icon="mdi-account-check-outline"
-            >
+            <v-alert color="info" variant="tonal" class="mb-4" icon="mdi-account-check-outline">
               El sistema puede asignar cualquier empleado disponible para este servicio
             </v-alert>
             <v-card
@@ -288,12 +266,15 @@
               icon="mdi-clock-outline"
             >
               Te unirás a la lista de espera para:
-              <strong>{{ waitlistTimes.map((t) => t.slice(0, 5)).join(', ') }}</strong>.
-              Te avisaremos cuando alguno se libere.
+              <strong>{{ waitlistTimes.map((t) => t.slice(0, 5)).join(', ') }}</strong
+              >. Te avisaremos cuando alguno se libere.
             </v-alert>
             <v-card variant="outlined" class="rounded-xl overflow-hidden mb-4">
               <div class="d-flex flex-column">
-                <div class="pa-4 d-flex align-center ga-3" style="background: rgba(var(--v-theme-primary), 0.06)">
+                <div
+                  class="pa-4 d-flex align-center ga-3"
+                  style="background: rgba(var(--v-theme-primary), 0.06)"
+                >
                   <div class="color-dot" :style="{ backgroundColor: selectedService?.color }" />
                   <div class="flex-grow-1">
                     <div class="text-subtitle-1 font-weight-bold">{{ selectedService?.name }}</div>
@@ -301,7 +282,9 @@
                       {{ selectedEmployee?.first_name }} {{ selectedEmployee?.last_name }}
                     </div>
                   </div>
-                  <div class="text-subtitle-1 font-weight-bold">{{ formatPrice(selectedService?.price ?? 0) }}</div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    {{ formatPrice(selectedService?.price ?? 0) }}
+                  </div>
                 </div>
                 <v-divider />
                 <div class="pa-4 d-flex flex-column ga-3">
@@ -309,13 +292,17 @@
                     <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
                       <v-icon size="16">mdi-calendar</v-icon>Fecha
                     </span>
-                    <span class="text-body-2 font-weight-medium">{{ formatDate(selectedDate) }}</span>
+                    <span class="text-body-2 font-weight-medium">{{
+                      formatDate(selectedDate)
+                    }}</span>
                   </div>
                   <div class="d-flex justify-space-between">
                     <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
                       <v-icon size="16">mdi-clock-outline</v-icon>Hora
                     </span>
-                    <span v-if="!joiningWaitlist" class="text-body-2 font-weight-medium">{{ selectedTime?.slice(0, 5) }}</span>
+                    <span v-if="!joiningWaitlist" class="text-body-2 font-weight-medium">{{
+                      selectedTime?.slice(0, 5)
+                    }}</span>
                     <span v-else class="text-body-2 font-weight-medium text-end">
                       {{ waitlistTimes.map((t) => t.slice(0, 5)).join(', ') }}
                     </span>
@@ -324,7 +311,9 @@
                     <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
                       <v-icon size="16">mdi-timer-outline</v-icon>Duración
                     </span>
-                    <span class="text-body-2 font-weight-medium">{{ selectedService?.duration_minutes }} min</span>
+                    <span class="text-body-2 font-weight-medium"
+                      >{{ selectedService?.duration_minutes }} min</span
+                    >
                   </div>
                   <v-divider />
                   <div class="d-flex justify-space-between">
@@ -387,12 +376,7 @@
       <v-card v-if="confirmed" class="mt-4 pa-8 text-center rounded-xl confirmation-card">
         <div class="success-badge">
           <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle
-              class="s-circle"
-              cx="60"
-              cy="60"
-              r="52"
-            />
+            <circle class="s-circle" cx="60" cy="60" r="52" />
             <path class="s-check" d="M38 61 L54 78 L84 44" fill="none" />
           </svg>
           <span
@@ -416,11 +400,7 @@
         >
           ¡Solicitud recibida!
         </h2>
-        <h2
-          v-else
-          class="text-h5 font-weight-bold mb-2 conf-step"
-          style="animation-delay: 0.45s"
-        >
+        <h2 v-else class="text-h5 font-weight-bold mb-2 conf-step" style="animation-delay: 0.45s">
           ¡Estás en la lista de espera!
         </h2>
 
@@ -453,7 +433,40 @@
           seleccionados se libere.
         </p>
 
-        <div class="d-flex flex-column align-center mt-6 ga-3 conf-step" style="animation-delay: 1.05s">
+        <v-card
+          v-if="!waitlistJoined && myBookingsUrl"
+          variant="tonal"
+          color="primary"
+          class="mt-6 text-left pa-4 conf-step"
+          style="animation-delay: 0.95s"
+        >
+          <div class="text-subtitle-2 font-weight-bold mb-2 d-flex align-center">
+            <v-icon start>mdi-history</v-icon>
+            Sigue tus reservas
+          </div>
+          <p class="text-body-2 text-medium-emphasis mb-3">
+            Guarda este enlace para consultar el estado de tus reservas en cualquier momento.
+          </p>
+          <div class="d-flex align-center ga-2">
+            <v-text-field
+              :model-value="myBookingsUrl"
+              readonly
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="my-bookings-link"
+            />
+            <v-btn color="primary" variant="flat" @click="copyMyBookingsLink">
+              <v-icon start>mdi-content-copy</v-icon>
+              Copiar
+            </v-btn>
+          </div>
+        </v-card>
+
+        <div
+          class="d-flex flex-column align-center mt-6 ga-3 conf-step"
+          style="animation-delay: 1.05s"
+        >
           <v-btn
             v-if="!waitlistJoined && waSummaryUrl"
             color="green"
@@ -519,7 +532,13 @@ import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAvailability } from '../composables/useAvailability';
 import TimeSlotPicker from '../components/TimeSlotPicker.vue';
 import { useUiStore } from '@/shared/stores/ui.store';
-import { buildBookingIcs, buildGoogleCalendarUrl, downloadIcs, getIcsBlob, shareIcs } from '../utils/ics';
+import {
+  buildBookingIcs,
+  buildGoogleCalendarUrl,
+  downloadIcs,
+  getIcsBlob,
+  shareIcs,
+} from '../utils/ics';
 import type { Service } from '../types/service.types';
 import type { Employee } from '../types/employee.types';
 
@@ -539,6 +558,7 @@ const confirmed = ref(false);
 const calendarBusy = ref(false);
 const bookingError = ref<string | null>(null);
 const createdBookingId = ref<string | null>(null);
+const customerAccessToken = ref<string | null>(null);
 const formRef = ref();
 
 const selectedCategory = ref<string | null>(null);
@@ -564,7 +584,9 @@ const isAndroid = /Android/.test(navigator.userAgent);
 
 const pendingEmployeeName = computed(() => {
   if (!pendingEmployeeId.value) return '';
-  return employeeStore.activeEmployees.find((e) => e.id === pendingEmployeeId.value)?.first_name ?? '';
+  return (
+    employeeStore.activeEmployees.find((e) => e.id === pendingEmployeeId.value)?.first_name ?? ''
+  );
 });
 
 const waSummaryUrl = computed(() => {
@@ -584,8 +606,15 @@ const waSummaryUrl = computed(() => {
 });
 
 const bookingEvent = computed(() => {
-  if (!selectedService.value || !selectedEmployee.value || !selectedDate.value || !selectedTime.value) return null;
-  const workerName = `${selectedEmployee.value.first_name} ${selectedEmployee.value.last_name ?? ''}`.trim();
+  if (
+    !selectedService.value ||
+    !selectedEmployee.value ||
+    !selectedDate.value ||
+    !selectedTime.value
+  )
+    return null;
+  const workerName =
+    `${selectedEmployee.value.first_name} ${selectedEmployee.value.last_name ?? ''}`.trim();
   const serviceName = selectedService.value.name;
   const time = selectedTime.value.slice(0, 5);
   const start = new Date(`${selectedDate.value}T${time}:00Z`);
@@ -616,6 +645,30 @@ const googleCalendarUrl = computed(() => {
   const ev = bookingEvent.value;
   return ev ? buildGoogleCalendarUrl(ev) : '';
 });
+
+const myBookingsUrl = computed(() => {
+  if (!customerAccessToken.value) return '';
+  const slug = route.params.slug as string;
+  return `/${slug}/reservas/${customerAccessToken.value}`;
+});
+
+function copyMyBookingsLink() {
+  if (!myBookingsUrl.value) return;
+  const url = window.location.origin + myBookingsUrl.value;
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard
+      .writeText(url)
+      .then(() =>
+        uiStore.showNotification(
+          'Enlace copiado. Guárdalo para consultar tus reservas.',
+          'success',
+        ),
+      )
+      .catch(() => uiStore.showNotification('No se pudo copiar el enlace.', 'error'));
+  } else {
+    uiStore.showNotification('No se pudo copiar el enlace.', 'error');
+  }
+}
 
 const steps = ['Categoría', 'Servicio', 'Empleado', 'Fecha', 'Hora', 'Tus datos', 'Confirmar'];
 
@@ -694,9 +747,11 @@ const canProceed = computed(() => {
   if (step.value === 4) return !!selectedDate.value;
   if (step.value === 5) return !!selectedTime.value || waitlistTimes.value.length > 0;
   if (step.value === 6) {
-    return !!customerName.value?.trim() &&
+    return (
+      !!customerName.value?.trim() &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.value) &&
-      /^\+?[\d\s\-()]{7,15}$/.test(customerPhone.value);
+      /^\+?[\d\s\-()]{7,15}$/.test(customerPhone.value)
+    );
   }
   return true;
 });
@@ -704,6 +759,7 @@ const canProceed = computed(() => {
 onMounted(async () => {
   loading.value = true;
   const slug = route.params.slug as string;
+  customerAccessToken.value = localStorage.getItem(`customerAccessToken:${slug}`) ?? null;
   await tenantStore.fetchTenantBySlug(slug);
   await Promise.all([
     serviceStore.fetchServices(),
@@ -814,10 +870,15 @@ async function onConfirm() {
       source: 'online',
       whatsapp_consent: whatsappConsent.value,
     });
-    createdBookingId.value = created?.id ?? null;
+    createdBookingId.value = created?.booking?.id ?? null;
+    if (created?.accessToken) {
+      customerAccessToken.value = created.accessToken;
+      localStorage.setItem(`customerAccessToken:${route.params.slug}`, created.accessToken);
+    }
     confirmed.value = true;
   } catch (e: unknown) {
-    bookingError.value = e instanceof Error ? e.message : 'Error al procesar tu solicitud. Intenta de nuevo.';
+    bookingError.value =
+      e instanceof Error ? e.message : 'Error al procesar tu solicitud. Intenta de nuevo.';
   } finally {
     submitting.value = false;
   }
@@ -843,8 +904,14 @@ async function openCalendar() {
       if (createdBookingId.value && import.meta.env.PROD) {
         window.location.href = `/api/ics/${createdBookingId.value}`;
       } else {
-        downloadIcs(`cita-${ev.summary.toLowerCase().replace(/\s+/g, '-')}-${selectedDate.value}.ics`, blob);
-        uiStore.showNotification('Archivo generado. Ábrelo para agregarlo a tu calendario.', 'info');
+        downloadIcs(
+          `cita-${ev.summary.toLowerCase().replace(/\s+/g, '-')}-${selectedDate.value}.ics`,
+          blob,
+        );
+        uiStore.showNotification(
+          'Archivo generado. Ábrelo para agregarlo a tu calendario.',
+          'info',
+        );
       }
     }
   } catch (e) {
@@ -880,7 +947,12 @@ function formatPrice(centavos: number): string {
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  return d.toLocaleDateString('es-MX', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 }
 </script>
 
@@ -973,9 +1045,15 @@ function formatDate(dateStr: string): string {
 }
 
 @keyframes bookingDotPulse {
-  0% { box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0.35); }
-  70% { box-shadow: 0 0 0 9px rgba(var(--v-theme-primary), 0); }
-  100% { box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(var(--v-theme-primary), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0);
+  }
 }
 
 @media (max-width: 600px) {
@@ -1007,7 +1085,10 @@ function formatDate(dateStr: string): string {
 
 .service-select-card {
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .service-select-card.is-selected {
@@ -1030,6 +1111,17 @@ function formatDate(dateStr: string): string {
   overflow: hidden;
 }
 
+.my-bookings-link {
+  max-width: 320px;
+  flex: 1 1 auto;
+}
+
+@media (max-width: 600px) {
+  .my-bookings-link {
+    max-width: none;
+  }
+}
+
 .success-badge {
   position: relative;
   width: 96px;
@@ -1043,7 +1135,11 @@ function formatDate(dateStr: string): string {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--v-theme-success), 0.22) 0%, rgba(var(--v-theme-success), 0) 70%);
+  background: radial-gradient(
+    circle,
+    rgba(var(--v-theme-success), 0.22) 0%,
+    rgba(var(--v-theme-success), 0) 70%
+  );
   z-index: 0;
   animation: successPulse 1.8s ease-out infinite;
 }

@@ -2,7 +2,21 @@ import { defineStore } from 'pinia';
 import { bookingRepository } from '../repositories/booking.repository';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
-import type { Booking, CreateBookingDTO, UpdateBookingDTO, BookingFilters, BookingStatus, ClientBlockCheck, WaitlistEntry, CreateWaitlistDTO, RecurringPattern, CreateRecurringDTO, RecurringInstance } from '../types/booking.types';
+import type {
+  Booking,
+  CreateBookingDTO,
+  CreateBookingResult,
+  UpdateBookingDTO,
+  BookingFilters,
+  BookingStatus,
+  ClientBlockCheck,
+  WaitlistEntry,
+  CreateWaitlistDTO,
+  RecurringPattern,
+  CreateRecurringDTO,
+  RecurringInstance,
+  CustomerBookingSummary,
+} from '../types/booking.types';
 
 interface BookingStoreState {
   bookings: Booking[];
@@ -82,7 +96,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
       }
     },
 
-    async createBooking(dto: CreateBookingDTO): Promise<Booking> {
+    async createBooking(dto: CreateBookingDTO): Promise<CreateBookingResult> {
       const tenantId = resolveTenantId();
       if (!tenantId) throw new Error('No tenant ID available');
 
@@ -95,9 +109,13 @@ export const useBookingStore = defineStore('appointments/bookings', {
         }
       }
 
-      const booking = await bookingRepository.create(dto, tenantId);
-      this.bookings.push(booking);
-      return booking;
+      const result = await bookingRepository.create(dto, tenantId);
+      this.bookings.push(result.booking);
+      return result;
+    },
+
+    async fetchCustomerBookings(token: string): Promise<CustomerBookingSummary[]> {
+      return bookingRepository.getCustomerBookingsByToken(token);
     },
 
     async updateBooking(id: string, dto: UpdateBookingDTO): Promise<Booking> {
@@ -108,7 +126,12 @@ export const useBookingStore = defineStore('appointments/bookings', {
       return updated;
     },
 
-    async updateStatus(id: string, status: BookingStatus, reason?: string, cancelledBy?: 'customer' | 'employee' | 'system'): Promise<Booking> {
+    async updateStatus(
+      id: string,
+      status: BookingStatus,
+      reason?: string,
+      cancelledBy?: 'customer' | 'employee' | 'system',
+    ): Promise<Booking> {
       const tenantId = resolveTenantId();
       const authStore = useAuthStore();
       const booking = this.bookings.find((b) => b.id === id) ?? this.currentBooking;
@@ -192,7 +215,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authStore.session?.access_token ?? ''}`,
+              Authorization: `Bearer ${authStore.session?.access_token ?? ''}`,
             },
             body: JSON.stringify({ token: entry.offer_token, tenant_id: tenantId }),
           });
@@ -214,17 +237,33 @@ export const useBookingStore = defineStore('appointments/bookings', {
       return bookingRepository.getNoShowCount(tenantId, customerEmail);
     },
 
-    async getAvailableSlots(employeeId: string, date: string, serviceDuration: number, serviceId?: string) {
+    async getAvailableSlots(
+      employeeId: string,
+      date: string,
+      serviceDuration: number,
+      serviceId?: string,
+    ) {
       const tenantId = resolveTenantId();
       if (!tenantId) throw new Error('No tenant ID available');
-      return bookingRepository.getAvailableSlots(tenantId, employeeId, date, serviceDuration, serviceId);
+      return bookingRepository.getAvailableSlots(
+        tenantId,
+        employeeId,
+        date,
+        serviceDuration,
+        serviceId,
+      );
     },
 
     async fetchBookingsForEmployee(employeeId: string, date: string): Promise<Booking[]> {
       return bookingRepository.getByEmployeeAndDate(employeeId, date);
     },
 
-    async reassignBooking(bookingId: string, newDate: string, newStartTime: string, serviceDuration: number): Promise<Booking> {
+    async reassignBooking(
+      bookingId: string,
+      newDate: string,
+      newStartTime: string,
+      serviceDuration: number,
+    ): Promise<Booking> {
       const tenantId = resolveTenantId();
       const authStore = useAuthStore();
       const booking = this.bookings.find((b) => b.id === bookingId) ?? this.currentBooking;
@@ -233,7 +272,11 @@ export const useBookingStore = defineStore('appointments/bookings', {
 
       if (tenantId) {
         const slots = await bookingRepository.getAvailableSlots(
-          tenantId, booking!.employee_id, newDate, serviceDuration, booking!.service_id,
+          tenantId,
+          booking!.employee_id,
+          newDate,
+          serviceDuration,
+          booking!.service_id,
         );
         const slotAvailable = slots.some((s) => s.start_time === newStartTime);
         if (!slotAvailable) {
@@ -241,7 +284,12 @@ export const useBookingStore = defineStore('appointments/bookings', {
         }
       }
 
-      const updated = await bookingRepository.reassign(bookingId, newDate, newStartTime, serviceDuration);
+      const updated = await bookingRepository.reassign(
+        bookingId,
+        newDate,
+        newStartTime,
+        serviceDuration,
+      );
       const index = this.bookings.findIndex((b) => b.id === bookingId);
       if (index !== -1) this.bookings[index] = updated;
       if (this.currentBooking?.id === bookingId) this.currentBooking = updated;
@@ -271,7 +319,11 @@ export const useBookingStore = defineStore('appointments/bookings', {
         throw new Error('Solo se pueden aprobar reservas pendientes de aprobación.');
       }
 
-      const updated = await bookingRepository.approveBooking(bookingId, authStore.user?.id ?? '', reason);
+      const updated = await bookingRepository.approveBooking(
+        bookingId,
+        authStore.user?.id ?? '',
+        reason,
+      );
       const index = this.bookings.findIndex((b) => b.id === bookingId);
       if (index !== -1) this.bookings[index] = updated;
       if (this.currentBooking?.id === bookingId) this.currentBooking = updated;
@@ -301,7 +353,11 @@ export const useBookingStore = defineStore('appointments/bookings', {
         throw new Error('Solo se pueden rechazar reservas pendientes de aprobación.');
       }
 
-      const updated = await bookingRepository.rejectBooking(bookingId, authStore.user?.id ?? '', reason);
+      const updated = await bookingRepository.rejectBooking(
+        bookingId,
+        authStore.user?.id ?? '',
+        reason,
+      );
       const index = this.bookings.findIndex((b) => b.id === bookingId);
       if (index !== -1) this.bookings[index] = updated;
       if (this.currentBooking?.id === bookingId) this.currentBooking = updated;

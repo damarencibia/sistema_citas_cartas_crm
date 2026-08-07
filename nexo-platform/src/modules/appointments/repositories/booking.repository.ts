@@ -3,6 +3,8 @@ import type { Database } from '@/shared/types/supabase.gen';
 import type {
   Booking,
   CreateBookingDTO,
+  CreateBookingResult,
+  CustomerBookingSummary,
   UpdateBookingDTO,
   BookingFilters,
   AvailableSlot,
@@ -93,7 +95,15 @@ export const bookingRepository = {
     return data as unknown as Booking | null;
   },
 
-  async create(dto: CreateBookingDTO, tenantId: string): Promise<Booking> {
+  async getCustomerBookingsByToken(token: string): Promise<CustomerBookingSummary[]> {
+    const { data, error } = await supabase.rpc('get_customer_bookings_by_token', {
+      p_token: token,
+    });
+    if (error) throw error;
+    return (data ?? []) as unknown as CustomerBookingSummary[];
+  },
+
+  async create(dto: CreateBookingDTO, tenantId: string): Promise<CreateBookingResult> {
     const { data: serviceData, error: serviceError } = await supabase
       .from('services')
       .select('duration_minutes, requires_approval')
@@ -111,15 +121,21 @@ export const bookingRepository = {
         : 'confirmed';
 
     let customerId: string | null = null;
+    let accessToken: string | null = null;
     if (dto.customer_email) {
-      const { data: cid, error: customerError } = await supabase.rpc('upsert_booking_customer', {
-        p_tenant_id: tenantId,
-        p_customer_name: dto.customer_name ?? '',
-        p_customer_email: dto.customer_email,
-        p_customer_phone: dto.customer_phone ?? '',
-      });
+      const { data: customer, error: customerError } = await supabase.rpc(
+        'upsert_booking_customer',
+        {
+          p_tenant_id: tenantId,
+          p_customer_name: dto.customer_name ?? '',
+          p_customer_email: dto.customer_email,
+          p_customer_phone: dto.customer_phone ?? '',
+        },
+      );
       if (customerError) throw customerError;
-      customerId = (cid as string) ?? null;
+      const row = (customer as unknown as { id: string; access_token: string }[] | null)?.[0];
+      customerId = row?.id ?? null;
+      accessToken = row?.access_token ?? null;
     }
 
     const insertPayload: BookingInsert = {
@@ -149,7 +165,7 @@ export const bookingRepository = {
       }
       throw error;
     }
-    return data as Booking;
+    return { booking: data as Booking, accessToken };
   },
 
   async update(id: string, dto: UpdateBookingDTO): Promise<Booking> {
@@ -186,7 +202,8 @@ export const bookingRepository = {
     if (dto.employee_id) payload.employee_id = dto.employee_id;
     if (dto.date) payload.date = dto.date;
     if (dto.start_time) payload.start_time = dto.start_time;
-    if (dto.custom_duration_minutes !== undefined) payload.custom_duration_minutes = dto.custom_duration_minutes;
+    if (dto.custom_duration_minutes !== undefined)
+      payload.custom_duration_minutes = dto.custom_duration_minutes;
     if (dto.resource_id !== undefined) payload.resource_id = dto.resource_id;
     if (dto.participant_count !== undefined) payload.participant_count = dto.participant_count;
     if (dto.whatsapp_consent !== undefined) payload.whatsapp_consent = dto.whatsapp_consent;
@@ -196,14 +213,18 @@ export const bookingRepository = {
     if (dto.notes !== undefined) payload.notes = dto.notes;
 
     if (dto.customer_email && dto.customer_email !== current.customer_email) {
-      const { data: cid, error: customerError } = await supabase.rpc('upsert_booking_customer', {
-        p_tenant_id: current.tenant_id,
-        p_customer_name: dto.customer_name ?? current.customer_name ?? '',
-        p_customer_email: dto.customer_email,
-        p_customer_phone: dto.customer_phone ?? current.customer_phone ?? '',
-      });
+      const { data: customer, error: customerError } = await supabase.rpc(
+        'upsert_booking_customer',
+        {
+          p_tenant_id: current.tenant_id,
+          p_customer_name: dto.customer_name ?? current.customer_name ?? '',
+          p_customer_email: dto.customer_email,
+          p_customer_phone: dto.customer_phone ?? current.customer_phone ?? '',
+        },
+      );
       if (customerError) throw customerError;
-      payload.customer_id = (cid as string) ?? null;
+      const row = (customer as unknown as { id: string; access_token: string }[] | null)?.[0];
+      payload.customer_id = row?.id ?? null;
     }
 
     const { data, error } = await supabase
@@ -329,9 +350,7 @@ export const bookingRepository = {
     return count ?? 0;
   },
 
-  async getAppointmentConfig(
-    tenantId: string,
-  ): Promise<{
+  async getAppointmentConfig(tenantId: string): Promise<{
     auto_start: boolean;
     grace_period_minutes: number;
     max_no_shows: number;
@@ -571,11 +590,13 @@ export const bookingRepository = {
 
     const position = (count ?? 0) + 1;
 
-    const preferredTimes = (dto.preferred_times?.length
-      ? dto.preferred_times
-      : dto.preferred_time_start
-        ? [dto.preferred_time_start]
-        : []).map(normalizeTime);
+    const preferredTimes = (
+      dto.preferred_times?.length
+        ? dto.preferred_times
+        : dto.preferred_time_start
+          ? [dto.preferred_time_start]
+          : []
+    ).map(normalizeTime);
 
     const { data, error } = await (supabase as any)
       .from('waitlist')
