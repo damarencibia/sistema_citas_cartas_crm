@@ -9,10 +9,41 @@
     :scrim="!isDesktop"
     :disable-route-watcher="isDesktop"
     class="app-sidebar"
+    :class="{ 'app-sidebar--mobile': !isDesktop }"
     @update:rail="onRailUpdate"
   >
     <template #prepend>
-      <div class="sidebar-brand d-flex align-center pa-3" :class="rail ? 'justify-center' : 'justify-space-between'">
+      <div v-if="!isDesktop" class="sidebar-brand--mobile d-flex align-center justify-space-between px-4 py-3">
+        <div class="d-flex align-center ga-3 overflow-hidden">
+          <v-avatar
+            color="primary"
+            size="40"
+            variant="flat"
+            rounded="lg"
+          >
+            <span class="text-white font-weight-bold" style="font-size: 18px;">N</span>
+          </v-avatar>
+          <div class="overflow-hidden">
+            <div class="text-h6 font-weight-semibold text-truncate" style="line-height: 1.2;">
+              {{ tenantStore.tenant?.name || 'Nexo' }}
+            </div>
+            <div class="text-caption" style="color: var(--text-faint); line-height: 1.2;">
+              {{ authStore.userRole }}
+            </div>
+          </div>
+        </div>
+        <v-btn
+          icon
+          variant="text"
+          class="sidebar-close-btn"
+          aria-label="Cerrar menú"
+          @click="uiStore.sidebar = false"
+        >
+          <v-icon size="28">mdi-menu-open</v-icon>
+        </v-btn>
+      </div>
+
+      <div v-else class="sidebar-brand d-flex align-center pa-3" :class="rail ? 'justify-center' : 'justify-space-between'">
         <template v-if="!rail">
           <div class="d-flex align-center ga-2 overflow-hidden">
             <v-avatar color="primary" size="32" variant="flat">
@@ -41,7 +72,12 @@
 
     <v-divider class="mx-3" />
 
-    <v-list density="compact" nav class="pa-2">
+    <v-list
+      v-if="isDesktop"
+      density="compact"
+      nav
+      class="pa-2"
+    >
       <template v-for="item in navItems" :key="item.title">
         <v-list-item
           v-if="!item.children"
@@ -74,6 +110,51 @@
             class="sidebar-item sidebar-item--child mb-1"
           />
         </v-list-group>
+      </template>
+    </v-list>
+
+    <v-list
+      v-else
+      density="comfortable"
+      nav
+      class="pa-2"
+    >
+      <template v-for="(item, index) in navItems" :key="item.title">
+        <v-divider
+          v-if="index > 0 && item.section !== navItems[index - 1].section"
+          class="mx-3 my-1 sidebar-section-divider"
+        />
+        <div
+          v-if="index === 0 || item.section !== navItems[index - 1].section"
+          class="sidebar-section-header px-4"
+        >
+          {{ item.section }}
+        </div>
+        <v-list-item
+          v-if="!item.children"
+          :to="item.to"
+          :prepend-icon="item.icon"
+          :title="item.title"
+          :value="item.title"
+          color="primary"
+          rounded="lg"
+          class="sidebar-item mb-1"
+          :class="{ 'sidebar-item--active': isActive(item.to) }"
+        />
+        <template v-else>
+          <v-list-item
+            v-for="child in item.children"
+            :key="child.title"
+            :to="child.to"
+            :prepend-icon="child.icon"
+            :title="child.title"
+            :value="child.title"
+            color="primary"
+            rounded="lg"
+            class="sidebar-item sidebar-item--child mb-1"
+            :class="{ 'sidebar-item--active': isActive(child.to) }"
+          />
+        </template>
       </template>
     </v-list>
   </v-navigation-drawer>
@@ -115,7 +196,9 @@ function isActive(to?: string) {
   return route.path === to;
 }
 
-const baseNavItems = [{ title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/' }];
+const baseNavItems = [
+  { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/', section: 'General' },
+];
 
 const moduleNavItems = computed(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -124,27 +207,29 @@ const moduleNavItems = computed(() => {
   const isAdmin = authStore.isAdmin;
 
   if (modules.appointments) {
-    items.push({ title: 'Agenda', icon: 'mdi-calendar-outline', to: '/appointments/agenda' });
-    items.push({ title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' });
+    const section = 'Citas';
+    items.push({ title: 'Agenda', icon: 'mdi-calendar-outline', to: '/appointments/agenda', section });
+    items.push({ title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules', section });
     if (isAdmin) {
-      items.push({ title: 'Catálogo y Servicios', icon: 'mdi-book-open-outline', to: '/appointments/catalog' });
-      items.push({ title: 'Empleados', icon: 'mdi-account-group-outline', to: '/appointments/employees' });
+      items.push({ title: 'Catálogo y Servicios', icon: 'mdi-book-open-outline', to: '/appointments/catalog', section });
+      items.push({ title: 'Empleados', icon: 'mdi-account-group-outline', to: '/appointments/employees', section });
     } else {
-      items.push({ title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services' });
+      items.push({ title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services', section });
     }
-    items.push({ title: 'Reservas', icon: 'mdi-book-check-outline', to: '/appointments/bookings' });
-    items.push({ title: 'Historial', icon: 'mdi-history', to: '/appointments/history' });
-    items.push({ title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/appointments/notifications' });
+    items.push({ title: 'Reservas', icon: 'mdi-book-check-outline', to: '/appointments/bookings', section });
+    items.push({ title: 'Historial', icon: 'mdi-history', to: '/appointments/history', section });
+    items.push({ title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/appointments/notifications', section });
   }
 
   if (modules.digital_menu && isAdmin) {
     items.push({
       title: 'Carta Digital',
       icon: 'mdi-silverware-fork-knife',
+      section: 'Carta Digital',
       children: [
         { title: 'Categorías', icon: 'mdi-shape-outline', to: '/menu/categories' },
         { title: 'Productos', icon: 'mdi-food-outline', to: '/menu/products' },
-        { title: 'Mesas', icon: 'mdi-table', to: '/menu/tables' },
+        { title: 'Mesas', icon: 'mdi-table-furniture', to: '/menu/tables' },
         { title: 'Pedidos', icon: 'mdi-clipboard-list-outline', to: '/menu/orders' },
       ],
     });
@@ -154,6 +239,7 @@ const moduleNavItems = computed(() => {
     items.push({
       title: 'CRM',
       icon: 'mdi-account-group-outline',
+      section: 'CRM',
       children: [
         { title: 'Clientes', icon: 'mdi-account-outline', to: '/crm/customers' },
         { title: 'Etiquetas', icon: 'mdi-tag-outline', to: '/crm/tags' },
@@ -171,10 +257,11 @@ const settingsNav = computed(() => {
     {
       title: 'Configuración',
       icon: 'mdi-cog-outline',
+      section: 'Configuración',
       children: [
         { title: 'Mi Negocio', icon: 'mdi-store-outline', to: '/settings/business' },
         { title: 'Módulos', icon: 'mdi-puzzle-outline', to: '/settings/modules' },
-        { title: 'Config. Citas', icon: 'mdi-calendar-cog-outline', to: '/settings/appointments-config' },
+        { title: 'Config. Citas', icon: 'mdi-calendar-cursor', to: '/settings/appointments-config' },
       ],
     },
   ];
@@ -208,5 +295,42 @@ const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...se
 
 .v-list-group__items .sidebar-item--child {
   padding-left: 16px !important;
+}
+
+.app-sidebar--mobile .sidebar-section-header {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-top: 14px;
+  padding-bottom: 4px;
+}
+
+.app-sidebar--mobile .sidebar-item {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  min-height: 48px;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
+
+.app-sidebar--mobile .sidebar-item--child {
+  padding-left: 14px !important;
+}
+
+.app-sidebar--mobile :deep(.v-list-item__prepend > .v-icon) {
+  font-size: 26px;
+}
+
+.app-sidebar--mobile :deep(.v-list-item--active) {
+  background-color: rgb(var(--v-theme-primary)) !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.app-sidebar--mobile :deep(.v-list-item--active .v-icon) {
+  color: #fff !important;
 }
 </style>
