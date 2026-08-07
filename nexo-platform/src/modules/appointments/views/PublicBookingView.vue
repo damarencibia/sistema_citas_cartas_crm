@@ -44,8 +44,7 @@
         closable
         @click:close="pendingEmployeeId = null"
       >
-        Reservando con <strong>{{ pendingEmployeeName }}</strong
-        >.
+        Reservando con <strong>{{ pendingEmployeeName }}</strong>.
       </v-alert>
 
       <v-alert
@@ -59,7 +58,13 @@
         {{ bookingError }}
       </v-alert>
 
-      <v-stepper v-if="!confirmed" v-model="step" :items="steps" alt-labels non-linear>
+      <v-stepper
+        v-if="!confirmed"
+        v-model="step"
+        :items="steps"
+        alt-labels
+        non-linear
+      >
         <template #item.1>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona una categoría</h3>
@@ -67,7 +72,13 @@
               <v-progress-circular indeterminate color="primary" />
             </div>
             <v-row v-else>
-              <v-col v-for="cat in categoryOptions" :key="cat.id" cols="12" sm="6" md="4">
+              <v-col
+                v-for="cat in categoryOptions"
+                :key="cat.id"
+                cols="12"
+                sm="6"
+                md="4"
+              >
                 <v-card
                   class="mb-3 rounded-xl service-select-card h-100"
                   :class="{
@@ -112,7 +123,12 @@
               <h3 class="text-subtitle-1 font-weight-medium mb-0">
                 Servicios de {{ selectedCategoryName }}
               </h3>
-              <v-btn variant="text" size="small" color="primary" @click="step = 1">
+              <v-btn
+                variant="text"
+                size="small"
+                color="primary"
+                @click="step = 1"
+              >
                 <v-icon start size="16">mdi-swap-horizontal</v-icon>
                 Cambiar categoría
               </v-btn>
@@ -159,7 +175,12 @@
         <template #item.3>
           <div class="pa-4">
             <h3 class="text-subtitle-1 font-weight-medium mb-4">Selecciona un empleado</h3>
-            <v-alert color="info" variant="tonal" class="mb-4" icon="mdi-account-check-outline">
+            <v-alert
+              color="info"
+              variant="tonal"
+              class="mb-4"
+              icon="mdi-account-check-outline"
+            >
               El sistema puede asignar cualquier empleado disponible para este servicio
             </v-alert>
             <v-card
@@ -266,8 +287,7 @@
               icon="mdi-clock-outline"
             >
               Te unirás a la lista de espera para:
-              <strong>{{ waitlistTimes.map((t) => t.slice(0, 5)).join(', ') }}</strong
-              >. Te avisaremos cuando alguno se libere.
+              <strong>{{ waitlistTimes.map((t) => t.slice(0, 5)).join(', ') }}</strong>. Te avisaremos cuando alguno se libere.
             </v-alert>
             <v-card variant="outlined" class="rounded-xl overflow-hidden mb-4">
               <div class="d-flex flex-column">
@@ -311,9 +331,7 @@
                     <span class="text-body-2 text-medium-emphasis d-flex align-center ga-1">
                       <v-icon size="16">mdi-timer-outline</v-icon>Duración
                     </span>
-                    <span class="text-body-2 font-weight-medium"
-                      >{{ selectedService?.duration_minutes }} min</span
-                    >
+                    <span class="text-body-2 font-weight-medium">{{ selectedService?.duration_minutes }} min</span>
                   </div>
                   <v-divider />
                   <div class="d-flex justify-space-between">
@@ -376,7 +394,12 @@
       <v-card v-if="confirmed" class="mt-4 pa-8 text-center rounded-xl confirmation-card">
         <div class="success-badge">
           <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle class="s-circle" cx="60" cy="60" r="52" />
+            <circle
+              class="s-circle"
+              cx="60"
+              cy="60"
+              r="52"
+            />
             <path class="s-check" d="M38 61 L54 78 L84 44" fill="none" />
           </svg>
           <span
@@ -461,6 +484,18 @@
               Copiar
             </v-btn>
           </div>
+          <v-btn
+            v-if="!waitlistJoined && sendMyBookingsLinkUrl"
+            color="green"
+            variant="outlined"
+            :href="sendMyBookingsLinkUrl"
+            target="_blank"
+            rel="noopener"
+            prepend-icon="mdi-whatsapp"
+            class="mt-3"
+          >
+            Enviarme el enlace por WhatsApp
+          </v-btn>
         </v-card>
 
         <div
@@ -650,6 +685,17 @@ const myBookingsUrl = computed(() => {
   if (!customerAccessToken.value) return '';
   const slug = route.params.slug as string;
   return `/${slug}/reservas/${customerAccessToken.value}`;
+});
+
+const sendMyBookingsLinkUrl = computed(() => {
+  if (!customerAccessToken.value) return '';
+  let digits = (customerPhone.value || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length === 8) digits = `53${digits}`;
+  const slug = route.params.slug as string;
+  const link = `${window.location.origin}/${slug}/reservas/${customerAccessToken.value}`;
+  const text = ['Guarda este enlace para consultar el estado de tus reservas:', link].join('\n');
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 });
 
 function copyMyBookingsLink() {
