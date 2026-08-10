@@ -140,11 +140,24 @@ interface PushSubscriptionRow {
   tenant_id: string | null;
 }
 
+interface PushDeliveryRow {
+  id: string;
+  notification_id: string | null;
+  recipient_user_id: string;
+  tenant_id: string | null;
+  attempts: number;
+}
+
 const VAPID_PUBLIC = Deno.env.get('VAPID_PUBLIC_KEY');
 const VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE_KEY');
 const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') || 'mailto:notificaciones@nexoplatform.app';
 const PUSH_SECRET = Deno.env.get('PUSH_SECRET');
 const APP_URL = Deno.env.get('APP_URL') || 'https://nexoplatform.app';
+const MAX_ATTEMPTS = 5;
+
+function backoffMinutes(attempt: number): number {
+  return Math.min(attempt * 5, 60);
+}
 
 function buildNotificationUrl(data: Record<string, unknown>): string {
   const type = typeof data?.notification_type === 'string' ? data.notification_type : '';
@@ -169,25 +182,59 @@ serve(async (req: Request) => {
 
   try {
     const payload = await req.json();
+    const deliveryId: string | undefined = payload?.delivery_id;
     const recipientUserId: string | undefined = payload?.recipient_user_id;
     const tenantId: string | null | undefined = payload?.tenant_id;
-    const title: string = payload?.title || 'Nexo Platform';
+    let title: string = payload?.title || 'Nexo Platform';
     const body: string = payload?.body || '';
     const data: Record<string, unknown> = payload?.data || {};
-
-    if (!recipientUserId) {
-      return errorResponse('recipient_user_id is required', 400);
-    }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    // Si venimos del sistema de delivery (create_notification o reintento),
+    // recuperamos el job y el contenido real de la notificación.
+    let job: PushDeliveryRow | null = null;
+    let recipientUser = recipientUserId;
+    let notifyTenant = tenantId ?? null;
+    if (deliveryId) {
+      const { data: jobRow, error: jobErr } = await supabase
+        .from('push_deliveries')
+        .select('id, notification_id, recipient_user_id, tenant_id, attempts')
+        .eq('id', deliveryId)
+        .maybeSingle();
+      if (jobErr) {
+        throw new Error(`Error leyendo delivery: ${jobErr.message}`);
+      }
+      if (!jobRow) {
+        return errorResponse('delivery not found', 404);
+      }
+      job = jobRow as PushDeliveryRow;
+      recipientUser = recipientUser ?? job.recipient_user_id;
+      notifyTenant = notifyTenant ?? job.tenant_id;
+
+      if (job.notification_id) {
+        const { data: notif } = await supabase
+          .from('notifications')
+          .select('title, body, data')
+          .eq('id', job.notification_id)
+          .maybeSingle();
+        if (notif) {
+          title = notif.title || title;
+        }
+      }
+    }
+
+    if (!recipientUser) {
+      return errorResponse('recipient_user_id is required', 400);
+    }
+
     const { data: subscriptions, error } = await supabase
       .from('push_subscriptions')
       .select('id, endpoint, p256dh, auth, tenant_id')
-      .eq('user_id', recipientUserId);
+      .eq('user_id', recipientUser);
 
     if (error) {
       throw new Error(`Error consultando suscripciones: ${error.message}`);
@@ -195,6 +242,15 @@ serve(async (req: Request) => {
 
     const rows = (subscriptions as PushSubscriptionRow[] | null) ?? [];
     if (rows.length === 0) {
+      if (job) {
+        await supabase.from('push_deliveries').update({
+          attempts: job.attempts + 1,
+          status: 'done',
+          last_error: 'sin suscripciones activas',
+          last_attempt_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).eq('id', job.id);
+      }
       return successResponse({ sent: 0, deleted: 0, skipped: 0 });
     }
 
@@ -203,9 +259,10 @@ serve(async (req: Request) => {
     let sent = 0;
     let deleted = 0;
     let skipped = 0;
+    const errors: string[] = [];
 
     for (const sub of rows) {
-      if (tenantId && sub.tenant_id && sub.tenant_id !== tenantId) {
+      if (notifyTenant && sub.tenant_id && sub.tenant_id !== notifyTenant) {
         skipped++;
         continue;
       }
@@ -232,12 +289,38 @@ serve(async (req: Request) => {
           sent++;
         } else {
           skipped++;
+          errors.push(`${sub.endpoint}: ${response.status}`);
           console.warn(`send-push: endpoint ${sub.endpoint} respondió ${response.status}`);
         }
       } catch (err) {
         skipped++;
+        errors.push(`${sub.endpoint}: ${(err as Error).message}`);
         console.error(`send-push: error enviando a ${sub.endpoint}:`, err);
       }
+    }
+
+    if (job) {
+      const attempt = job.attempts + 1;
+      const hadFailures = skipped > 0;
+      let status = 'done';
+      let nextRetryAt: string | null = null;
+      if (hadFailures && attempt < MAX_ATTEMPTS) {
+        status = 'pending';
+        nextRetryAt = new Date(Date.now() + backoffMinutes(attempt) * 60_000).toISOString();
+      } else if (hadFailures) {
+        status = 'failed';
+      }
+      await supabase.from('push_deliveries').update({
+        attempts: attempt,
+        sent_count: sent,
+        deleted_count: deleted,
+        skipped_count: skipped,
+        status,
+        next_retry_at: nextRetryAt,
+        last_error: hadFailures ? errors.join('; ').slice(0, 500) : null,
+        last_attempt_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', job.id);
     }
 
     return successResponse({ sent, deleted, skipped });

@@ -27,6 +27,7 @@ interface PushEventLike extends ExtendableEventLike {
 
 interface NotificationClickEventLike extends ExtendableEventLike {
   notification: { close(): void; data?: unknown };
+  action?: string;
 }
 
 interface ServiceWorkerScope {
@@ -122,6 +123,17 @@ interface PushPayload {
   url?: string;
 }
 
+interface NexoNotificationAction {
+  action: string;
+  title: string;
+}
+
+interface NexoNotificationOptions extends NotificationOptions {
+  vibrate: number[];
+  renotify: boolean;
+  actions: NexoNotificationAction[];
+}
+
 ctx.addEventListener('push', (event) => {
   let payload: PushPayload = {};
   try {
@@ -131,11 +143,15 @@ ctx.addEventListener('push', (event) => {
   }
 
   const title = payload.title || 'Nexo Platform';
-  const options: NotificationOptions = {
+  const options: NexoNotificationOptions = {
     body: payload.body || '',
-    icon: new URL('icons/pwa-192x192.png', ctx.location.origin).href,
+    icon: new URL('icons/pwa-512x512.png', ctx.location.origin).href,
     badge: new URL('icons/pwa-64x64.png', ctx.location.origin).href,
     data: { url: payload.url || '/' },
+    vibrate: [200, 100, 200],
+    tag: 'nexo-notification',
+    renotify: true,
+    actions: [{ action: 'open', title: 'Abrir' }],
   };
 
   event.waitUntil(ctx.registration.showNotification(title, options));
@@ -143,6 +159,7 @@ ctx.addEventListener('push', (event) => {
 
 ctx.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  if (event.action && event.action !== 'open') return;
   const targetUrl = (event.notification.data as { url?: string } | undefined)?.url || '/';
 
   event.waitUntil(

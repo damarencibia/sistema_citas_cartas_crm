@@ -3,6 +3,7 @@
     <AppSidebar />
     <AppTopbar />
     <PushOptInBanner />
+    <PwaInstallBanner />
     <v-main>
       <div class="main-content pa-4 pa-md-6">
         <router-view v-slot="{ Component }">
@@ -19,6 +20,7 @@
 import AppSidebar from '@/shared/components/AppSidebar.vue';
 import AppTopbar from '@/shared/components/AppTopbar.vue';
 import PushOptInBanner from '@/shared/components/PushOptInBanner.vue';
+import PwaInstallBanner from '@/shared/components/PwaInstallBanner.vue';
 </script>
 
 <style scoped>
