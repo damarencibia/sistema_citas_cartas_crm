@@ -1,11 +1,5 @@
 <template>
   <v-app-bar height="48" class="app-topbar" flat>
-    <v-app-bar-nav-icon
-      size="small"
-      class="d-md-none"
-      @click="uiStore.toggleSidebar()"
-    />
-
     <v-spacer />
 
     <NotificationCenter class="mr-1" />
@@ -58,6 +52,17 @@
         />
       </v-list>
     </v-menu>
+
+    <v-btn
+      icon
+      size="small"
+      variant="text"
+      class="d-md-none ml-1"
+      aria-label="Abrir menú"
+      @click="uiStore.toggleSidebar()"
+    >
+      <v-icon size="22">mdi-menu</v-icon>
+    </v-btn>
   </v-app-bar>
 </template>
 

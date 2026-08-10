@@ -1,56 +1,25 @@
 <template>
-  <v-navigation-drawer
-    v-model="uiStore.sidebar"
-    :temporary="!isDesktop"
-    :rail="rail"
-    :expand-on-hover="isDesktop"
-    :width="240"
-    :rail-width="60"
-    :scrim="!isDesktop"
-    :disable-route-watcher="isDesktop"
-    class="app-sidebar"
-    :class="{ 'app-sidebar--mobile': !isDesktop }"
-    @update:rail="onRailUpdate"
-  >
-    <template #prepend>
-      <div v-if="!isDesktop" class="sidebar-brand--mobile d-flex align-center justify-space-between px-4 py-3">
-        <div class="d-flex align-center ga-3 overflow-hidden">
-          <v-avatar
-            color="primary"
-            size="40"
-            variant="flat"
-            rounded="lg"
-          >
-            <span class="text-white font-weight-bold" style="font-size: 18px;">N</span>
-          </v-avatar>
-          <div class="overflow-hidden">
-            <div class="text-h6 font-weight-semibold text-truncate" style="line-height: 1.2;">
-              {{ tenantStore.tenant?.name || 'Nexo' }}
-            </div>
-            <div class="text-caption" style="color: var(--text-faint); line-height: 1.2;">
-              {{ authStore.userRole }}
-            </div>
-          </div>
-        </div>
-        <v-btn
-          icon
-          variant="text"
-          class="sidebar-close-btn"
-          aria-label="Cerrar menú"
-          @click="uiStore.sidebar = false"
-        >
-          <v-icon size="28">mdi-menu-open</v-icon>
-        </v-btn>
-      </div>
-
-      <div v-else class="sidebar-brand d-flex align-center pa-3" :class="rail ? 'justify-center' : 'justify-space-between'">
-        <template v-if="!rail">
-          <div class="d-flex align-center ga-2 overflow-hidden">
-            <v-avatar color="primary" size="32" variant="flat">
-              <span class="text-white font-weight-bold text-body-2">N</span>
+  <div class="app-sidebar-root">
+    <v-navigation-drawer
+      v-if="!isDesktop"
+      v-model="uiStore.sidebar"
+      temporary
+      :scrim="true"
+      class="app-sidebar app-sidebar--mobile"
+    >
+      <template #prepend>
+        <div class="sidebar-brand--mobile d-flex align-center justify-space-between px-4 py-3">
+          <div class="d-flex align-center ga-3 overflow-hidden">
+            <v-avatar
+              color="primary"
+              size="40"
+              variant="flat"
+              rounded="lg"
+            >
+              <span class="text-white font-weight-bold" style="font-size: 18px;">N</span>
             </v-avatar>
             <div class="overflow-hidden">
-              <div class="text-body-2 font-weight-semibold text-truncate" style="line-height: 1.2;">
+              <div class="text-h6 font-weight-semibold text-truncate" style="line-height: 1.2;">
                 {{ tenantStore.tenant?.name || 'Nexo' }}
               </div>
               <div class="text-caption" style="color: var(--text-faint); line-height: 1.2;">
@@ -58,215 +27,200 @@
               </div>
             </div>
           </div>
-        </template>
-        <v-avatar
-          v-else
-          color="primary"
-          size="32"
-          variant="flat"
-        >
-          <span class="text-white font-weight-bold text-body-2">N</span>
-        </v-avatar>
-      </div>
-    </template>
-
-    <v-divider class="mx-3" />
-
-    <v-list
-      v-if="isDesktop"
-      density="compact"
-      nav
-      class="pa-2"
-    >
-      <template v-for="item in navItems" :key="item.title">
-        <v-list-item
-          v-if="!item.children"
-          :to="item.to"
-          :prepend-icon="item.icon"
-          :title="item.title"
-          :value="item.title"
-          color="primary"
-          rounded="md"
-          class="sidebar-item mb-1"
-          :class="{ 'sidebar-item--active': isActive(item.to) }"
-        />
-        <v-list-group v-else :value="item.title" :prepend-icon="item.icon">
-          <template #activator="{ props }">
-            <v-list-item
-              v-bind="props"
-              :title="item.title"
-              rounded="md"
-              class="sidebar-item mb-1"
-            />
-          </template>
-          <v-list-item
-            v-for="child in item.children"
-            :key="child.title"
-            :to="child.to"
-            :prepend-icon="child.icon"
-            :title="child.title"
-            color="primary"
-            rounded="md"
-            class="sidebar-item sidebar-item--child mb-1"
-          />
-        </v-list-group>
-      </template>
-    </v-list>
-
-    <v-list
-      v-else
-      density="comfortable"
-      nav
-      class="pa-2"
-    >
-      <template v-for="(item, index) in navItems" :key="item.title">
-        <v-divider
-          v-if="index > 0 && item.section !== navItems[index - 1].section"
-          class="mx-3 my-1 sidebar-section-divider"
-        />
-        <div
-          v-if="index === 0 || item.section !== navItems[index - 1].section"
-          class="sidebar-section-header px-4"
-        >
-          {{ item.section }}
+          <v-btn
+            icon
+            variant="text"
+            class="sidebar-close-btn"
+            aria-label="Cerrar menú"
+            @click="uiStore.sidebar = false"
+          >
+            <v-icon size="28">mdi-menu-open</v-icon>
+          </v-btn>
         </div>
+      </template>
+
+      <v-divider class="mx-3" />
+
+      <v-list
+        v-if="mobileView === 'modules'"
+        density="comfortable"
+        nav
+        class="pa-2"
+      >
         <v-list-item
-          v-if="!item.children"
-          :to="item.to"
-          :prepend-icon="item.icon"
-          :title="item.title"
-          :value="item.title"
-          color="primary"
+          v-for="mod in modules"
+          :key="mod.key"
+          :prepend-icon="mod.icon"
+          :title="mod.title"
+          :append-icon="mod.options.length ? 'mdi-chevron-right' : undefined"
           rounded="lg"
           class="sidebar-item mb-1"
-          :class="{ 'sidebar-item--active': isActive(item.to) }"
+          @click="onMobileModuleClick(mod)"
         />
-        <template v-else>
+      </v-list>
+
+      <template v-else>
+        <div class="d-flex align-center ga-1 px-2 py-2">
+          <v-btn
+            icon
+            variant="text"
+            size="small"
+            aria-label="Volver a módulos"
+            @click="mobileView = 'modules'"
+          >
+            <v-icon>mdi-chevron-left</v-icon>
+          </v-btn>
+          <span class="text-body-1 font-weight-semibold text-truncate">{{ activeMobileModule?.title }}</span>
+        </div>
+        <v-divider class="mx-3" />
+        <v-list
+          density="comfortable"
+          nav
+          class="pa-2"
+        >
           <v-list-item
-            v-for="child in item.children"
-            :key="child.title"
-            :to="child.to"
-            :prepend-icon="child.icon"
-            :title="child.title"
-            :value="child.title"
-            color="primary"
+            v-for="opt in activeMobileModule?.options ?? []"
+            :key="opt.title"
+            :prepend-icon="opt.icon"
+            :title="opt.title"
             rounded="lg"
-            class="sidebar-item sidebar-item--child mb-1"
-            :class="{ 'sidebar-item--active': isActive(child.to) }"
+            class="sidebar-item mb-1"
+            :class="{ 'sidebar-item--active': isOptionActive(route, opt) }"
+            @click="go(opt.to)"
           />
-        </template>
+        </v-list>
       </template>
-    </v-list>
-  </v-navigation-drawer>
+    </v-navigation-drawer>
+
+    <div v-else class="desktop-nav">
+      <nav
+        class="desktop-nav__primary"
+        :class="{ 'is-expanded': primaryExpanded }"
+        @mouseenter="primaryExpanded = true"
+        @mouseleave="primaryExpanded = false"
+      >
+        <div class="primary-brand">
+          <v-avatar
+            color="primary"
+            size="28"
+            variant="flat"
+            rounded="lg"
+          >
+            <span class="text-white font-weight-bold text-body-2">N</span>
+          </v-avatar>
+          <span v-if="primaryExpanded" class="primary-brand__name text-truncate">{{ tenantStore.tenant?.name || 'Nexo' }}</span>
+        </div>
+        <v-divider class="mx-3" />
+        <div class="primary-items pa-2">
+          <v-btn
+            v-for="mod in modules"
+            :key="mod.key"
+            class="primary-item mb-1"
+            :class="{ 'primary-item--active': mod.key === activeModuleKey }"
+            :icon="!primaryExpanded"
+            variant="text"
+            density="comfortable"
+            :title="mod.title"
+            @click="go(mod.to)"
+          >
+            <v-icon :size="primaryExpanded ? 20 : 22">{{ mod.icon }}</v-icon>
+            <span v-if="primaryExpanded" class="ml-2 text-truncate">{{ mod.title }}</span>
+          </v-btn>
+        </div>
+      </nav>
+
+      <nav
+        v-if="activeModule?.options.length"
+        class="desktop-nav__secondary"
+        :class="{ 'is-collapsed': uiStore.secondarySidebarCollapsed }"
+      >
+        <div class="secondary-header">
+          <span class="secondary-header__title text-truncate">{{ activeModule.title }}</span>
+        </div>
+        <v-divider class="mx-3" />
+        <v-list density="compact" nav class="pa-2">
+          <v-list-item
+            v-for="opt in activeModule.options"
+            :key="opt.title"
+            :prepend-icon="opt.icon"
+            :title="opt.title"
+            rounded="md"
+            color="primary"
+            class="sidebar-item mb-1"
+            :class="{ 'sidebar-item--active': isOptionActive(route, opt) }"
+            @click="go(opt.to)"
+          />
+        </v-list>
+      </nav>
+
+      <v-btn
+        v-if="activeModule?.options.length"
+        class="secondary-toggle"
+        :class="{ 'is-collapsed': uiStore.secondarySidebarCollapsed }"
+        icon
+        size="x-small"
+        variant="flat"
+        color="primary"
+        :title="uiStore.secondarySidebarCollapsed ? 'Expandir menú' : 'Colapsar menú'"
+        @click="uiStore.toggleSecondarySidebar()"
+      >
+        <v-icon size="18">{{ uiStore.secondarySidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
+      </v-btn>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useDisplay } from 'vuetify';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useUiStore } from '@/shared/stores/ui.store';
+import { useSidebarModules } from '@/shared/composables/useSidebarModules';
+import type { SidebarModule } from '@/shared/composables/useSidebarModules';
 
 const authStore = useAuthStore();
 const tenantStore = useTenantStore();
 const uiStore = useUiStore();
 const route = useRoute();
+const router = useRouter();
 const { smAndDown } = useDisplay();
 
 const isDesktop = computed(() => !smAndDown.value);
-const isRail = ref(true);
-const rail = computed(() => (isDesktop.value ? isRail.value : false));
+const primaryExpanded = ref(false);
+const mobileView = ref<'modules' | string>('modules');
 
-function onRailUpdate(val: boolean) {
-  isRail.value = val;
+const { modules, routeToModuleKey, isOptionActive } = useSidebarModules();
+
+const activeModuleKey = computed(() => routeToModuleKey(route));
+const activeModule = computed(() => modules.value.find((m) => m.key === activeModuleKey.value));
+const activeMobileModule = computed<SidebarModule | undefined>(() => modules.value.find((m) => m.key === mobileView.value));
+
+function go(to: string) {
+  if (!isDesktop.value) {
+    uiStore.sidebar = false;
+    mobileView.value = 'modules';
+  }
+  router.push(to);
 }
 
-onMounted(() => {
-  uiStore.sidebar = isDesktop.value;
+function onMobileModuleClick(mod: SidebarModule) {
+  if (mod.options.length > 0) {
+    mobileView.value = mod.key;
+  } else {
+    go(mod.to);
+  }
+}
+
+watch(() => uiStore.sidebar, (open) => {
+  if (open) mobileView.value = 'modules';
 });
 
 watch(isDesktop, (val) => {
-  if (val) isRail.value = true;
-  uiStore.sidebar = val;
+  if (val) primaryExpanded.value = false;
+  if (!val) mobileView.value = 'modules';
 });
-
-function isActive(to?: string) {
-  if (!to) return false;
-  return route.path === to;
-}
-
-const baseNavItems = [
-  { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/', section: 'General' },
-];
-
-const moduleNavItems = computed(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items: any[] = [];
-  const modules = tenantStore.activeModules;
-  const isAdmin = authStore.isAdmin;
-
-  if (modules.appointments) {
-    const section = 'Citas';
-    items.push({ title: 'Agenda', icon: 'mdi-calendar-outline', to: '/appointments/agenda', section });
-    items.push({ title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules', section });
-    if (isAdmin) {
-      items.push({ title: 'Catálogo y Servicios', icon: 'mdi-book-open-outline', to: '/appointments/catalog', section });
-      items.push({ title: 'Empleados', icon: 'mdi-account-group-outline', to: '/appointments/employees', section });
-    } else {
-      items.push({ title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services', section });
-    }
-    items.push({ title: 'Historial', icon: 'mdi-history', to: '/appointments/history', section });
-    items.push({ title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/appointments/notifications', section });
-  }
-
-  if (modules.digital_menu && isAdmin) {
-    items.push({
-      title: 'Carta Digital',
-      icon: 'mdi-silverware-fork-knife',
-      section: 'Carta Digital',
-      children: [
-        { title: 'Categorías', icon: 'mdi-shape-outline', to: '/menu/categories' },
-        { title: 'Productos', icon: 'mdi-food-outline', to: '/menu/products' },
-        { title: 'Mesas', icon: 'mdi-table-furniture', to: '/menu/tables' },
-        { title: 'Pedidos', icon: 'mdi-clipboard-list-outline', to: '/menu/orders' },
-      ],
-    });
-  }
-
-  if (modules.crm && isAdmin) {
-    items.push({
-      title: 'CRM',
-      icon: 'mdi-account-group-outline',
-      section: 'CRM',
-      children: [
-        { title: 'Clientes', icon: 'mdi-account-outline', to: '/crm/customers' },
-        { title: 'Etiquetas', icon: 'mdi-tag-outline', to: '/crm/tags' },
-        { title: 'Fidelización', icon: 'mdi-star-outline', to: '/crm/loyalty' },
-      ],
-    });
-  }
-
-  return items;
-});
-
-const settingsNav = computed(() => {
-  if (!authStore.isAdmin) return [];
-  return [
-    {
-      title: 'Configuración',
-      icon: 'mdi-cog-outline',
-      section: 'Configuración',
-      children: [
-        { title: 'Mi Negocio', icon: 'mdi-store-outline', to: '/settings/business' },
-        { title: 'Módulos', icon: 'mdi-puzzle-outline', to: '/settings/modules' },
-        { title: 'Config. Citas', icon: 'mdi-calendar-cursor', to: '/settings/appointments-config' },
-      ],
-    },
-  ];
-});
-
-const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...settingsNav.value]);
 </script>
 
 <style scoped>
@@ -292,24 +246,6 @@ const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...se
   min-height: 36px;
 }
 
-.sidebar-item--child {
-  padding-left: 16px !important;
-}
-
-.v-list-group__items .sidebar-item--child {
-  padding-left: 16px !important;
-}
-
-.app-sidebar--mobile .sidebar-section-header {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  padding-top: 14px;
-  padding-bottom: 4px;
-}
-
 .app-sidebar--mobile .sidebar-item {
   font-size: 15px;
   font-weight: 500;
@@ -319,21 +255,126 @@ const navItems = computed(() => [...baseNavItems, ...moduleNavItems.value, ...se
   padding-right: 14px !important;
 }
 
-.app-sidebar--mobile .sidebar-item--child {
-  padding-left: 14px !important;
-}
-
 .app-sidebar--mobile :deep(.v-list-item__prepend > .v-icon) {
   font-size: 26px;
 }
 
-.app-sidebar--mobile :deep(.v-list-item--active) {
+.sidebar-item--active {
   background-color: rgb(var(--v-theme-primary)) !important;
   color: #fff !important;
   font-weight: 600;
 }
 
-.app-sidebar--mobile :deep(.v-list-item--active .v-icon) {
+.sidebar-item--active .v-icon {
   color: #fff !important;
+}
+
+.desktop-nav {
+  position: fixed;
+  top: 48px;
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: stretch;
+}
+
+.desktop-nav__primary {
+  width: 60px;
+  height: 100%;
+  background: rgb(var(--v-theme-surface));
+  border-right: 1px solid rgb(var(--v-border));
+  transition: width 0.2s ease;
+  overflow: hidden;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.desktop-nav__primary.is-expanded {
+  width: 240px;
+}
+
+.primary-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  min-height: 48px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.primary-brand__name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.primary-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.desktop-nav__primary .primary-item {
+  justify-content: flex-start;
+}
+
+.desktop-nav__primary:not(.is-expanded) .primary-item {
+  width: 44px;
+  min-width: 44px;
+  justify-content: center;
+  margin-left: 8px;
+  padding: 0;
+}
+
+.primary-item--active {
+  background-color: rgb(var(--v-theme-primary)) !important;
+  color: #fff !important;
+}
+
+.primary-item--active .v-icon {
+  color: #fff !important;
+}
+
+.desktop-nav__secondary {
+  width: 240px;
+  height: 100%;
+  background: rgb(var(--v-theme-surface));
+  border-right: 1px solid rgb(var(--v-border));
+  transition: width 0.2s ease;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.desktop-nav__secondary.is-collapsed {
+  width: 0;
+}
+
+.secondary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  min-height: 48px;
+}
+
+.secondary-header__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.secondary-toggle {
+  position: absolute;
+  top: 56px;
+  left: calc(60px + 240px);
+  transform: translateX(-50%);
+  z-index: 1100;
+  transition: left 0.2s ease;
+}
+
+.secondary-toggle.is-collapsed {
+  left: 60px;
 }
 </style>

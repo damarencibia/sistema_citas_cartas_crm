@@ -11,7 +11,12 @@
           <v-icon size="64" color="error">mdi-link-off</v-icon>
           <h2 class="text-h6 font-weight-bold mt-4">Enlace no válido</h2>
           <p class="text-body-2 text-medium-emphasis mt-2">{{ error }}</p>
-          <v-btn color="primary" variant="flat" class="mt-6" @click="goToBooking">
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="mt-6"
+            @click="goToBooking"
+          >
             Reservar una cita
           </v-btn>
         </div>
@@ -72,7 +77,12 @@
           </v-card>
         </div>
 
-        <v-alert v-else type="info" variant="tonal" class="mt-4">
+        <v-alert
+          v-else
+          type="info"
+          variant="tonal"
+          class="mt-4"
+        >
           Aún no tienes reservas registradas con este negocio.
         </v-alert>
 

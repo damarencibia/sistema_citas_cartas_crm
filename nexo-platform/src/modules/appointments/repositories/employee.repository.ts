@@ -1,4 +1,5 @@
 import { supabase } from '@/shared/api/supabase.client';
+import { useAuthStore } from '@/shared/stores/auth.store';
 import type { Employee, CreateEmployeeDTO, UpdateEmployeeDTO } from '../types/employee.types';
 import type { Service } from '../types/service.types';
 
@@ -109,10 +110,23 @@ export const employeeRepository = {
   },
 
   async softDelete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from(TABLE)
-      .update({ deleted_at: new Date().toISOString() } as any)
-      .eq('id', id);
-    if (error) throw error;
+    const authStore = useAuthStore();
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const token = authStore.session?.access_token;
+    if (!token) throw new Error('No session available');
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/deactivate-team-member`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ employee_id: id }),
+    });
+
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || 'Error al eliminar el empleado');
+    }
   },
 };
