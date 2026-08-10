@@ -62,7 +62,7 @@
       <div v-if="!employeeId" class="text-center pa-6">
         <v-icon size="48" color="medium-emphasis">mdi-account-search-outline</v-icon>
         <p class="text-body-2 text-medium-emphasis mt-2">
-          Selecciona un empleado en la pestaña <strong>Agenda</strong> para ver su cierre.
+          Selecciona un empleado y una fecha para ver su cierre.
         </p>
       </div>
 

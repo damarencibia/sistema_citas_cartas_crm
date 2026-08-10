@@ -56,9 +56,7 @@ export const routes: RouteRecordRaw[] = [
           },
           {
             path: 'bookings',
-            name: 'bookings',
-            component: () => import('@/modules/appointments/views/BookingsView.vue'),
-            meta: { title: 'Reservas' },
+            redirect: '/appointments/agenda',
           },
           {
             path: 'history',

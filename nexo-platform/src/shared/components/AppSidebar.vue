@@ -216,7 +216,6 @@ const moduleNavItems = computed(() => {
     } else {
       items.push({ title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services', section });
     }
-    items.push({ title: 'Reservas', icon: 'mdi-book-check-outline', to: '/appointments/bookings', section });
     items.push({ title: 'Historial', icon: 'mdi-history', to: '/appointments/history', section });
     items.push({ title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/appointments/notifications', section });
   }
