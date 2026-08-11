@@ -1,5 +1,5 @@
 -- =============================================================
--- Migration 000052: Pending Confirmation status
+-- Migration 000066: Pending Confirmation status
 -- =============================================================
 -- Expand bookings status CHECK to include 'pending_confirmation'
 -- Bookings created from the public portal arrive with this status

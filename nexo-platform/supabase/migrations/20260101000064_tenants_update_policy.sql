@@ -1,5 +1,5 @@
 -- =============================================================
--- Migration 000050: UPDATE policy on tenants for tenant members
+-- Migration 000064: UPDATE policy on tenants for tenant members
 -- Without this, authenticated tenant members could not persist
 -- business settings (PostgREST silently matches 0 rows).
 -- =============================================================

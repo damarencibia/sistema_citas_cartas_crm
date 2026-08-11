@@ -1,5 +1,7 @@
 import type { BaseEntity } from '@/shared/types';
 
+export const DEFAULT_SCHEDULE_ID = '__business_default__';
+
 export interface Schedule extends BaseEntity {
   tenant_id: string;
   employee_id: string | null;
@@ -45,6 +47,15 @@ export interface CreateScheduleDTO {
   slot_interval_minutes?: number;
   advance_booking_days?: number;
   min_advance_minutes?: number;
+}
+
+export interface ScheduleShiftInput {
+  start_time: string;
+  end_time: string;
+  slot_mode: 'fixed' | 'flexible';
+  slot_interval_minutes: number;
+  advance_booking_days: number;
+  min_advance_minutes: number;
 }
 
 export interface CreateFixedSlotDTO {

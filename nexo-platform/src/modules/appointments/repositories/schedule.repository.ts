@@ -10,30 +10,20 @@ export const scheduleRepository = {
     return (data ?? []) as Schedule[];
   },
 
-  async replaceAll(tenantId: string, employeeId: string | null, schedules: CreateScheduleDTO[]): Promise<void> {
-    const { error: delErr } = await (supabase as any)
-      .from('schedules')
-      .delete()
-      .eq('tenant_id', tenantId)
-      .eq('employee_id', employeeId ?? '');
-    if (delErr) throw delErr;
-
-    if (!schedules.length) return;
-
-    const rows = schedules.map((s) => ({
-      tenant_id: tenantId,
-      employee_id: employeeId ?? null,
-      day_of_week: s.day_of_week,
-      start_time: s.start_time,
-      end_time: s.end_time,
-      is_active: true,
-      slot_mode: s.slot_mode ?? 'fixed',
-      slot_interval_minutes: s.slot_interval_minutes ?? 30,
-      advance_booking_days: s.advance_booking_days ?? 7,
-      min_advance_minutes: s.min_advance_minutes ?? 15,
-    }));
-    const { error: insErr } = await (supabase as any).from('schedules').insert(rows);
-    if (insErr) throw insErr;
+  async replaceAll(employeeId: string | null, schedules: CreateScheduleDTO[]): Promise<void> {
+    const { error } = await (supabase as any).rpc('replace_schedules', {
+      p_employee_id: employeeId,
+      p_schedules: schedules.map((s) => ({
+        day_of_week: s.day_of_week,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        slot_mode: s.slot_mode ?? 'fixed',
+        slot_interval_minutes: s.slot_interval_minutes ?? 30,
+        advance_booking_days: s.advance_booking_days ?? 7,
+        min_advance_minutes: s.min_advance_minutes ?? 15,
+      })),
+    });
+    if (error) throw error;
   },
 
   async deleteSchedule(scheduleId: string): Promise<void> {
@@ -43,14 +33,10 @@ export const scheduleRepository = {
 
   // --- Fixed Slot Definitions ---
 
-  async getFixedSlots(tenantId: string, employeeId: string): Promise<FixedSlotDefinition[]> {
-    const { data, error } = await (supabase as any)
-      .from('fixed_slot_definitions')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('employee_id', employeeId)
-      .order('day_of_week')
-      .order('start_time');
+  async getFixedSlots(tenantId: string, employeeId: string | null): Promise<FixedSlotDefinition[]> {
+    let query = (supabase as any).from('fixed_slot_definitions').select('*').eq('tenant_id', tenantId);
+    query = employeeId ? query.eq('employee_id', employeeId) : query.is('employee_id', null);
+    const { data, error } = await query.order('day_of_week').order('start_time');
     if (error) throw error;
     return (data ?? []) as FixedSlotDefinition[];
   },

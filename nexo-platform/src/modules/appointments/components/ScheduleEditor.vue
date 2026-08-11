@@ -1,110 +1,107 @@
 <template>
   <div class="schedule-editor">
-    <div class="d-flex align-center ga-2 mb-4 flex-wrap">
-      <EmployeeSelect
-        v-model="selectedEmployeeId"
-        label="Empleado"
-        class="flex-grow-1"
-        :allowed-ids="allowedIds"
-        :disabled="isEmployeeView"
-      />
-      <v-chip
-        v-if="isEmployeeView"
-        color="primary"
-        variant="tonal"
-        size="small"
-      >
-        <v-icon start size="16">mdi-account-badge-outline</v-icon>
-        Configurando tu horario
-      </v-chip>
-    </div>
+    <v-card variant="flat" border>
+      <v-card-text>
+        <div class="d-flex align-center ga-2 mb-4 flex-wrap">
+          <div class="me-2">
+            <h3 class="text-subtitle-1 font-weight-medium">Turnos Semanales</h3>
+            <div class="text-caption text-medium-emphasis">Horario recurrente de citas</div>
+          </div>
+          <EmployeeSelect
+            :model-value="selectedEmployeeId"
+            label="Turnos de"
+            class="flex-grow-1"
+            style="max-width: 320px"
+            :allowed-ids="allowedIds"
+            :exclude-ids="copyExcludeIds"
+            :include-default="!isEmployeeView"
+            :disabled="isEmployeeView"
+            @update:model-value="onEmployeeChange"
+          />
+          <v-chip
+            v-if="isEmployeeView"
+            color="primary"
+            variant="tonal"
+            size="small"
+          >
+            <v-icon start size="16">mdi-account-badge-outline</v-icon>
+            Configurando tu horario
+          </v-chip>
+          <v-chip v-if="dirty" color="warning" size="small">
+            <v-icon start size="16">mdi-alert-outline</v-icon>
+            Sin guardar
+          </v-chip>
+          <v-btn
+            v-if="!isEmployeeView && selectedEmployeeId"
+            size="small"
+            variant="tonal"
+            prepend-icon="mdi-content-copy"
+            @click="openCopyDialog"
+          >
+            Copiar a empleado
+          </v-btn>
+        </div>
 
-    <div v-if="!selectedEmployeeId" class="text-center text-medium-emphasis pa-8">
-      <template v-if="isEmployeeView && !myEmployeeId">
-        No hay un perfil de empleado vinculado a tu cuenta. Contacta a un administrador.
-      </template>
-      <template v-else>
-        Selecciona un empleado para configurar sus turnos
-      </template>
-    </div>
+        <div v-if="!selectedEmployeeId" class="text-center text-medium-emphasis pa-8">
+          <template v-if="isEmployeeView && !myEmployeeId">
+            No hay un perfil de empleado vinculado a tu cuenta. Contacta a un administrador.
+          </template>
+          <template v-else>
+            Selecciona un empleado para configurar sus turnos
+          </template>
+        </div>
 
-    <template v-else>
-      <v-card v-for="day in daysOfWeek" :key="day.value" class="mb-2">
-        <v-card-text class="py-3">
-          <div class="d-flex align-center ga-3 flex-wrap">
-            <v-checkbox
-              :model-value="isDayActive(day.value)"
-              :label="day.label"
-              hide-details
-              density="compact"
-              @update:model-value="toggleDay(day.value)"
-            />
-            <v-spacer />
-            <v-btn
-              v-if="isDayActive(day.value)"
-              size="small"
-              color="primary"
+        <template v-else>
+          <div class="d-flex ga-2 mb-3 flex-wrap">
+            <v-chip variant="tonal" size="small" prepend-icon="mdi-calendar-week">
+              {{ summary.days }} días activos
+            </v-chip>
+            <v-chip variant="tonal" size="small" prepend-icon="mdi-clock-outline">
+              {{ summary.hours }} semanales
+            </v-chip>
+            <v-chip
+              v-if="selectedEmployeeId === DEFAULT_SCHEDULE_ID"
               variant="tonal"
-              prepend-icon="mdi-plus"
-              @click="openShiftDialog(day.value)"
+              size="small"
+              color="info"
+              prepend-icon="mdi-domain"
             >
-              Agregar turno
+              Se aplica a empleados sin horario propio
+            </v-chip>
+          </div>
+
+          <WeekScheduleGrid
+            :days="daysOfWeek"
+            :shifts="localShifts"
+            @toggle-day="onToggleDay"
+            @add-shift="openShiftDialog"
+            @edit-shift="editShift"
+            @remove-shift="removeShift"
+            @copy-day="copyDayToWeek"
+          />
+
+          <div class="d-flex justify-end mt-4 ga-2">
+            <v-btn
+              v-if="dirty"
+              variant="text"
+              color="error"
+              @click="onDiscard"
+            >
+              Descartar
+            </v-btn>
+            <v-btn
+              color="primary"
+              variant="flat"
+              :loading="saving"
+              @click="onSave"
+            >
+              <v-icon start>mdi-content-save</v-icon>
+              {{ dirty ? 'Guardar cambios' : 'Guardar' }}
             </v-btn>
           </div>
-
-          <div v-if="isDayActive(day.value) && getShifts(day.value).length > 0" class="mt-2 ml-8">
-            <div
-              v-for="(shift, idx) in getShifts(day.value)"
-              :key="`shift-${day.value}-${idx}`"
-              class="d-flex align-center ga-2 mb-1 flex-wrap"
-            >
-              <v-chip
-                size="small"
-                :color="shift.slot_mode === 'flexible' ? 'orange' : 'primary'"
-                variant="tonal"
-                prepend-icon="mdi-clock-outline"
-              >
-                {{ shift.start_time?.slice(0, 5) }} - {{ shift.end_time?.slice(0, 5) }}
-                <template #append>
-                  <span class="text-caption ml-1">
-                    {{ shift.slot_mode === 'flexible' ? 'flex' : 'auto' }}
-                  </span>
-                </template>
-              </v-chip>
-              <v-btn
-                icon="mdi-pencil"
-                size="x-small"
-                variant="text"
-                @click="editShift(day.value, idx)"
-              />
-              <v-btn
-                icon="mdi-delete"
-                size="x-small"
-                variant="text"
-                color="error"
-                @click="removeShift(day.value, idx)"
-              />
-            </div>
-          </div>
-
-          <div v-else-if="isDayActive(day.value)" class="text-caption text-medium-emphasis ml-8 mt-1">
-            Sin turnos configurados
-          </div>
-        </v-card-text>
-      </v-card>
-
-      <div class="d-flex justify-end mt-4">
-        <v-btn
-          color="primary"
-          variant="flat"
-          :loading="saving"
-          @click="onSave"
-        >
-          <v-icon start>mdi-content-save</v-icon>
-          Guardar Horarios
-        </v-btn>
-      </div>
-    </template>
+        </template>
+      </v-card-text>
+    </v-card>
 
     <ShiftDialog
       :visible="showShiftDialog"
@@ -119,6 +116,37 @@
       @close="closeShiftDialog"
       @save="onShiftSave"
     />
+
+    <v-dialog v-model="showCopyDialog" max-width="440">
+      <v-card>
+        <v-card-title class="text-h6">Copiar horario a otro empleado</v-card-title>
+        <v-card-text>
+          <p class="text-body-2 text-medium-emphasis mb-3">
+            El horario actual se copiará como cambios sin guardar para el empleado
+            seleccionado. Revisa y pulsa Guardar para aplicarlo.
+          </p>
+          <EmployeeSelect
+            v-model="copyTargetId"
+            label="Copiar a"
+            :allowed-ids="allowedIds"
+            :exclude-ids="copyExcludeIds"
+            :include-default="!isEmployeeView"
+          />
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showCopyDialog = false">Cancelar</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :disabled="!copyTargetId"
+            @click="onCopyConfirm"
+          >
+            Copiar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -126,18 +154,25 @@
 import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useScheduleStore } from '../stores/schedule.store';
 import { useNotification } from '@/shared/composables/useNotification';
+import { useConfirm } from '@/shared/composables/useConfirm';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useEmployeeStore } from '../stores/employee.store';
 import EmployeeSelect from './EmployeeSelect.vue';
 import ShiftDialog from './ShiftDialog.vue';
+import WeekScheduleGrid from './WeekScheduleGrid.vue';
+import { DEFAULT_SCHEDULE_ID } from '../types/schedule.types';
+import type { ScheduleShiftInput, CreateScheduleDTO } from '../types/schedule.types';
 
 const scheduleStore = useScheduleStore();
 const notification = useNotification();
 const authStore = useAuthStore();
 const employeeStore = useEmployeeStore();
+const { confirm } = useConfirm();
 
 const selectedEmployeeId = ref<string | null>(null);
 const saving = ref(false);
+const dirty = ref(false);
+const suppressWatch = ref(false);
 
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
@@ -146,29 +181,32 @@ const allowedIds = computed(() =>
   isEmployeeView.value && myEmployeeId.value ? [myEmployeeId.value] : undefined,
 );
 
+const copyExcludeIds = computed(() => {
+  if (isEmployeeView.value && myEmployeeId.value) return [myEmployeeId.value];
+  return selectedEmployeeId.value ? [selectedEmployeeId.value] : undefined;
+});
+
 onMounted(async () => {
-  if (!isEmployeeView.value) return;
   await employeeStore.fetchEmployeesWithRoles();
-  const userId = authStore.user?.id;
-  const match = employeeStore.employees.find(
-    (e) => e.user_id === userId || e.supabase_user_id === userId,
-  );
-  myEmployeeId.value = match?.id ?? null;
-  if (myEmployeeId.value) {
-    selectedEmployeeId.value = myEmployeeId.value;
+  if (isEmployeeView.value) {
+    const userId = authStore.user?.id;
+    const match = employeeStore.employees.find(
+      (e) => e.user_id === userId || e.supabase_user_id === userId,
+    );
+    myEmployeeId.value = match?.id ?? null;
+    if (myEmployeeId.value) {
+      selectedEmployeeId.value = myEmployeeId.value;
+    }
+  } else {
+    selectedEmployeeId.value = DEFAULT_SCHEDULE_ID;
   }
 });
 
-interface LocalShift {
-  start_time: string;
-  end_time: string;
-  slot_mode: 'fixed' | 'flexible';
-  slot_interval_minutes: number;
-  advance_booking_days: number;
-  min_advance_minutes: number;
+function resolveEmployeeId(id: string | null): string | null {
+  return id === DEFAULT_SCHEDULE_ID ? null : id;
 }
 
-const localShifts = reactive<Map<number, LocalShift[]>>(new Map());
+const localShifts = reactive<Map<number, ScheduleShiftInput[]>>(new Map());
 
 const daysOfWeek = [
   { value: 1, label: 'Lunes' },
@@ -179,6 +217,17 @@ const daysOfWeek = [
   { value: 6, label: 'Sábado' },
   { value: 0, label: 'Domingo' },
 ];
+
+function defaultShift(): ScheduleShiftInput {
+  return {
+    start_time: '09:00',
+    end_time: '17:00',
+    slot_mode: 'fixed',
+    slot_interval_minutes: 30,
+    advance_booking_days: 7,
+    min_advance_minutes: 15,
+  };
+}
 
 function initLocalShifts() {
   localShifts.clear();
@@ -200,28 +249,29 @@ function initLocalShifts() {
   }
 }
 
-function isDayActive(day: number): boolean {
-  const shifts = localShifts.get(day);
-  return !!shifts && shifts.length > 0;
-}
+const summary = computed(() => {
+  let days = 0;
+  let minutes = 0;
+  for (const [, shifts] of localShifts) {
+    if (shifts.length) days += 1;
+    for (const s of shifts) {
+      const [sh, sm] = s.start_time.split(':').map(Number);
+      const [eh, em] = s.end_time.split(':').map(Number);
+      minutes += eh * 60 + em - (sh * 60 + sm);
+    }
+  }
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return { days, hours: `${h} h${m ? ` ${m} min` : ''}` };
+});
 
-function getShifts(day: number): LocalShift[] {
-  return localShifts.get(day) ?? [];
-}
-
-function toggleDay(day: number) {
-  if (isDayActive(day)) {
+function onToggleDay(day: number) {
+  if ((localShifts.get(day) ?? []).length > 0) {
     localShifts.set(day, []);
   } else {
-    localShifts.set(day, [{
-      start_time: '09:00',
-      end_time: '17:00',
-      slot_mode: 'fixed',
-      slot_interval_minutes: 30,
-      advance_booking_days: 7,
-      min_advance_minutes: 15,
-    }]);
+    localShifts.set(day, [defaultShift()]);
   }
+  dirty.value = true;
 }
 
 const showShiftDialog = ref(false);
@@ -262,11 +312,11 @@ function closeShiftDialog() {
   editingShiftIndex.value = -1;
 }
 
-function onShiftSave(data: any) {
+function onShiftSave(data: ScheduleShiftInput) {
   const shifts = localShifts.get(currentEditDay.value);
   if (!shifts) return;
 
-  const shiftData: LocalShift = {
+  const shiftData: ScheduleShiftInput = {
     start_time: data.start_time,
     end_time: data.end_time,
     slot_mode: data.slot_mode ?? 'fixed',
@@ -280,7 +330,7 @@ function onShiftSave(data: any) {
   } else {
     shifts.push(shiftData);
   }
-
+  dirty.value = true;
   closeShiftDialog();
 }
 
@@ -288,44 +338,112 @@ function removeShift(day: number, index: number) {
   const shifts = localShifts.get(day);
   if (!shifts) return;
   shifts.splice(index, 1);
+  dirty.value = true;
+}
+
+function copyDayToWeek(day: number) {
+  const source = localShifts.get(day) ?? [];
+  for (const d of daysOfWeek) {
+    localShifts.set(d.value, source.map((s) => ({ ...s })));
+  }
+  dirty.value = true;
+  notification.info(`Horario del ${currentDayLabelFor(day)} copiado a toda la semana`);
+}
+
+function currentDayLabelFor(day: number): string {
+  return daysOfWeek.find((d) => d.value === day)?.label ?? '';
+}
+
+const showCopyDialog = ref(false);
+const copyTargetId = ref<string | null>(null);
+
+function openCopyDialog() {
+  copyTargetId.value = null;
+  showCopyDialog.value = true;
+}
+
+async function onCopyConfirm() {
+  if (!copyTargetId.value) return;
+  const source = new Map<number, ScheduleShiftInput[]>();
+  for (const [day, shifts] of localShifts) {
+    source.set(day, shifts.map((s) => ({ ...s })));
+  }
+  const target = copyTargetId.value;
+  showCopyDialog.value = false;
+
+  suppressWatch.value = true;
+  selectedEmployeeId.value = target;
+  await scheduleStore.fetchSchedules(resolveEmployeeId(target));
+  initLocalShifts();
+  for (const [day, shifts] of source) {
+    localShifts.set(day, shifts);
+  }
+  dirty.value = true;
+  notification.success('Horario copiado. Revisa y pulsa Guardar.');
+}
+
+function buildPayload(): CreateScheduleDTO[] {
+  const out: CreateScheduleDTO[] = [];
+  for (const [day, shifts] of localShifts) {
+    for (const s of shifts) {
+      out.push({ day_of_week: day, ...s });
+    }
+  }
+  return out;
 }
 
 async function onSave() {
   if (!selectedEmployeeId.value) return;
   saving.value = true;
   try {
-    const activeShifts: any[] = [];
-    for (const [day, shifts] of localShifts) {
-      for (const s of shifts) {
-        activeShifts.push({
-          day_of_week: day,
-          start_time: s.start_time,
-          end_time: s.end_time,
-          slot_mode: s.slot_mode,
-          slot_interval_minutes: s.slot_interval_minutes,
-          advance_booking_days: s.advance_booking_days,
-          min_advance_minutes: s.min_advance_minutes,
-        });
-      }
-    }
-    await scheduleStore.updateSchedules(activeShifts, selectedEmployeeId.value);
-
-    await scheduleStore.fetchSchedules(selectedEmployeeId.value);
+    await scheduleStore.updateSchedules(buildPayload(), resolveEmployeeId(selectedEmployeeId.value));
+    await scheduleStore.fetchSchedules(resolveEmployeeId(selectedEmployeeId.value));
     initLocalShifts();
+    dirty.value = false;
     notification.success('Turnos guardados correctamente');
-  } catch {
-    notification.error('Error al guardar turnos');
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : '';
+    if (msg.includes('Not authorized') || msg.includes('no autorizado') || msg.includes('authorized')) {
+      notification.error('No tienes permiso para editar este horario');
+    } else {
+      notification.error('Error al guardar turnos');
+    }
   } finally {
     saving.value = false;
   }
 }
 
+function onDiscard() {
+  if (!dirty.value) return;
+  confirm('¿Descartar los cambios sin guardar?').then((ok) => {
+    if (ok) {
+      initLocalShifts();
+      dirty.value = false;
+    }
+  });
+}
+
+async function onEmployeeChange(id: string | null) {
+  if (id === selectedEmployeeId.value) return;
+  if (dirty.value) {
+    const ok = await confirm('Tienes cambios sin guardar. ¿Descartarlos?');
+    if (!ok) return;
+  }
+  selectedEmployeeId.value = id;
+}
+
 watch(selectedEmployeeId, async (id) => {
-  if (!id) {
-    localShifts.clear();
+  if (suppressWatch.value) {
+    suppressWatch.value = false;
     return;
   }
-  await scheduleStore.fetchSchedules(id);
+  if (!id) {
+    localShifts.clear();
+    dirty.value = false;
+    return;
+  }
+  await scheduleStore.fetchSchedules(resolveEmployeeId(id));
   initLocalShifts();
+  dirty.value = false;
 });
 </script>

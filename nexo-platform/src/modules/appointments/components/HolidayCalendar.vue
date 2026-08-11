@@ -1,65 +1,79 @@
 <template>
-  <div class="holiday-calendar">
-    <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-2">
-      <h3 class="text-subtitle-1 font-weight-medium">Días Festivos / Cierres</h3>
-      <v-btn
-        color="primary"
-        variant="flat"
-        size="small"
-        @click="showForm = true"
-      >
-        <v-icon start>mdi-plus</v-icon>
-        Agregar Excepción
-      </v-btn>
-    </div>
+  <v-card variant="flat" border>
+    <v-card-text>
+      <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-2">
+        <div>
+          <h3 class="text-subtitle-1 font-weight-medium">Días Festivos / Cierres</h3>
+          <div class="text-caption text-medium-emphasis">
+            Días o horarios puntuales en los que el negocio no atiende
+          </div>
+        </div>
+        <v-btn
+          color="primary"
+          variant="flat"
+          size="small"
+          @click="showForm = true"
+        >
+          <v-icon start>mdi-plus</v-icon>
+          Agregar Excepción
+        </v-btn>
+      </div>
 
-    <v-list v-if="holidays.length > 0" lines="two">
-      <v-list-item
-        v-for="holiday in holidays"
-        :key="holiday.id"
-        :title="formatDate(holiday.date)"
-        :subtitle="holiday.reason || (holiday.is_closed ? 'Cerrado todo el día' : `${holiday.start_time} - ${holiday.end_time}`)"
-      >
-        <template #prepend>
-          <v-icon :color="holiday.is_closed ? 'error' : 'warning'">
-            {{ holiday.is_closed ? 'mdi-close-circle' : 'mdi-clock-outline' }}
-          </v-icon>
-        </template>
-        <template #append>
-          <v-btn
-            icon="mdi-delete"
-            size="small"
-            variant="text"
-            color="error"
-            @click="onDelete(holiday)"
-          />
-        </template>
-      </v-list-item>
-    </v-list>
+      <div v-if="holidays.length === 0" class="text-center text-medium-emphasis pa-6">
+        <v-icon size="48" color="medium-emphasis">mdi-calendar-blank</v-icon>
+        <p class="text-body-2 mt-2">No hay excepciones configuradas</p>
+      </div>
 
-    <v-card v-else variant="tonal" class="pa-6 text-center">
-      <v-icon size="48" color="medium-emphasis">mdi-calendar-blank</v-icon>
-      <p class="text-body-2 text-medium-emphasis mt-2">No hay excepciones configuradas</p>
-    </v-card>
+      <div v-else class="d-flex flex-column ga-4">
+        <div v-for="group in groupedHolidays" :key="group.key">
+          <div class="text-caption font-weight-medium text-medium-emphasis mb-1 text-capitalize">
+            {{ group.month }}
+          </div>
+          <v-list lines="two" density="compact">
+            <v-list-item
+              v-for="holiday in group.items"
+              :key="holiday.id"
+              :title="formatDate(holiday.date)"
+              :subtitle="holiday.reason || (holiday.is_closed ? 'Cerrado todo el día' : `${formatTime(holiday.start_time)} - ${formatTime(holiday.end_time)}`)"
+            >
+              <template #prepend>
+                <v-icon :color="holiday.is_closed ? 'error' : 'warning'">
+                  {{ holiday.is_closed ? 'mdi-close-circle' : 'mdi-clock-outline' }}
+                </v-icon>
+              </template>
+              <template #append>
+                <v-btn
+                  icon="mdi-delete"
+                  size="small"
+                  variant="text"
+                  color="error"
+                  @click="onDelete(holiday)"
+                />
+              </template>
+            </v-list-item>
+          </v-list>
+        </div>
+      </div>
+    </v-card-text>
 
-    <v-dialog v-model="showForm" max-width="400">
+    <v-dialog v-model="showForm" max-width="420">
       <v-card>
         <v-card-title class="text-h6">Nueva Excepción</v-card-title>
         <v-card-text>
-          <v-text-field
+          <v-date-picker
             v-model="form.date"
-            label="Fecha"
-            type="date"
-            class="mb-2"
+            show-adjacent-months
+            class="mb-3"
           />
           <v-switch
             v-model="form.is_closed"
             label="Cerrado todo el día"
             color="error"
             class="mb-2"
+            hide-details
           />
           <template v-if="!form.is_closed">
-            <v-row>
+            <v-row class="mt-2">
               <v-col cols="12" sm="6">
                 <v-text-field v-model="form.start_time" label="Hora inicio" type="time" />
               </v-col>
@@ -68,7 +82,7 @@
               </v-col>
             </v-row>
           </template>
-          <v-text-field v-model="form.reason" label="Motivo (opcional)" />
+          <v-text-field v-model="form.reason" label="Motivo (opcional)" class="mt-2" />
         </v-card-text>
         <v-card-actions class="pa-4 pt-0">
           <v-spacer />
@@ -77,6 +91,7 @@
             color="primary"
             variant="flat"
             :loading="loading"
+            :disabled="!form.date"
             @click="onCreate"
           >
             Crear
@@ -84,7 +99,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </v-card>
 </template>
 
 <script setup lang="ts">
@@ -110,6 +125,27 @@ const form = reactive({
 });
 
 const holidays = computed(() => scheduleStore.holidays);
+
+interface HolidayGroup {
+  key: string;
+  month: string;
+  items: HolidayException[];
+}
+
+const groupedHolidays = computed<HolidayGroup[]>(() => {
+  const sorted = [...holidays.value].sort((a, b) => a.date.localeCompare(b.date));
+  const groups: HolidayGroup[] = [];
+  for (const h of sorted) {
+    const key = h.date.slice(0, 7);
+    let group = groups.find((g) => g.key === key);
+    if (!group) {
+      group = { key, month: formatMonth(h.date), items: [] };
+      groups.push(group);
+    }
+    group.items.push(h);
+  }
+  return groups;
+});
 
 onMounted(async () => {
   await scheduleStore.fetchHolidays();
@@ -156,5 +192,16 @@ function formatDate(dateStr: string): string {
     month: 'long',
     day: 'numeric',
   });
+}
+
+function formatMonth(dateStr: string): string {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-MX', {
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function formatTime(t: string | null): string {
+  return (t ?? '').slice(0, 5);
 }
 </script>

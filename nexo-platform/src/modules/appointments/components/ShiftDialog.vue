@@ -111,6 +111,23 @@
           density="compact"
           hide-details
           class="mb-2"
+          :hint="form.slot_mode === 'flexible' ? 'Los clientes eligen cualquier hora libre dentro del turno' : 'Los huecos se generan automáticamente a intervalos fijos'"
+          persistent-hint
+        />
+
+        <v-text-field
+          v-model.number="form.slot_interval_minutes"
+          label="Duración de cada hueco (min)"
+          type="number"
+          :min="5"
+          :max="480"
+          :step="5"
+          density="compact"
+          hide-details
+          class="mb-2"
+          :disabled="form.slot_mode === 'flexible'"
+          hint="Duración de cada cita que se genera dentro del turno"
+          persistent-hint
         />
 
         <v-row dense class="mt-2">
@@ -123,6 +140,8 @@
               :max="365"
               density="compact"
               hide-details
+              hint="Cuántos días adelante pueden reservar"
+              persistent-hint
             />
           </v-col>
           <v-col cols="12" sm="6">
@@ -134,6 +153,8 @@
               :max="4320"
               density="compact"
               hide-details
+              hint="Tiempo mínimo antes de la cita para reservar"
+              persistent-hint
             />
           </v-col>
         </v-row>

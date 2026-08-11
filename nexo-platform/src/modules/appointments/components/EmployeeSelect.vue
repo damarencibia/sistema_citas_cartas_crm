@@ -1,7 +1,7 @@
 <template>
   <v-select
     :model-value="modelValue"
-    :items="employees"
+    :items="items"
     item-title="displayName"
     item-value="id"
     :label="label"
@@ -29,12 +29,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useEmployeeStore } from '../stores/employee.store';
+import { DEFAULT_SCHEDULE_ID } from '../types/schedule.types';
 
 const props = defineProps<{
   modelValue: string | null;
   label?: string;
   rules?: readonly ((v: string | null) => boolean | string)[];
   allowedIds?: string[];
+  excludeIds?: string[];
+  includeDefault?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -47,11 +50,26 @@ const loading = computed(() => employeeStore.loading);
 const employees = computed(() =>
   employeeStore.activeEmployees
     .filter((e) => !props.allowedIds || props.allowedIds.length === 0 || props.allowedIds.includes(e.id))
+    .filter((e) => !props.excludeIds || props.excludeIds.length === 0 || !props.excludeIds.includes(e.id))
     .map((e) => ({
       ...e,
       displayName: `${e.first_name} ${e.last_name}`,
     })),
 );
+
+const items = computed(() => {
+  if (!props.includeDefault) return employees.value;
+  return [
+    {
+      id: DEFAULT_SCHEDULE_ID,
+      first_name: 'Horario por defecto del negocio',
+      last_name: '',
+      displayName: 'Horario por defecto del negocio',
+      color: '#64748b',
+    },
+    ...employees.value,
+  ];
+});
 </script>
 
 <style scoped>

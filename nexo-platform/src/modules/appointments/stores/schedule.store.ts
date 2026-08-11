@@ -29,10 +29,7 @@ export const useScheduleStore = defineStore('appointments/schedules', {
     },
 
     async updateSchedules(schedules: CreateScheduleDTO[], employeeId: string | null = null) {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
-      if (!tenantId) throw new Error('No tenant ID available');
-      await scheduleRepository.replaceAll(tenantId, employeeId, schedules);
+      await scheduleRepository.replaceAll(employeeId, schedules);
     },
 
     async deleteSchedule(scheduleId: string) {
@@ -42,7 +39,7 @@ export const useScheduleStore = defineStore('appointments/schedules', {
 
     // --- Fixed Slot Definitions ---
 
-    async fetchFixedSlots(employeeId: string) {
+    async fetchFixedSlots(employeeId: string | null) {
       const authStore = useAuthStore();
       const tenantId = authStore.user?.tenant_id;
       if (!tenantId) return;
