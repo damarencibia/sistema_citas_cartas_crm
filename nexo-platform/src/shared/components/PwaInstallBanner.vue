@@ -3,7 +3,6 @@
     class="pwa-install-wrap"
     :class="{
       'pwa-install-wrap--desktop': isDesktop,
-      'pwa-install-wrap--offset': pushStore.canPrompt,
     }"
   >
     <v-banner
@@ -13,10 +12,20 @@
       icon="mdi-cellphone-arrow-down"
       class="pwa-banner"
     >
-      <v-banner-text>
+      <v-banner-text class="pwa-banner__text">
         Instala la aplicación para recibir las notificaciones de forma más rápida y abrirla a
         pantalla completa.
       </v-banner-text>
+      <v-btn
+        class="pwa-banner__close"
+        icon
+        variant="text"
+        size="x-small"
+        aria-label="Cerrar"
+        @click="dismiss"
+      >
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
       <template #actions>
         <v-btn
           variant="text"
@@ -37,11 +46,21 @@
       icon="mdi-iphone"
       class="pwa-banner"
     >
-      <v-banner-text>
+      <v-banner-text class="pwa-banner__text">
         Para recibir notificaciones en iPhone/iPad: abre el menú <strong>Compartir</strong> y elige
         <strong>"Añadir a pantalla de inicio"</strong>. Después activa las notificaciones en el
         centro de notificaciones.
       </v-banner-text>
+      <v-btn
+        class="pwa-banner__close"
+        icon
+        variant="text"
+        size="x-small"
+        aria-label="Cerrar"
+        @click="dismiss"
+      >
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
       <template #actions>
         <v-btn variant="text" @click="dismiss">Entendido</v-btn>
       </template>
@@ -105,7 +124,7 @@ onMounted(() => {
 <style scoped>
 .pwa-install-wrap {
   position: fixed;
-  top: 56px;
+  bottom: 16px;
   left: 8px;
   right: 8px;
   z-index: 900;
@@ -115,13 +134,20 @@ onMounted(() => {
   left: 68px;
 }
 
-.pwa-install-wrap--offset {
-  top: 120px;
-}
-
 .pwa-banner {
+  position: relative;
   border: 1px solid rgb(var(--v-border)) !important;
   border-radius: 8px !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+.pwa-banner__text {
+  padding-right: 28px;
+}
+
+.pwa-banner__close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
 }
 </style>

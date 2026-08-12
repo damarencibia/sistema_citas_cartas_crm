@@ -42,7 +42,8 @@ const isDesktop = computed(() => !smAndDown.value);
 const mainStyle = computed(() => {
   if (!isDesktop.value) return {};
   const secondaryWidth = uiStore.secondarySidebarCollapsed ? 0 : 240;
-  return { paddingLeft: `${60 + secondaryWidth}px` };
+  const toggleSpace = 14 + 40; // margin-left 14px + tamaño del botón de colapso (40px)
+  return { paddingLeft: `${60 + secondaryWidth + toggleSpace}px` };
 });
 
 const { visible, title, message, onConfirm, onCancel } = useConfirm();

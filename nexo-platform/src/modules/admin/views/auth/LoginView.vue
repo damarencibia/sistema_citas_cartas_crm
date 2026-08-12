@@ -82,7 +82,7 @@ const authError = ref<string | null>(null);
 const showModuleDialog = ref(false);
 
 const MODULE_ROUTES: Record<string, string> = {
-  appointments: '/',
+  appointments: '/appointments/agenda',
   digital_menu: '/menu',
   crm: '/crm/customers',
 };

@@ -13,7 +13,7 @@
             <v-avatar
               color="primary"
               size="40"
-              variant="flat"
+        variant="outlined"
               rounded="lg"
             >
               <span class="text-white font-weight-bold" style="font-size: 18px;">N</span>
@@ -85,7 +85,7 @@
             :title="opt.title"
             rounded="lg"
             class="sidebar-item mb-1"
-            :class="{ 'sidebar-item--active': isOptionActive(route, opt) }"
+            :class="{ 'sidebar-item--active': isOptionActive(route, opt), 'sidebar-item--new': opt.action === 'new-booking' }"
             @click="go(opt.to)"
           />
         </v-list>
@@ -99,33 +99,21 @@
         @mouseenter="primaryExpanded = true"
         @mouseleave="primaryExpanded = false"
       >
-        <div class="primary-brand">
-          <v-avatar
-            color="primary"
-            size="28"
-            variant="flat"
-            rounded="lg"
-          >
-            <span class="text-white font-weight-bold text-body-2">N</span>
-          </v-avatar>
-          <span v-if="primaryExpanded" class="primary-brand__name text-truncate">{{ tenantStore.tenant?.name || 'Nexo' }}</span>
-        </div>
-        <v-divider class="mx-3" />
-        <div class="primary-items pa-2">
-          <v-btn
+        <div class="primary-items">
+          <div
             v-for="mod in modules"
             :key="mod.key"
-            class="primary-item mb-1"
+            class="primary-item"
             :class="{ 'primary-item--active': mod.key === activeModuleKey }"
-            :icon="!primaryExpanded"
-            variant="text"
-            density="comfortable"
             :title="mod.title"
+            role="button"
+            tabindex="0"
             @click="go(mod.to)"
+            @keydown.enter="go(mod.to)"
           >
-            <v-icon :size="primaryExpanded ? 20 : 22">{{ mod.icon }}</v-icon>
-            <span v-if="primaryExpanded" class="ml-2 text-truncate">{{ mod.title }}</span>
-          </v-btn>
+            <v-icon size="20" class="primary-item__icon">{{ mod.icon }}</v-icon>
+            <span class="primary-item__label text-truncate">{{ mod.title }}</span>
+          </div>
         </div>
       </nav>
 
@@ -147,7 +135,7 @@
             rounded="md"
             color="primary"
             class="sidebar-item mb-1"
-            :class="{ 'sidebar-item--active': isOptionActive(route, opt) }"
+            :class="{ 'sidebar-item--active': isOptionActive(route, opt), 'sidebar-item--new': opt.action === 'new-booking' }"
             @click="go(opt.to)"
           />
         </v-list>
@@ -158,13 +146,12 @@
         class="secondary-toggle"
         :class="{ 'is-collapsed': uiStore.secondarySidebarCollapsed }"
         icon
-        size="x-small"
+        size="small"
         variant="flat"
-        color="primary"
         :title="uiStore.secondarySidebarCollapsed ? 'Expandir menú' : 'Colapsar menú'"
         @click="uiStore.toggleSecondarySidebar()"
       >
-        <v-icon size="18">{{ uiStore.secondarySidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
+        <v-icon size="20">{{ uiStore.secondarySidebarCollapsed ? 'mdi-menu-right' : 'mdi-menu-left' }}</v-icon>
       </v-btn>
     </div>
   </div>
@@ -269,6 +256,17 @@ watch(isDesktop, (val) => {
   color: #fff !important;
 }
 
+.sidebar-item--new {
+  color: rgb(var(--v-theme-primary)) !important;
+  font-weight: 600;
+  min-height: 40px;
+  border: 1px solid rgb(var(--v-theme-primary));
+}
+
+.sidebar-item--new .v-icon {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
 .desktop-nav {
   position: fixed;
   top: 48px;
@@ -276,17 +274,21 @@ watch(isDesktop, (val) => {
   bottom: 0;
   z-index: 1000;
   display: flex;
+  flex-direction: row;
   align-items: stretch;
 }
 
 .desktop-nav__primary {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
   width: 60px;
-  height: 100%;
+  z-index: 20;
   background: rgb(var(--v-theme-surface));
   border-right: 1px solid rgb(var(--v-border));
   transition: width 0.2s ease;
   overflow: hidden;
-  z-index: 10;
   display: flex;
   flex-direction: column;
 }
@@ -295,57 +297,63 @@ watch(isDesktop, (val) => {
   width: 240px;
 }
 
-.primary-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  min-height: 48px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.primary-brand__name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .primary-items {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  padding: 0 10px;
 }
 
-.desktop-nav__primary .primary-item {
-  justify-content: flex-start;
-}
-
-.desktop-nav__primary:not(.is-expanded) .primary-item {
-  width: 44px;
-  min-width: 44px;
-  justify-content: center;
-  margin-left: 8px;
+.primary-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  margin: 4px 0;
   padding: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgb(var(--v-theme-surface)) !important;
+  border: 1px solid rgb(var(--v-border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+.primary-item__icon {
+  margin-left: 10px;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.primary-item__label {
+  flex: 1;
+  min-width: 0;
+  margin-left: 10px;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .primary-item--active {
   background-color: rgb(var(--v-theme-primary)) !important;
-  color: #fff !important;
+  border-color: rgb(var(--v-theme-primary)) !important;
 }
 
-.primary-item--active .v-icon {
+.primary-item--active .primary-item__icon,
+.primary-item--active .primary-item__label {
   color: #fff !important;
 }
 
 .desktop-nav__secondary {
+  margin-left: 60px;
+  flex: 0 0 auto;
+  align-self: stretch;
   width: 240px;
-  height: 100%;
   background: rgb(var(--v-theme-surface));
   border-right: 1px solid rgb(var(--v-border));
   transition: width 0.2s ease;
   overflow: hidden;
-  z-index: 5;
 }
 
 .desktop-nav__secondary.is-collapsed {
@@ -366,15 +374,17 @@ watch(isDesktop, (val) => {
 }
 
 .secondary-toggle {
-  position: absolute;
-  top: 56px;
-  left: calc(60px + 240px);
-  transform: translateX(-50%);
-  z-index: 1100;
-  transition: left 0.2s ease;
+  align-self: flex-start;
+  margin-top: 12px;
+  margin-left: 14px;
+  flex: 0 0 auto;
+  border-radius: 50% !important;
+  background: rgb(var(--v-theme-surface)) !important;
+  border: 1px solid rgb(var(--v-border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.secondary-toggle.is-collapsed {
-  left: 60px;
+.secondary-toggle .v-icon {
+  color: rgb(var(--v-theme-on-surface));
 }
 </style>

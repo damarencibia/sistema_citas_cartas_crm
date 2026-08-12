@@ -1,5 +1,13 @@
 <template>
   <v-app-bar height="48" class="app-topbar" flat>
+    <div class="d-flex align-center ga-2" style="min-width: 0; margin-left: 18px;">
+      <v-avatar color="primary" size="24" variant="flat" rounded="lg">
+        <span class="text-white font-weight-bold text-caption">N</span>
+      </v-avatar>
+      <span class="text-body-2 font-weight-semibold text-truncate d-none d-sm-inline">{{ tenantStore.tenant?.name || 'Nexo' }}</span>
+      <AppBreadcrumbs class="d-none d-sm-flex ml-6" />
+    </div>
+
     <v-spacer />
 
     <NotificationCenter class="mr-1" />
@@ -70,11 +78,14 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useUiStore } from '@/shared/stores/ui.store';
 import NotificationCenter from '@/modules/notifications/components/NotificationCenter.vue';
+import AppBreadcrumbs from '@/shared/components/AppBreadcrumbs.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const tenantStore = useTenantStore();
 const uiStore = useUiStore();
 
 const initials = computed(() => {
@@ -91,7 +102,7 @@ async function handleLogout() {
 
 <style scoped>
 .app-topbar {
-  border-bottom: 1px solid rgb(var(--v-border)) !important;
+  border-bottom: 1px solid rgb(var(--v-border-strong)) !important;
   background-color: rgb(var(--v-theme-surface)) !important;
 }
 </style>
