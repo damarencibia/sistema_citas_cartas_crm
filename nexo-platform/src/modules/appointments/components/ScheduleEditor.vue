@@ -490,11 +490,15 @@ watch(selectedEmployeeId, async (id) => {
   dirty.value = false;
 });
 
-watch(autoConfirmDefault, (val) => {
-  if (syncAutoConfirm.value) return;
-  for (const [, shifts] of localShifts) {
-    for (const s of shifts) s.auto_confirm = val;
-  }
-  dirty.value = true;
-});
+watch(
+  autoConfirmDefault,
+  (val) => {
+    if (syncAutoConfirm.value) return;
+    for (const [, shifts] of localShifts) {
+      for (const s of shifts) s.auto_confirm = val;
+    }
+    dirty.value = true;
+  },
+  { flush: 'sync' },
+);
 </script>

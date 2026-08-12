@@ -52,7 +52,7 @@ interface ServiceWorkerScope {
   ): void;
 }
 
-const CACHE_NAME = 'nexo-v1';
+const CACHE_NAME = 'nexo-v2';
 const ctx = self as unknown as ServiceWorkerScope;
 
 const manifestUrls = (self as unknown as ServiceWorkerScope).__WB_MANIFEST.map((entry) => {
@@ -89,14 +89,15 @@ ctx.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      caches.match(appShellUrl).then((cached) => {
-        if (cached) return cached;
-        return fetch(request).then((network) => {
-          const copy = network.clone();
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(appShellUrl, copy)).catch(() => undefined);
-          return network;
-        });
-      }),
+          return response;
+        })
+        .catch(() =>
+          caches.match(appShellUrl).then((cached) => cached ?? new Response('', { status: 503 })),
+        ),
     );
     return;
   }
