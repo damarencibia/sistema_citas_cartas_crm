@@ -69,6 +69,28 @@
             </v-chip>
           </div>
 
+          <div class="d-flex align-center ga-1 mb-3">
+            <v-switch
+              v-model="autoConfirmDefault"
+              label="Auto-confirmar reservas"
+              color="primary"
+              density="compact"
+              hide-details
+            />
+            <v-tooltip location="top" max-width="300">
+              <template #activator="{ props }">
+                <v-icon v-bind="props" size="small" color="medium-emphasis">
+                  mdi-information-outline
+                </v-icon>
+              </template>
+              <span>
+                Si está activo, las reservas del portal se agendan automáticamente en los turnos
+                nuevos de este horario. Si no, quedan como Pendientes de Confirmación para aprobar.
+                Puedes ajustar cada turno individualmente.
+              </span>
+            </v-tooltip>
+          </div>
+
           <WeekScheduleGrid
             :days="daysOfWeek"
             :shifts="localShifts"
@@ -111,6 +133,7 @@
       :slot_interval_minutes="editingShift?.slot_interval_minutes"
       :advance_booking_days="editingShift?.advance_booking_days"
       :min_advance_minutes="editingShift?.min_advance_minutes"
+      :auto_confirm="editingShift?.auto_confirm"
       :existing-shifts="currentDayShiftsForValidation"
       @close="closeShiftDialog"
       @save="onShiftSave"
@@ -177,6 +200,7 @@ const selectedEmployeeId = computed<string | null>({
 const saving = ref(false);
 const dirty = ref(false);
 const suppressWatch = ref(false);
+const autoConfirmDefault = ref(true);
 
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
@@ -230,6 +254,7 @@ function defaultShift(): ScheduleShiftInput {
     slot_interval_minutes: 30,
     advance_booking_days: 7,
     min_advance_minutes: 15,
+    auto_confirm: autoConfirmDefault.value,
   };
 }
 
@@ -248,6 +273,7 @@ function initLocalShifts() {
         slot_interval_minutes: s.slot_interval_minutes ?? 30,
         advance_booking_days: s.advance_booking_days ?? 7,
         min_advance_minutes: s.min_advance_minutes ?? 15,
+        auto_confirm: s.auto_confirm ?? true,
       })),
     );
   }
@@ -327,6 +353,7 @@ function onShiftSave(data: ScheduleShiftInput) {
     slot_interval_minutes: data.slot_interval_minutes ?? 30,
     advance_booking_days: data.advance_booking_days ?? 7,
     min_advance_minutes: data.min_advance_minutes ?? 15,
+    auto_confirm: data.auto_confirm ?? true,
   };
 
   if (editingShiftIndex.value >= 0) {

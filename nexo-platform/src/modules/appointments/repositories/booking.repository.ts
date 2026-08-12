@@ -51,6 +51,32 @@ function normalizeTime(t: string): string {
   return t.length === 5 ? `${t}:00` : t;
 }
 
+async function resolveAutoConfirm(
+  tenantId: string,
+  employeeId: string | null,
+  date: string,
+): Promise<boolean> {
+  const dow = new Date(`${date}T12:00:00`).getDay();
+  const base = () =>
+    supabase
+      .from('schedules')
+      .select('auto_confirm')
+      .eq('tenant_id', tenantId)
+      .eq('day_of_week', dow)
+      .eq('is_active', true);
+
+  if (employeeId) {
+    const { data, error } = await base().eq('employee_id', employeeId).limit(1);
+    if (!error && data && data.length > 0 && data[0].auto_confirm != null) {
+      return data[0].auto_confirm;
+    }
+  }
+
+  const { data, error } = await base().is('employee_id', null).limit(1);
+  if (error || !data || data.length === 0) return true;
+  return data[0].auto_confirm ?? true;
+}
+
 function extractCustomerUpsert(
   result: unknown,
 ): { customerId: string | null; accessToken: string | null } {
@@ -127,11 +153,15 @@ export const bookingRepository = {
     const duration = dto.custom_duration_minutes ?? serviceData.duration_minutes;
     const endTime = computeEndTime(dto.start_time, duration);
 
-    const initialStatus: BookingStatus = serviceData.requires_approval
-      ? 'pending_approval'
-      : dto.source === 'online'
-        ? 'pending_confirmation'
-        : 'confirmed';
+    let initialStatus: BookingStatus;
+    if (serviceData.requires_approval) {
+      initialStatus = 'pending_approval';
+    } else if (dto.source === 'online') {
+      const autoConfirm = await resolveAutoConfirm(tenantId, dto.employee_id, dto.date);
+      initialStatus = autoConfirm ? 'confirmed' : 'pending_confirmation';
+    } else {
+      initialStatus = 'confirmed';
+    }
 
     let customerId: string | null = null;
     let accessToken: string | null = null;

@@ -55,7 +55,11 @@
               />
             </div>
             <div class="shift-meta">
-              {{ shift.slot_mode === 'flexible' ? 'flexible' : `cada ${shift.slot_interval_minutes} min` }}
+              <span>{{ shift.slot_mode === 'flexible' ? 'flexible' : `cada ${shift.slot_interval_minutes} min` }}</span>
+              <span v-if="shift.auto_confirm === false" class="auto-confirm-off">
+                <v-icon size="12" color="warning">mdi-message-clock-outline</v-icon>
+                pendiente
+              </span>
             </div>
           </div>
 
@@ -196,6 +200,13 @@ function formatTime(t: string): string {
   font-size: 11px;
   color: rgb(var(--v-theme-medium-emphasis));
   margin-top: 2px;
+}
+
+.auto-confirm-off {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .shift-delete {

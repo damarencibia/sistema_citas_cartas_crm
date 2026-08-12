@@ -1611,6 +1611,7 @@ export type Database = {
       schedules: {
         Row: {
           advance_booking_days: number;
+          auto_confirm: boolean;
           created_at: string;
           day_of_week: number;
           employee_id: string | null;
@@ -1626,6 +1627,7 @@ export type Database = {
         };
         Insert: {
           advance_booking_days?: number;
+          auto_confirm?: boolean;
           created_at?: string;
           day_of_week: number;
           employee_id?: string | null;
@@ -1641,6 +1643,7 @@ export type Database = {
         };
         Update: {
           advance_booking_days?: number;
+          auto_confirm?: boolean;
           created_at?: string;
           day_of_week?: number;
           employee_id?: string | null;

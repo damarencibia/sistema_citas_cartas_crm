@@ -63,7 +63,9 @@ export const useBookingStore = defineStore('appointments/bookings', {
     pendingConfirmationBookings: (state) =>
       state.bookings.filter((b) => b.status === 'pending_confirmation'),
     pendingApprovalBookings: (state) =>
-      state.bookings.filter((b) => b.status === 'pending_approval'),
+      state.bookings.filter(
+        (b) => b.status === 'pending_approval' || b.status === 'pending_confirmation',
+      ),
     filteredBookings: (state) => {
       let result = state.bookings;
       if (state.filters.employee_id) {
@@ -315,7 +317,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
       const booking = this.bookings.find((b) => b.id === bookingId) ?? this.currentBooking;
       const oldStatus = booking?.status ?? null;
 
-      if (oldStatus !== 'pending_approval') {
+      if (oldStatus !== 'pending_approval' && oldStatus !== 'pending_confirmation') {
         throw new Error('Solo se pueden aprobar reservas pendientes de aprobación.');
       }
 
@@ -349,7 +351,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
       const booking = this.bookings.find((b) => b.id === bookingId) ?? this.currentBooking;
       const oldStatus = booking?.status ?? null;
 
-      if (oldStatus !== 'pending_approval') {
+      if (oldStatus !== 'pending_approval' && oldStatus !== 'pending_confirmation') {
         throw new Error('Solo se pueden rechazar reservas pendientes de aprobación.');
       }
 

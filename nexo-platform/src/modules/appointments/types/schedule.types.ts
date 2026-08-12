@@ -13,6 +13,7 @@ export interface Schedule extends BaseEntity {
   slot_interval_minutes: number;
   advance_booking_days: number;
   min_advance_minutes: number;
+  auto_confirm: boolean;
 }
 
 export interface HolidayException {
@@ -37,6 +38,7 @@ export interface CreateScheduleDTO {
   slot_interval_minutes?: number;
   advance_booking_days?: number;
   min_advance_minutes?: number;
+  auto_confirm?: boolean;
 }
 
 export interface ScheduleShiftInput {
@@ -46,6 +48,7 @@ export interface ScheduleShiftInput {
   slot_interval_minutes: number;
   advance_booking_days: number;
   min_advance_minutes: number;
+  auto_confirm: boolean;
 }
 
 export interface CreateHolidayDTO {

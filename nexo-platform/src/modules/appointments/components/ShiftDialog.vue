@@ -130,6 +130,27 @@
           persistent-hint
         />
 
+        <div class="d-flex align-center ga-1 mb-2">
+          <v-switch
+            v-model="form.auto_confirm"
+            label="Auto-confirmar reservas"
+            color="primary"
+            density="compact"
+            hide-details
+          />
+          <v-tooltip location="top" max-width="280">
+            <template #activator="{ props: tooltipProps }">
+              <v-icon v-bind="tooltipProps" size="small" color="medium-emphasis">
+                mdi-information-outline
+              </v-icon>
+            </template>
+            <span>
+              Si está activo, las reservas del portal se agendan automáticamente en este turno.
+              Si no, quedan como Pendientes de Confirmación para aprobar.
+            </span>
+          </v-tooltip>
+        </div>
+
         <v-row dense class="mt-2">
           <v-col cols="12" sm="6">
             <v-text-field
@@ -196,6 +217,7 @@ interface ShiftForm {
   slot_interval_minutes: number;
   advance_booking_days: number;
   min_advance_minutes: number;
+  auto_confirm: boolean;
 }
 
 const props = defineProps<{
@@ -207,6 +229,7 @@ const props = defineProps<{
   slot_interval_minutes?: number;
   advance_booking_days?: number;
   min_advance_minutes?: number;
+  auto_confirm?: boolean;
   existingShifts: { start_time: string; end_time: string }[];
 }>();
 
@@ -224,6 +247,7 @@ const form = reactive<ShiftForm>({
   slot_interval_minutes: 30,
   advance_booking_days: 7,
   min_advance_minutes: 15,
+  auto_confirm: true,
 });
 
 const slotModes = [
@@ -330,6 +354,7 @@ watch(
       form.slot_interval_minutes = props.slot_interval_minutes ?? 30;
       form.advance_booking_days = props.advance_booking_days ?? 7;
       form.min_advance_minutes = props.min_advance_minutes ?? 15;
+      form.auto_confirm = props.auto_confirm ?? true;
       resetDuration();
     }
   },

@@ -2,7 +2,7 @@
   <div>
     <div v-if="bookings.length === 0" class="text-center pa-8">
       <v-icon size="64" color="medium-emphasis">mdi-check-decagram</v-icon>
-      <p class="text-body-1 text-medium-emphasis mt-4">No hay reservas pendientes de aprobación</p>
+      <p class="text-body-1 text-medium-emphasis mt-4">No hay reservas pendientes</p>
     </div>
 
     <v-card
@@ -45,7 +45,7 @@
             prepend-icon="mdi-check"
             @click="onApprove(booking)"
           >
-            Aprobar
+            {{ booking.status === 'pending_confirmation' ? 'Confirmar' : 'Aprobar' }}
           </v-btn>
           <v-btn
             color="error"
