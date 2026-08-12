@@ -102,6 +102,12 @@ async function handleLogout() {
 
 <style scoped>
 .app-topbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+  z-index: 1000 !important;
   border-bottom: 1px solid rgb(var(--v-border-strong)) !important;
   background-color: rgb(var(--v-theme-surface)) !important;
 }

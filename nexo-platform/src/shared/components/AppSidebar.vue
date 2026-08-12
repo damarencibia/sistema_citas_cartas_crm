@@ -304,6 +304,10 @@ watch(isDesktop, (val) => {
   padding: 0 10px;
 }
 
+.primary-items .primary-item:first-child {
+  margin-top: 16px;
+}
+
 .primary-item {
   position: relative;
   display: flex;
