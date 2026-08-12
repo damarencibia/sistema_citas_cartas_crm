@@ -27,6 +27,7 @@
           variant="flat"
           size="small"
           prepend-icon="mdi-plus"
+          :block="$vuetify.display.xs"
           :disabled="!activeEmployeeId"
           @click="showForm = true"
         >
@@ -91,10 +92,24 @@
       </div>
     </v-card-text>
 
-    <v-dialog v-model="showForm" max-width="420">
-      <v-card>
-        <v-card-title class="text-h6">Nueva Excepción</v-card-title>
-        <v-card-text>
+    <v-dialog
+      v-model="showForm"
+      max-width="420"
+      :fullscreen="$vuetify.display.smAndDown"
+    >
+      <v-card class="d-flex flex-column">
+        <v-card-title class="text-h6 d-flex align-center">
+          Nueva Excepción
+          <v-spacer />
+          <v-btn
+            icon="mdi-close"
+            size="small"
+            variant="text"
+            aria-label="Cerrar"
+            @click="showForm = false"
+          />
+        </v-card-title>
+        <v-card-text class="flex-grow-1 overflow-y-auto">
           <v-date-picker
             v-model="form.date"
             show-adjacent-months
@@ -119,12 +134,15 @@
           </template>
           <v-text-field v-model="form.reason" label="Motivo (opcional)" class="mt-2" />
         </v-card-text>
-        <v-card-actions class="pa-4 pt-0">
-          <v-spacer />
-          <v-btn variant="text" @click="showForm = false">Cancelar</v-btn>
+        <v-card-actions class="pa-4 pt-0 d-flex ga-2">
+          <v-spacer class="hidden-xs-only" />
+          <v-btn variant="text" :block="$vuetify.display.xs" @click="showForm = false">
+            Cancelar
+          </v-btn>
           <v-btn
             color="primary"
             variant="flat"
+            :block="$vuetify.display.xs"
             :loading="saving"
             :disabled="!form.date"
             @click="onCreate"

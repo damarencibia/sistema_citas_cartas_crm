@@ -11,7 +11,7 @@
             :model-value="selectedEmployeeId"
             label="Turnos de"
             class="flex-grow-1"
-            style="max-width: 320px"
+            :style="$vuetify.display.xs ? undefined : { maxWidth: '320px' }"
             :allowed-ids="allowedIds"
             :include-default="!isEmployeeView"
             :disabled="isEmployeeView"
@@ -101,11 +101,12 @@
             @copy-day="copyDayToWeek"
           />
 
-          <div class="d-flex justify-end mt-4 ga-2">
+          <div class="d-flex mt-4 ga-2" :class="$vuetify.display.xs ? 'flex-column' : 'justify-end'">
             <v-btn
               v-if="dirty"
               variant="text"
               color="error"
+              :block="$vuetify.display.xs"
               @click="onDiscard"
             >
               Descartar
@@ -114,6 +115,7 @@
               color="primary"
               variant="flat"
               :loading="saving"
+              :block="$vuetify.display.xs"
               @click="onSave"
             >
               <v-icon start>mdi-content-save</v-icon>

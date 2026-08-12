@@ -138,6 +138,14 @@ function formatTime(t: string): string {
   padding-bottom: 4px;
 }
 
+@media (max-width: 959.98px) {
+  .week-grid {
+    display: flex;
+    flex-direction: column;
+    overflow-x: visible;
+  }
+}
+
 .day-column {
   border: 1px solid rgba(var(--v-theme-outline), 0.35);
   border-radius: 8px;
@@ -152,6 +160,12 @@ function formatTime(t: string): string {
   gap: 4px;
   padding: 6px 6px 6px 10px;
   background: rgba(var(--v-theme-surface-variant), 0.4);
+}
+
+@media (max-width: 959.98px) {
+  .day-header {
+    padding: 10px 8px 10px 12px;
+  }
 }
 
 .day-name {

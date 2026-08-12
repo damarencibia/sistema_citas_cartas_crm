@@ -1,10 +1,23 @@
 <template>
-  <v-dialog :model-value="visible" max-width="480" @update:model-value="emit('close')">
-    <v-card>
-      <v-card-title class="text-h6">
+  <v-dialog
+    :model-value="visible"
+    max-width="480"
+    :fullscreen="$vuetify.display.smAndDown"
+    @update:model-value="emit('close')"
+  >
+    <v-card class="d-flex flex-column">
+      <v-card-title class="text-h6 d-flex align-center">
         {{ editing ? 'Editar Turno' : 'Agregar Turno' }}
+        <v-spacer />
+        <v-btn
+          icon="mdi-close"
+          size="small"
+          variant="text"
+          aria-label="Cerrar"
+          @click="emit('close')"
+        />
       </v-card-title>
-      <v-card-text>
+      <v-card-text class="flex-grow-1 overflow-y-auto">
         <div class="text-body-2 text-medium-emphasis mb-4">{{ dayLabel }}</div>
 
         <v-row>
@@ -191,12 +204,19 @@
           Este horario se superpone con otro turno existente.
         </v-alert>
       </v-card-text>
-      <v-card-actions class="pa-4 pt-0">
-        <v-spacer />
-        <v-btn variant="text" @click="emit('close')">Cancelar</v-btn>
+      <v-card-actions class="pa-4 pt-0 d-flex ga-2">
+        <v-spacer class="hidden-xs-only" />
+        <v-btn
+          variant="text"
+          :block="$vuetify.display.xs"
+          @click="emit('close')"
+        >
+          Cancelar
+        </v-btn>
         <v-btn
           color="primary"
           variant="flat"
+          :block="$vuetify.display.xs"
           :disabled="!isValid || overlapError"
           @click="onSave"
         >
