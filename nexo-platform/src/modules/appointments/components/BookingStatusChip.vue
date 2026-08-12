@@ -1,5 +1,5 @@
 <template>
-  <v-chip :color="config.color" size="small" label>
+  <v-chip :color="config.color" :size="size ?? 'small'" label>
     <v-icon start :size="14">{{ config.icon }}</v-icon>
     {{ config.label }}
   </v-chip>
@@ -11,6 +11,7 @@ import type { BookingStatus } from '../types/booking.types';
 
 const props = defineProps<{
   status: BookingStatus;
+  size?: string;
 }>();
 
 const statusMap: Record<BookingStatus, { label: string; color: string; icon: string }> = {

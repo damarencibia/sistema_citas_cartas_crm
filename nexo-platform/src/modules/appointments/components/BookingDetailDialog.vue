@@ -6,22 +6,40 @@
     @update:model-value="emit('close')"
   >
     <v-card v-if="booking">
-      <v-card-title class="text-h6 d-flex align-center">
-        Detalle de Cita
-        <v-spacer />
-        <BookingStatusChip :status="booking.status" />
+      <v-card-title class="pb-2">
+        <div class="d-flex align-start ga-2">
+          <div class="flex-grow-1" style="min-width: 0">
+            <div class="text-h6 text-truncate">{{ booking.customer_name || 'Sin nombre' }}</div>
+            <div class="text-caption text-medium-emphasis text-truncate">
+              {{ booking.service?.name || 'Servicio' }}
+            </div>
+          </div>
+          <v-btn
+            icon="mdi-close"
+            size="small"
+            variant="text"
+            aria-label="Cerrar"
+            @click="emit('close')"
+          />
+        </div>
+        <div class="d-flex flex-wrap ga-1 mt-2">
+          <BookingStatusChip :status="booking.status" />
+          <v-chip size="small" variant="tonal" :color="sourceConfig.color">
+            {{ sourceConfig.label }}
+          </v-chip>
+          <v-chip
+            size="small"
+            variant="tonal"
+            prepend-icon="mdi-calendar"
+          >
+            {{ booking.date }} · {{ booking.start_time?.slice(0, 5) }} - {{ booking.end_time?.slice(0, 5) }}
+          </v-chip>
+        </div>
       </v-card-title>
       <v-card-text>
         <v-list density="compact">
-          <v-list-item prepend-icon="mdi-account" :title="booking.customer_name || 'Sin nombre'" />
           <v-list-item prepend-icon="mdi-phone" :title="booking.customer_phone || 'Sin teléfono'" />
           <v-list-item prepend-icon="mdi-email" :title="booking.customer_email || 'Sin email'" />
-          <v-list-item prepend-icon="mdi-calendar" :title="booking.date" />
-          <v-list-item
-            prepend-icon="mdi-clock-outline"
-            :title="`${booking.start_time?.slice(0, 5)} - ${booking.end_time?.slice(0, 5)}`"
-          />
-          <v-list-item prepend-icon="mdi-tag" :title="booking.service?.name || 'Servicio'" />
           <v-list-item
             v-if="booking.employee"
             prepend-icon="mdi-account-tie"
@@ -32,11 +50,6 @@
             prepend-icon="mdi-account-group"
             :title="`${booking.participant_count} participantes`"
           />
-          <v-list-item prepend-icon="mdi-web">
-            <v-chip size="x-small" :color="sourceConfig.color" variant="tonal">
-              {{ sourceConfig.label }}
-            </v-chip>
-          </v-list-item>
           <v-list-item v-if="booking.notes" prepend-icon="mdi-note-text" :title="booking.notes" />
         </v-list>
 
@@ -63,7 +76,7 @@
       </v-card-text>
 
       <v-card-text v-if="hasPhone || hasWhatsapp" class="pt-0">
-        <div class="d-flex ga-2">
+        <div class="d-flex ga-2" :class="xs ? 'flex-column' : 'flex-row'">
           <v-btn
             v-if="hasWhatsapp"
             color="green"
@@ -88,58 +101,45 @@
           </v-btn>
         </div>
       </v-card-text>
-      <v-card-actions v-if="showActions && canUpdate" class="pa-4 pt-0 flex-wrap ga-2">
+      <v-card-actions v-if="showActions && canUpdate" class="pa-4 pt-0 d-flex flex-column align-stretch ga-2">
         <v-btn
           v-if="booking.status === 'pending_confirmation'"
           color="success"
           variant="flat"
+          block
           prepend-icon="mdi-check-circle"
           @click="emit('statusChange', booking, 'confirmed')"
         >
           Confirmar
         </v-btn>
-        <v-btn
-          v-if="booking.status === 'confirmed' || booking.status === 'in_progress'"
-          color="success"
-          variant="flat"
-          prepend-icon="mdi-check-all"
-          @click="emit('statusChange', booking, 'completed')"
-        >
-          Completar
-        </v-btn>
-        <v-btn
-          v-if="booking.status === 'confirmed' || booking.status === 'in_progress'"
-          color="error"
-          variant="outlined"
-          prepend-icon="mdi-cancel"
-          @click="showCancelDialog = true"
-        >
-          Cancelar
-        </v-btn>
-        <v-btn
-          v-if="['confirmed', 'in_progress', 'pending_confirmation'].includes(booking.status)"
-          color="warning"
-          variant="outlined"
-          prepend-icon="mdi-account-remove"
-          @click="emit('statusChange', booking, 'no_show')"
-        >
-          No Asistió
-        </v-btn>
-        <v-btn
-          v-if="booking.status === 'confirmed'"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-calendar-switch"
-          @click="showReassignDialog = true"
-        >
-          Reasignar
-        </v-btn>
-        <span class="ms-auto d-flex flex-wrap ga-1">
+        <div class="d-flex ga-2 flex-wrap">
+          <v-btn
+            v-if="booking.status === 'confirmed'"
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-calendar-switch"
+            :class="{ 'flex-grow-1': smAndDown }"
+            @click="showReassignDialog = true"
+          >
+            Reasignar
+          </v-btn>
+          <v-btn
+            v-if="booking.status === 'confirmed' || booking.status === 'in_progress'"
+            color="error"
+            variant="outlined"
+            prepend-icon="mdi-cancel"
+            :class="{ 'flex-grow-1': smAndDown }"
+            @click="showCancelDialog = true"
+          >
+            Cancelar
+          </v-btn>
+        </div>
+        <div class="d-flex justify-end ga-1 flex-wrap">
           <v-btn
             color="primary"
             variant="text"
-            prepend-icon="mdi-pencil"
             size="small"
+            prepend-icon="mdi-pencil"
             @click="emit('edit', booking)"
           >
             Editar
@@ -147,14 +147,13 @@
           <v-btn
             color="error"
             variant="text"
-            prepend-icon="mdi-delete-forever"
             size="small"
+            prepend-icon="mdi-delete-forever"
             @click="showDeleteDialog = true"
           >
             Eliminar
           </v-btn>
-          <v-btn variant="text" @click="emit('close')">Cerrar</v-btn>
-        </span>
+        </div>
       </v-card-actions>
     </v-card>
 
@@ -207,6 +206,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useDisplay } from 'vuetify';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { bookingRepository } from '../repositories/booking.repository';
 import BookingStatusChip from './BookingStatusChip.vue';
@@ -235,6 +235,7 @@ const emit = defineEmits<{
 }>();
 
 const authStore = useAuthStore();
+const { xs, smAndDown } = useDisplay();
 const showCancelDialog = ref(false);
 const showReassignDialog = ref(false);
 const showDeleteDialog = ref(false);
