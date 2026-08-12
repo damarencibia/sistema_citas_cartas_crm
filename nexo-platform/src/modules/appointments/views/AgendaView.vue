@@ -1,146 +1,121 @@
 <template>
   <div>
-    <PageHeader :title="submoduleTitle">
-      <template #actions>
-        <v-btn color="primary" size="small" @click="openCreateForm">
-          <v-icon start size="18">mdi-plus</v-icon>
-          <span class="d-none-mobile">Nueva Reserva</span>
-        </v-btn>
-      </template>
-    </PageHeader>
+    <PageHeader :title="submoduleTitle" />
 
     <v-card v-if="tabKey === 'reservas'">
       <v-card-text class="pa-4">
-        <div class="d-flex align-center ga-2 mb-4 flex-wrap">
-          <v-tabs v-model="reservasTab" density="compact" color="primary">
-            <v-tab value="all">Todas</v-tab>
-            <v-tab value="approval">
-              Pendientes de Aprobación
-              <v-badge
-                v-if="bookingStore.pendingApprovalBookings.length > 0"
-                :content="bookingStore.pendingApprovalBookings.length"
-                color="amber"
-                inline
-                class="ml-2"
-              />
-            </v-tab>
-          </v-tabs>
-        </div>
-
-        <v-card class="mb-4 pa-4">
-          <v-row>
-            <v-col cols="12" sm="4">
-              <v-text-field
-                v-model="filters.date"
-                label="Fecha"
-                type="date"
-                density="compact"
-                hide-details
-                clearable
-              />
-            </v-col>
-            <v-col cols="12" sm="4">
-              <v-select
-                v-model="filters.employee_id"
-                :items="employeeOptions"
-                item-title="text"
-                item-value="value"
-                label="Empleado"
-                density="compact"
-                hide-details
-                clearable
-              />
-            </v-col>
-            <v-col cols="12" sm="4">
-              <v-select
-                v-model="filters.status"
-                :items="statusOptions"
-                item-title="text"
-                item-value="value"
-                label="Estado"
-                density="compact"
-                hide-details
-                clearable
-              />
-            </v-col>
-          </v-row>
-        </v-card>
-
-        <v-tabs-window v-model="reservasTab">
-          <v-tabs-window-item value="all">
-            <div v-if="bookingStore.loading" class="text-center pa-8">
-              <v-progress-circular indeterminate color="primary" />
-            </div>
-
-            <div v-else-if="bookingStore.bookings.length === 0" class="text-center pa-8">
-              <v-icon size="64" color="medium-emphasis">mdi-calendar-blank</v-icon>
-              <p class="text-body-1 text-medium-emphasis mt-4">No hay reservas</p>
-            </div>
-
-            <template v-else>
-              <BookingCard
-                v-for="booking in bookingStore.bookings"
-                :key="booking.id"
-                :booking="booking"
-                @detail="openDetail"
-              />
-            </template>
-          </v-tabs-window-item>
-
-          <v-tabs-window-item value="approval">
-            <BookingApprovalList
-              :bookings="bookingStore.pendingApprovalBookings"
-              @approve="onApproveBooking"
-              @reject="onRejectBooking"
-            />
-          </v-tabs-window-item>
-        </v-tabs-window>
-      </v-card-text>
-    </v-card>
-
-    <v-card v-else-if="tabKey === 'semana'">
-      <v-card-text class="pa-4">
-        <div class="d-flex align-center ga-3 mb-4 flex-wrap">
-          <v-chip
-            v-if="agenda.isEmployeeView.value"
+        <div class="d-flex justify-center mb-4">
+          <v-btn-toggle
+            v-model="viewSegment"
+            density="compact"
+            mandatory
+            rounded="lg"
             color="primary"
-            variant="tonal"
-            prepend-icon="mdi-account-badge-outline"
           >
-            Mi agenda
-          </v-chip>
-          <v-select
-            v-else
-            v-model="agenda.selectedEmployeeId.value"
-            :items="employeeOptions"
-            item-title="text"
-            item-value="value"
-            label="Empleado"
-            density="comfortable"
-            hide-details
-            clearable
-            clear-text="Todos los empleados"
-            style="min-width: 220px; max-width: 300px;"
-          />
-          <v-spacer />
-          <v-chip
-            v-if="!agenda.isEmployeeView.value && agenda.selectedEmployeeId.value"
-            color="info"
-            variant="tonal"
-            size="small"
-          >
-            {{ selectedEmployeeName }}
-          </v-chip>
+            <v-btn value="dia">Día</v-btn>
+            <v-btn value="semana">Semana</v-btn>
+          </v-btn-toggle>
         </div>
 
-        <WeeklyBookingsView
-          :bookings="agenda.agendaBookings.value"
-          :week-dates="agenda.weekDates.value"
-          :current-date="agenda.selectedDate.value"
-          :loading="bookingStore.loading"
-          @update:date="agenda.setDate"
-          @detail="openDetail"
-        />
+        <template v-if="viewSegment === 'semana'">
+          <WeekDayStrip
+            :week-dates="weekDates"
+            :counts="weekCounts"
+            :selected-date="filters.date"
+            :loading="weekLoading"
+            @select-date="onSelectWeekDay"
+            @prev-week="shiftWeek(-7)"
+            @next-week="shiftWeek(7)"
+            @today="goToTodayWeek"
+          />
+        </template>
+
+        <template v-else>
+          <div class="d-flex align-center ga-2 mb-4 flex-wrap">
+            <v-tabs v-model="reservasTab" density="compact" color="primary">
+              <v-tab value="all">Todas</v-tab>
+              <v-tab value="approval">
+                Pendientes de Aprobación
+                <v-badge
+                  v-if="bookingStore.pendingApprovalBookings.length > 0"
+                  :content="bookingStore.pendingApprovalBookings.length"
+                  color="amber"
+                  inline
+                  class="ml-2"
+                />
+              </v-tab>
+            </v-tabs>
+          </div>
+
+          <v-card class="mb-4 pa-4">
+            <v-row>
+              <v-col cols="12" sm="4">
+                <v-text-field
+                  v-model="filters.date"
+                  label="Fecha"
+                  type="date"
+                  density="compact"
+                  hide-details
+                  clearable
+                />
+              </v-col>
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="filters.employee_id"
+                  :items="employeeOptions"
+                  item-title="text"
+                  item-value="value"
+                  label="Empleado"
+                  density="compact"
+                  hide-details
+                  clearable
+                />
+              </v-col>
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="filters.status"
+                  :items="statusOptions"
+                  item-title="text"
+                  item-value="value"
+                  label="Estado"
+                  density="compact"
+                  hide-details
+                  clearable
+                />
+              </v-col>
+            </v-row>
+          </v-card>
+
+          <v-tabs-window v-model="reservasTab">
+            <v-tabs-window-item value="all">
+              <div v-if="bookingStore.loading" class="text-center pa-8">
+                <v-progress-circular indeterminate color="primary" />
+              </div>
+
+              <div v-else-if="bookingStore.bookings.length === 0" class="text-center pa-8">
+                <v-icon size="64" color="medium-emphasis">mdi-calendar-blank</v-icon>
+                <p class="text-body-1 text-medium-emphasis mt-4">No hay reservas</p>
+              </div>
+
+              <template v-else>
+                <BookingCard
+                  v-for="booking in bookingStore.bookings"
+                  :key="booking.id"
+                  :booking="booking"
+                  @detail="openDetail"
+                />
+              </template>
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="approval">
+              <BookingApprovalList
+                :bookings="bookingStore.pendingApprovalBookings"
+                @approve="onApproveBooking"
+                @reject="onRejectBooking"
+              />
+            </v-tabs-window-item>
+          </v-tabs-window>
+        </template>
       </v-card-text>
     </v-card>
 
@@ -224,27 +199,33 @@ import PageHeader from '@/shared/components/PageHeader.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useBookingStore } from '../stores/booking.store';
 import { useEmployeeStore } from '../stores/employee.store';
-import { useAgenda } from '../composables/useAgenda';
 import BookingCard from '../components/BookingCard.vue';
 import BookingForm from '../components/BookingForm.vue';
 import BookingDetailDialog from '../components/BookingDetailDialog.vue';
 import BookingApprovalList from '../components/BookingApprovalList.vue';
-import WeeklyBookingsView from '../components/WeeklyBookingsView.vue';
 import WaitlistPanel from '../components/WaitlistPanel.vue';
 import DailyClosurePanel from '../components/DailyClosurePanel.vue';
+import WeekDayStrip from '../components/WeekDayStrip.vue';
+import type { WeekDayCount } from '../components/WeekDayStrip.vue';
 import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
+import { bookingRepository } from '../repositories/booking.repository';
 import { useTenantStore } from '@/shared/stores/tenant.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 import type { Booking, CreateBookingDTO, WaitlistEntry, DailyExtra } from '../types/booking.types';
 
 const bookingStore = useBookingStore();
 const employeeStore = useEmployeeStore();
 const tenantStore = useTenantStore();
+const authStore = useAuthStore();
 const notification = useNotification();
-const agenda = useAgenda();
 const route = useRoute();
 const router = useRouter();
 
 const reservasTab = ref<'all' | 'approval'>('all');
+const viewSegment = ref<'dia' | 'semana'>('dia');
+const weekAnchor = ref(new Date().toISOString().split('T')[0]);
+const weekLoading = ref(false);
+const weekCounts = ref<Record<string, WeekDayCount>>({});
 const showForm = ref(false);
 const showDetail = ref(false);
 const selectedBooking = ref<Booking | null>(null);
@@ -253,21 +234,22 @@ const closurePanelRef = ref<InstanceType<typeof DailyClosurePanel> | null>(null)
 const pendingWaitlistConversion = ref<WaitlistEntry | null>(null);
 const closureDate = ref(new Date().toISOString().split('T')[0]);
 const closureEmployeeId = ref<string | null>(null);
+const isEmployeeView = computed(() => authStore.userRole === 'employee');
+const myEmployeeId = ref<string | null>(null);
 
 const filters = reactive({
-  date: null as string | null,
+  date: new Date().toISOString().split('T')[0] as string | null,
   employee_id: null as string | null,
   status: null as string | null,
 });
 
-const tabKey = computed<'reservas' | 'semana' | 'espera' | 'cierre'>(() => {
+const tabKey = computed<'reservas' | 'espera' | 'cierre'>(() => {
   const t = route.query.tab;
-  return t === 'semana' || t === 'espera' || t === 'cierre' ? t : 'reservas';
+  return t === 'espera' || t === 'cierre' ? t : 'reservas';
 });
 
 const submoduleTitle = computed(() => {
   switch (tabKey.value) {
-    case 'semana': return 'Semana';
     case 'espera': return 'Espera';
     case 'cierre': return 'Cierre';
     default: return 'Reservas';
@@ -293,19 +275,80 @@ const statusOptions = [
   { value: 'pending_confirmation', text: 'Pendiente Confirmación' },
 ];
 
-const selectedEmployeeName = computed(() => {
-  const id = agenda.selectedEmployeeId.value;
-  if (!id) return '';
-  const emp = employeeStore.employees.find((e) => e.id === id);
-  return emp ? `${emp.first_name} ${emp.last_name}` : '';
+const weekDates = computed(() => {
+  const d = new Date(weekAnchor.value + 'T12:00:00');
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  const dates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const dd = new Date(d);
+    dd.setDate(d.getDate() + i);
+    dates.push(dd.toISOString().split('T')[0]);
+  }
+  return dates;
+});
+
+async function loadWeekCounts() {
+  weekLoading.value = true;
+  try {
+    const [start, end] = [weekDates.value[0], weekDates.value[6]];
+    const data = await bookingRepository.getByFilters({
+      date_from: start,
+      date_to: end,
+      employee_id: filters.employee_id,
+    });
+    const counts: Record<string, WeekDayCount> = {};
+    for (const b of data) {
+      if (b.status === 'cancelled' || b.status === 'no_show') continue;
+      counts[b.date] = counts[b.date] ?? { total: 0, pending: 0 };
+      counts[b.date].total += 1;
+      if (b.status === 'pending_approval') counts[b.date].pending += 1;
+    }
+    weekCounts.value = counts;
+  } finally {
+    weekLoading.value = false;
+  }
+}
+
+function shiftWeek(days: number) {
+  const d = new Date(weekAnchor.value + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  weekAnchor.value = d.toISOString().split('T')[0];
+}
+
+function goToTodayWeek() {
+  weekAnchor.value = new Date().toISOString().split('T')[0];
+}
+
+function onSelectWeekDay(day: string) {
+  filters.date = day;
+  viewSegment.value = 'dia';
+}
+
+watch(() => viewSegment.value, (segment) => {
+  if (segment === 'semana') loadWeekCounts();
+});
+
+watch(() => filters.employee_id, () => {
+  if (viewSegment.value === 'semana') loadWeekCounts();
+});
+
+watch(weekAnchor, () => {
+  if (viewSegment.value === 'semana') loadWeekCounts();
 });
 
 onMounted(async () => {
-  agenda.setView('week');
   await employeeStore.fetchEmployees();
-  if (agenda.isEmployeeView.value) {
-    await agenda.assignCurrentEmployee();
-    closureEmployeeId.value = agenda.selectedEmployeeId.value;
+  if (isEmployeeView.value) {
+    await employeeStore.fetchEmployeesWithRoles();
+    const userId = authStore.user?.id;
+    const match = employeeStore.employees.find(
+      (e) => e.user_id === userId || e.supabase_user_id === userId,
+    );
+    myEmployeeId.value = match?.id ?? null;
+    closureEmployeeId.value = myEmployeeId.value;
+    filters.employee_id = myEmployeeId.value;
   }
   await loadForTab(tabKey.value);
   await bookingStore.fetchWaitlist();
@@ -326,10 +369,6 @@ watch(() => route.query.nueva, (nueva) => {
   }
 });
 
-watch([agenda.selectedDate, agenda.selectedEmployeeId], () => {
-  if (tabKey.value === 'semana') agenda.loadAgenda();
-});
-
 watch(filters, () => {
   bookingStore.setFilters({
     date: filters.date ?? undefined,
@@ -341,15 +380,16 @@ watch(filters, () => {
 
 async function loadForTab(tab: string) {
   if (tab === 'reservas') {
-    await bookingStore.fetchBookings();
-  } else if (tab === 'semana') {
-    await agenda.loadAgenda();
+    await bookingStore.fetchBookings({
+      date: filters.date ?? undefined,
+      employee_id: filters.employee_id,
+      status: filters.status as Booking['status'] | null,
+    });
   }
 }
 
 async function refreshBookings() {
-  if (tabKey.value === 'semana') await agenda.loadAgenda();
-  else await bookingStore.fetchBookings();
+  await bookingStore.fetchBookings();
 }
 
 function openCreateForm() {

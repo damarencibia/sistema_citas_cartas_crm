@@ -4,7 +4,7 @@ import type { RouteLocationNormalizedLoaded } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 
-export type AgendaTab = 'reservas' | 'semana' | 'espera' | 'cierre';
+export type AgendaTab = 'reservas' | 'espera' | 'cierre';
 
 export interface SidebarOption {
   title: string;
@@ -22,10 +22,15 @@ export interface SidebarModule {
   options: SidebarOption[];
 }
 
+export interface BreadcrumbItem {
+  title: string;
+  to: string;
+  isCurrent: boolean;
+}
+
 const AGENDA_OPTIONS: SidebarOption[] = [
   { title: 'Nueva Reserva', icon: 'mdi-calendar-plus', to: '/appointments/agenda?tab=reservas&nueva=1', action: 'new-booking' },
   { title: 'Reservas', icon: 'mdi-clipboard-text-outline', to: '/appointments/agenda?tab=reservas', tab: 'reservas' },
-  { title: 'Semana', icon: 'mdi-calendar-week', to: '/appointments/agenda?tab=semana', tab: 'semana' },
   { title: 'Espera', icon: 'mdi-account-clock-outline', to: '/appointments/agenda?tab=espera', tab: 'espera' },
   { title: 'Cierre', icon: 'mdi-clipboard-check-outline', to: '/appointments/agenda?tab=cierre', tab: 'cierre' },
   { title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' },
@@ -117,5 +122,19 @@ export function useSidebarModules() {
     return route.query.nueva !== '1';
   }
 
-  return { modules, routeToModuleKey, isOptionActive };
+  function getBreadcrumbs(route: RouteLocationNormalizedLoaded): BreadcrumbItem[] {
+    const moduleKey = routeToModuleKey(route);
+    const mod = modules.value.find((m) => m.key === moduleKey);
+    if (!mod) return [];
+    const crumbs: BreadcrumbItem[] = [{ title: mod.title, to: mod.to, isCurrent: false }];
+    const activeOpt = mod.options.find((opt) => isOptionActive(route, opt));
+    if (activeOpt) {
+      crumbs.push({ title: activeOpt.title, to: activeOpt.to, isCurrent: true });
+    } else {
+      crumbs[0].isCurrent = true;
+    }
+    return crumbs;
+  }
+
+  return { modules, routeToModuleKey, isOptionActive, getBreadcrumbs };
 }
