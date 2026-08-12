@@ -13,7 +13,6 @@
             class="flex-grow-1"
             style="max-width: 320px"
             :allowed-ids="allowedIds"
-            :exclude-ids="copyExcludeIds"
             :include-default="!isEmployeeView"
             :disabled="isEmployeeView"
             @update:model-value="onEmployeeChange"
