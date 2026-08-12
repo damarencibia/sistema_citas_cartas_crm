@@ -1,5 +1,5 @@
 import { supabase } from '@/shared/api/supabase.client';
-import type { Schedule, HolidayException, CreateScheduleDTO, CreateHolidayDTO, FixedSlotDefinition, CreateFixedSlotDTO } from '../types/schedule.types';
+import type { Schedule, HolidayException, CreateScheduleDTO, CreateHolidayDTO } from '../types/schedule.types';
 
 export const scheduleRepository = {
   async getByEmployee(employeeId: string | null): Promise<Schedule[]> {
@@ -31,55 +31,26 @@ export const scheduleRepository = {
     if (error) throw error;
   },
 
-  // --- Fixed Slot Definitions ---
-
-  async getFixedSlots(tenantId: string, employeeId: string | null): Promise<FixedSlotDefinition[]> {
-    let query = (supabase as any).from('fixed_slot_definitions').select('*').eq('tenant_id', tenantId);
-    query = employeeId ? query.eq('employee_id', employeeId) : query.is('employee_id', null);
-    const { data, error } = await query.order('day_of_week').order('start_time');
-    if (error) throw error;
-    return (data ?? []) as FixedSlotDefinition[];
-  },
-
-  async createFixedSlot(tenantId: string, dto: CreateFixedSlotDTO): Promise<FixedSlotDefinition> {
-    const { data, error } = await (supabase as any)
-      .from('fixed_slot_definitions')
-      .insert({
-        tenant_id: tenantId,
-        employee_id: dto.employee_id ?? null,
-        day_of_week: dto.day_of_week,
-        start_time: dto.start_time,
-        end_time: dto.end_time,
-        is_active: true,
-      })
-      .select()
-      .single();
-    if (error) throw error;
-    return data as FixedSlotDefinition;
-  },
-
-  async deleteFixedSlot(id: string): Promise<void> {
-    const { error } = await (supabase as any).from('fixed_slot_definitions').delete().eq('id', id);
-    if (error) throw error;
-  },
-
   // --- Holidays ---
 
-  async getHolidays(tenantId: string): Promise<HolidayException[]> {
-    const { data, error } = await (supabase as any)
-      .from('holiday_exceptions')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .order('date');
+  async getHolidays(tenantId: string, employeeId: string | null): Promise<HolidayException[]> {
+    let query = (supabase as any).from('holiday_exceptions').select('*').eq('tenant_id', tenantId);
+    if (employeeId) {
+      query = query.or(`employee_id.is.null,employee_id.eq.${employeeId}`);
+    } else {
+      query = query.is('employee_id', null);
+    }
+    const { data, error } = await query.order('date');
     if (error) throw error;
     return (data ?? []) as HolidayException[];
   },
 
-  async createHoliday(tenantId: string, dto: CreateHolidayDTO): Promise<HolidayException> {
+  async createHoliday(tenantId: string, employeeId: string | null, dto: CreateHolidayDTO): Promise<HolidayException> {
     const { data, error } = await (supabase as any)
       .from('holiday_exceptions')
       .insert({
         tenant_id: tenantId,
+        employee_id: employeeId,
         date: dto.date,
         is_closed: dto.is_closed ?? true,
         start_time: dto.is_closed ? null : (dto.start_time ?? null),

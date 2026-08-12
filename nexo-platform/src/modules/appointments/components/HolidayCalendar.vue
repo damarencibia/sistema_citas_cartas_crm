@@ -1,27 +1,60 @@
 <template>
   <v-card variant="flat" border>
     <v-card-text>
-      <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-2">
-        <div>
-          <h3 class="text-subtitle-1 font-weight-medium">Días Festivos / Cierres</h3>
+      <div class="d-flex align-center ga-2 mb-4 flex-wrap">
+        <div class="me-2">
+          <h3 class="text-subtitle-1 font-weight-medium">Excepciones por Trabajador</h3>
           <div class="text-caption text-medium-emphasis">
-            Días o horarios puntuales en los que el negocio no atiende
+            Días festivos o cierres puntuales de cada trabajador
           </div>
         </div>
+        <EmployeeSelect
+          :model-value="selectedEmployeeId"
+          label="Excepciones de"
+          class="flex-grow-1"
+          style="max-width: 320px"
+          :allowed-ids="allowedIds"
+          :include-default="!isEmployeeView"
+          :disabled="isEmployeeView"
+          @update:model-value="onEmployeeChange"
+        />
+        <v-chip
+          v-if="selectedEmployeeId === DEFAULT_SCHEDULE_ID"
+          variant="tonal"
+          size="small"
+          color="info"
+          prepend-icon="mdi-domain"
+        >
+          Aplica a todo el negocio
+        </v-chip>
         <v-btn
           color="primary"
           variant="flat"
           size="small"
+          prepend-icon="mdi-plus"
+          :disabled="!selectedEmployeeId"
           @click="showForm = true"
         >
-          <v-icon start>mdi-plus</v-icon>
           Agregar Excepción
         </v-btn>
       </div>
 
-      <div v-if="holidays.length === 0" class="text-center text-medium-emphasis pa-6">
+      <div v-if="!selectedEmployeeId" class="text-center text-medium-emphasis pa-6">
+        <template v-if="isEmployeeView && !myEmployeeId">
+          No hay un perfil de empleado vinculado a tu cuenta. Contacta a un administrador.
+        </template>
+        <template v-else>
+          Selecciona un trabajador para ver sus excepciones
+        </template>
+      </div>
+
+      <div v-else-if="loading" class="text-center pa-6">
+        <v-progress-circular indeterminate size="32" />
+      </div>
+
+      <div v-else-if="holidays.length === 0" class="text-center text-medium-emphasis pa-6">
         <v-icon size="48" color="medium-emphasis">mdi-calendar-blank</v-icon>
-        <p class="text-body-2 mt-2">No hay excepciones configuradas</p>
+        <p class="text-body-2 mt-2">No hay excepciones configuradas para este trabajador</p>
       </div>
 
       <div v-else class="d-flex flex-column ga-4">
@@ -90,7 +123,7 @@
           <v-btn
             color="primary"
             variant="flat"
-            :loading="loading"
+            :loading="saving"
             :disabled="!form.date"
             @click="onCreate"
           >
@@ -103,18 +136,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useScheduleStore } from '../stores/schedule.store';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
+import { useAuthStore } from '@/shared/stores/auth.store';
+import { useEmployeeStore } from '../stores/employee.store';
+import EmployeeSelect from './EmployeeSelect.vue';
+import { DEFAULT_SCHEDULE_ID } from '../types/schedule.types';
 import type { HolidayException } from '../types/schedule.types';
 
 const scheduleStore = useScheduleStore();
 const notification = useNotification();
+const authStore = useAuthStore();
+const employeeStore = useEmployeeStore();
 const { confirm } = useConfirm();
 
+const selectedEmployeeId = ref<string | null>(null);
+const myEmployeeId = ref<string | null>(null);
 const showForm = ref(false);
-const loading = ref(false);
+const saving = ref(false);
+
+const isEmployeeView = computed(() => authStore.userRole === 'employee');
+
+const allowedIds = computed(() =>
+  isEmployeeView.value && myEmployeeId.value ? [myEmployeeId.value] : undefined,
+);
+
+const loading = computed(() => scheduleStore.loading);
 
 const form = reactive({
   date: '',
@@ -147,21 +196,56 @@ const groupedHolidays = computed<HolidayGroup[]>(() => {
   return groups;
 });
 
+function resolveEmployeeId(id: string | null): string | null {
+  return id === DEFAULT_SCHEDULE_ID ? null : id;
+}
+
+async function load() {
+  await scheduleStore.fetchHolidays(resolveEmployeeId(selectedEmployeeId.value));
+}
+
 onMounted(async () => {
-  await scheduleStore.fetchHolidays();
+  await employeeStore.fetchEmployeesWithRoles();
+  if (isEmployeeView.value) {
+    const userId = authStore.user?.id;
+    const match = employeeStore.employees.find(
+      (e) => e.user_id === userId || e.supabase_user_id === userId,
+    );
+    myEmployeeId.value = match?.id ?? null;
+    if (myEmployeeId.value) {
+      selectedEmployeeId.value = myEmployeeId.value;
+    }
+  } else {
+    selectedEmployeeId.value = DEFAULT_SCHEDULE_ID;
+  }
+});
+
+async function onEmployeeChange(id: string | null) {
+  selectedEmployeeId.value = id;
+}
+
+watch(selectedEmployeeId, async (id) => {
+  if (!id) {
+    scheduleStore.holidays = [];
+    return;
+  }
+  await load();
 });
 
 async function onCreate() {
   if (!form.date) return;
-  loading.value = true;
+  saving.value = true;
   try {
-    await scheduleStore.createHoliday({
-      date: form.date,
-      is_closed: form.is_closed,
-      start_time: form.is_closed ? undefined : form.start_time,
-      end_time: form.is_closed ? undefined : form.end_time,
-      reason: form.reason || undefined,
-    });
+    await scheduleStore.createHoliday(
+      {
+        date: form.date,
+        is_closed: form.is_closed,
+        start_time: form.is_closed ? undefined : form.start_time,
+        end_time: form.is_closed ? undefined : form.end_time,
+        reason: form.reason || undefined,
+      },
+      resolveEmployeeId(selectedEmployeeId.value),
+    );
     showForm.value = false;
     form.date = '';
     form.is_closed = true;
@@ -170,7 +254,7 @@ async function onCreate() {
   } catch {
     notification.error('Error al crear excepción');
   } finally {
-    loading.value = false;
+    saving.value = false;
   }
 }
 

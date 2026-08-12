@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia';
 import { scheduleRepository } from '../repositories/schedule.repository';
 import { useAuthStore } from '@/shared/stores/auth.store';
-import type { Schedule, HolidayException, CreateScheduleDTO, CreateHolidayDTO, FixedSlotDefinition, CreateFixedSlotDTO } from '../types/schedule.types';
+import type { Schedule, HolidayException, CreateScheduleDTO, CreateHolidayDTO } from '../types/schedule.types';
 
 interface ScheduleStoreState {
   schedules: Schedule[];
   holidays: HolidayException[];
-  fixedSlots: FixedSlotDefinition[];
   loading: boolean;
 }
 
@@ -14,7 +13,6 @@ export const useScheduleStore = defineStore('appointments/schedules', {
   state: (): ScheduleStoreState => ({
     schedules: [],
     holidays: [],
-    fixedSlots: [],
     loading: false,
   }),
 
@@ -37,48 +35,25 @@ export const useScheduleStore = defineStore('appointments/schedules', {
       this.schedules = this.schedules.filter((s) => s.id !== scheduleId);
     },
 
-    // --- Fixed Slot Definitions ---
-
-    async fetchFixedSlots(employeeId: string | null) {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
-      if (!tenantId) return;
-      this.fixedSlots = await scheduleRepository.getFixedSlots(tenantId, employeeId);
-    },
-
-    async createFixedSlot(dto: CreateFixedSlotDTO): Promise<FixedSlotDefinition> {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
-      if (!tenantId) throw new Error('No tenant ID available');
-      const slot = await scheduleRepository.createFixedSlot(tenantId, dto);
-      this.fixedSlots.push(slot);
-      return slot;
-    },
-
-    async deleteFixedSlot(id: string): Promise<void> {
-      await scheduleRepository.deleteFixedSlot(id);
-      this.fixedSlots = this.fixedSlots.filter((s) => s.id !== id);
-    },
-
     // --- Holidays ---
 
-    async fetchHolidays() {
+    async fetchHolidays(employeeId: string | null) {
       const authStore = useAuthStore();
       const tenantId = authStore.user?.tenant_id;
       if (!tenantId) return;
       this.loading = true;
       try {
-        this.holidays = await scheduleRepository.getHolidays(tenantId);
+        this.holidays = await scheduleRepository.getHolidays(tenantId, employeeId);
       } finally {
         this.loading = false;
       }
     },
 
-    async createHoliday(dto: CreateHolidayDTO): Promise<HolidayException> {
+    async createHoliday(dto: CreateHolidayDTO, employeeId: string | null): Promise<HolidayException> {
       const authStore = useAuthStore();
       const tenantId = authStore.user?.tenant_id;
       if (!tenantId) throw new Error('No tenant ID available');
-      const holiday = await scheduleRepository.createHoliday(tenantId, dto);
+      const holiday = await scheduleRepository.createHoliday(tenantId, employeeId, dto);
       this.holidays.push(holiday);
       return holiday;
     },

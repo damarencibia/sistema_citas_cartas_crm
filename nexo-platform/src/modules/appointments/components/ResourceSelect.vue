@@ -18,7 +18,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useResourceStore } from '../stores/resource.store';
-import type { Resource } from '../types/resource.types';
 
 const props = defineProps<{
   modelValue: string | null;

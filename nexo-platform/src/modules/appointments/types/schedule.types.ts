@@ -15,20 +15,10 @@ export interface Schedule extends BaseEntity {
   min_advance_minutes: number;
 }
 
-export interface FixedSlotDefinition {
-  id: string;
-  tenant_id: string;
-  employee_id: string | null;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_active: boolean;
-  created_at: string;
-}
-
 export interface HolidayException {
   id: string;
   tenant_id: string;
+  employee_id: string | null;
   date: string;
   is_closed: boolean;
   start_time: string | null;
@@ -56,13 +46,6 @@ export interface ScheduleShiftInput {
   slot_interval_minutes: number;
   advance_booking_days: number;
   min_advance_minutes: number;
-}
-
-export interface CreateFixedSlotDTO {
-  employee_id?: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
 }
 
 export interface CreateHolidayDTO {
