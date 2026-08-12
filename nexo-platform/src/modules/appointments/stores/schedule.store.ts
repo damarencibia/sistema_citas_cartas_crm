@@ -6,6 +6,7 @@ import type { Schedule, HolidayException, CreateScheduleDTO, CreateHolidayDTO } 
 interface ScheduleStoreState {
   schedules: Schedule[];
   holidays: HolidayException[];
+  activeEmployeeId: string | null;
   loading: boolean;
 }
 
@@ -13,6 +14,7 @@ export const useScheduleStore = defineStore('appointments/schedules', {
   state: (): ScheduleStoreState => ({
     schedules: [],
     holidays: [],
+    activeEmployeeId: null,
     loading: false,
   }),
 

@@ -3,23 +3,18 @@
     <v-card-text>
       <div class="d-flex align-center ga-2 mb-4 flex-wrap">
         <div class="me-2">
-          <h3 class="text-subtitle-1 font-weight-medium">Excepciones por Trabajador</h3>
+          <h3 class="text-subtitle-1 font-weight-medium">Excepciones</h3>
           <div class="text-caption text-medium-emphasis">
-            Días festivos o cierres puntuales de cada trabajador
+            <template v-if="isDefaultMode">
+              Cierres del negocio (aplican a todos los trabajadores)
+            </template>
+            <template v-else>
+              Días festivos o cierres puntuales del trabajador seleccionado en "Turnos de"
+            </template>
           </div>
         </div>
-        <EmployeeSelect
-          :model-value="selectedEmployeeId"
-          label="Excepciones de"
-          class="flex-grow-1"
-          style="max-width: 320px"
-          :allowed-ids="allowedIds"
-          :include-default="!isEmployeeView"
-          :disabled="isEmployeeView"
-          @update:model-value="onEmployeeChange"
-        />
         <v-chip
-          v-if="selectedEmployeeId === DEFAULT_SCHEDULE_ID"
+          v-if="isDefaultMode"
           variant="tonal"
           size="small"
           color="info"
@@ -32,20 +27,15 @@
           variant="flat"
           size="small"
           prepend-icon="mdi-plus"
-          :disabled="!selectedEmployeeId"
+          :disabled="!activeEmployeeId"
           @click="showForm = true"
         >
           Agregar Excepción
         </v-btn>
       </div>
 
-      <div v-if="!selectedEmployeeId" class="text-center text-medium-emphasis pa-6">
-        <template v-if="isEmployeeView && !myEmployeeId">
-          No hay un perfil de empleado vinculado a tu cuenta. Contacta a un administrador.
-        </template>
-        <template v-else>
-          Selecciona un trabajador para ver sus excepciones
-        </template>
+      <div v-if="!activeEmployeeId" class="text-center text-medium-emphasis pa-6">
+        Selecciona un trabajador en "Turnos de" para ver sus excepciones
       </div>
 
       <div v-else-if="loading" class="text-center pa-6">
@@ -54,7 +44,9 @@
 
       <div v-else-if="holidays.length === 0" class="text-center text-medium-emphasis pa-6">
         <v-icon size="48" color="medium-emphasis">mdi-calendar-blank</v-icon>
-        <p class="text-body-2 mt-2">No hay excepciones configuradas para este trabajador</p>
+        <p class="text-body-2 mt-2">
+          {{ isDefaultMode ? 'No hay cierres para todo el negocio' : 'No hay excepciones para este trabajador' }}
+        </p>
       </div>
 
       <div v-else class="d-flex flex-column ga-4">
@@ -75,11 +67,21 @@
                 </v-icon>
               </template>
               <template #append>
+                <v-chip
+                  v-if="holiday.employee_id === null"
+                  variant="tonal"
+                  size="x-small"
+                  color="info"
+                >
+                  Global
+                </v-chip>
                 <v-btn
+                  v-if="canDelete(holiday)"
                   icon="mdi-delete"
                   size="small"
                   variant="text"
                   color="error"
+                  class="ms-1"
                   @click="onDelete(holiday)"
                 />
               </template>
@@ -136,33 +138,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { useScheduleStore } from '../stores/schedule.store';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useAuthStore } from '@/shared/stores/auth.store';
-import { useEmployeeStore } from '../stores/employee.store';
-import EmployeeSelect from './EmployeeSelect.vue';
 import { DEFAULT_SCHEDULE_ID } from '../types/schedule.types';
 import type { HolidayException } from '../types/schedule.types';
 
 const scheduleStore = useScheduleStore();
 const notification = useNotification();
 const authStore = useAuthStore();
-const employeeStore = useEmployeeStore();
 const { confirm } = useConfirm();
 
-const selectedEmployeeId = ref<string | null>(null);
-const myEmployeeId = ref<string | null>(null);
 const showForm = ref(false);
 const saving = ref(false);
 
+const activeEmployeeId = computed(() => scheduleStore.activeEmployeeId);
+const isDefaultMode = computed(() => activeEmployeeId.value === DEFAULT_SCHEDULE_ID);
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
-
-const allowedIds = computed(() =>
-  isEmployeeView.value && myEmployeeId.value ? [myEmployeeId.value] : undefined,
-);
-
 const loading = computed(() => scheduleStore.loading);
 
 const form = reactive({
@@ -200,37 +194,22 @@ function resolveEmployeeId(id: string | null): string | null {
   return id === DEFAULT_SCHEDULE_ID ? null : id;
 }
 
-async function load() {
-  await scheduleStore.fetchHolidays(resolveEmployeeId(selectedEmployeeId.value));
+function canDelete(holiday: HolidayException): boolean {
+  if (isEmployeeView.value && holiday.employee_id === null) return false;
+  return true;
 }
 
-onMounted(async () => {
-  await employeeStore.fetchEmployeesWithRoles();
-  if (isEmployeeView.value) {
-    const userId = authStore.user?.id;
-    const match = employeeStore.employees.find(
-      (e) => e.user_id === userId || e.supabase_user_id === userId,
-    );
-    myEmployeeId.value = match?.id ?? null;
-    if (myEmployeeId.value) {
-      selectedEmployeeId.value = myEmployeeId.value;
+watch(
+  activeEmployeeId,
+  async (id) => {
+    if (!id) {
+      scheduleStore.holidays = [];
+      return;
     }
-  } else {
-    selectedEmployeeId.value = DEFAULT_SCHEDULE_ID;
-  }
-});
-
-async function onEmployeeChange(id: string | null) {
-  selectedEmployeeId.value = id;
-}
-
-watch(selectedEmployeeId, async (id) => {
-  if (!id) {
-    scheduleStore.holidays = [];
-    return;
-  }
-  await load();
-});
+    await scheduleStore.fetchHolidays(resolveEmployeeId(id));
+  },
+  { immediate: true },
+);
 
 async function onCreate() {
   if (!form.date) return;
@@ -244,7 +223,7 @@ async function onCreate() {
         end_time: form.is_closed ? undefined : form.end_time,
         reason: form.reason || undefined,
       },
-      resolveEmployeeId(selectedEmployeeId.value),
+      resolveEmployeeId(activeEmployeeId.value),
     );
     showForm.value = false;
     form.date = '';

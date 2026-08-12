@@ -169,7 +169,12 @@ const authStore = useAuthStore();
 const employeeStore = useEmployeeStore();
 const { confirm } = useConfirm();
 
-const selectedEmployeeId = ref<string | null>(null);
+const selectedEmployeeId = computed<string | null>({
+  get: () => scheduleStore.activeEmployeeId,
+  set: (v) => {
+    scheduleStore.activeEmployeeId = v;
+  },
+});
 const saving = ref(false);
 const dirty = ref(false);
 const suppressWatch = ref(false);
