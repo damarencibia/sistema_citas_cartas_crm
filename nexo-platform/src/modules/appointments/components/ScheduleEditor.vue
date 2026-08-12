@@ -84,8 +84,8 @@
                 </v-icon>
               </template>
               <span>
-                Si está activo, las reservas del portal se agendan automáticamente en los turnos
-                nuevos de este horario. Si no, quedan como Pendientes de Confirmación para aprobar.
+                Si está activo, las reservas del portal se agendan automáticamente en todos los
+                turnos de este horario. Si no, quedan como Pendientes de Confirmación para aprobar.
                 Puedes ajustar cada turno individualmente.
               </span>
             </v-tooltip>
@@ -202,6 +202,7 @@ const selectedEmployeeId = computed<string | null>({
 const saving = ref(false);
 const dirty = ref(false);
 const suppressWatch = ref(false);
+const syncAutoConfirm = ref(false);
 const autoConfirmDefault = ref(true);
 
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
@@ -262,23 +263,32 @@ function defaultShift(): ScheduleShiftInput {
 
 function initLocalShifts() {
   localShifts.clear();
+  let allAutoConfirm = true;
+  let hasShifts = false;
   for (const day of daysOfWeek) {
     const daySchedules = scheduleStore.schedules.filter(
       (s) => s.day_of_week === day.value && s.is_active,
     );
+    if (daySchedules.length) hasShifts = true;
     localShifts.set(
       day.value,
-      daySchedules.map((s) => ({
-        start_time: s.start_time,
-        end_time: s.end_time,
-        slot_mode: s.slot_mode ?? 'fixed',
-        slot_interval_minutes: s.slot_interval_minutes ?? 30,
-        advance_booking_days: s.advance_booking_days ?? 7,
-        min_advance_minutes: s.min_advance_minutes ?? 15,
-        auto_confirm: s.auto_confirm ?? true,
-      })),
+      daySchedules.map((s) => {
+        if (s.auto_confirm === false) allAutoConfirm = false;
+        return {
+          start_time: s.start_time,
+          end_time: s.end_time,
+          slot_mode: s.slot_mode ?? 'fixed',
+          slot_interval_minutes: s.slot_interval_minutes ?? 30,
+          advance_booking_days: s.advance_booking_days ?? 7,
+          min_advance_minutes: s.min_advance_minutes ?? 15,
+          auto_confirm: s.auto_confirm ?? true,
+        };
+      }),
     );
   }
+  syncAutoConfirm.value = true;
+  autoConfirmDefault.value = !hasShifts || allAutoConfirm;
+  syncAutoConfirm.value = false;
 }
 
 const summary = computed(() => {
@@ -478,5 +488,13 @@ watch(selectedEmployeeId, async (id) => {
   await scheduleStore.fetchSchedules(resolveEmployeeId(id));
   initLocalShifts();
   dirty.value = false;
+});
+
+watch(autoConfirmDefault, (val) => {
+  if (syncAutoConfirm.value) return;
+  for (const [, shifts] of localShifts) {
+    for (const s of shifts) s.auto_confirm = val;
+  }
+  dirty.value = true;
 });
 </script>

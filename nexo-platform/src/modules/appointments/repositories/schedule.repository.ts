@@ -21,6 +21,7 @@ export const scheduleRepository = {
         slot_interval_minutes: s.slot_interval_minutes ?? 30,
         advance_booking_days: s.advance_booking_days ?? 7,
         min_advance_minutes: s.min_advance_minutes ?? 15,
+        auto_confirm: s.auto_confirm ?? true,
       })),
     });
     if (error) throw error;
