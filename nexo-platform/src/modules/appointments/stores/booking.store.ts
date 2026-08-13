@@ -44,7 +44,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
     loading: false,
     filters: {
       employee_id: null,
-      status: null,
     },
     waitlist: [],
     waitlistLoading: false,
@@ -70,9 +69,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
       let result = state.bookings;
       if (state.filters.employee_id) {
         result = result.filter((b) => b.employee_id === state.filters.employee_id);
-      }
-      if (state.filters.status) {
-        result = result.filter((b) => b.status === state.filters.status);
       }
       return result;
     },

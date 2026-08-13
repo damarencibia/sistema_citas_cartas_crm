@@ -5,7 +5,7 @@ export const dailyExtrasRepository = {
   async getByEmployeeAndDate(employeeId: string, date: string): Promise<DailyExtra[]> {
     const { data, error } = await (supabase as any)
       .from('daily_extras')
-      .select('*, service:services(name, duration_minutes, color)')
+      .select('*, service:services(name, duration_minutes, color, price)')
       .eq('employee_id', employeeId)
       .eq('date', date)
       .order('created_at');
@@ -24,7 +24,7 @@ export const dailyExtrasRepository = {
         service_id: dto.service_id ?? null,
         notes: dto.notes ?? null,
       })
-      .select('*, service:services(name, duration_minutes, color)')
+      .select('*, service:services(name, duration_minutes, color, price)')
       .single();
     if (error) throw error;
     return data as DailyExtra;

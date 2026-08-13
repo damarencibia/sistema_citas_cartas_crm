@@ -4,7 +4,7 @@ import type { RouteLocationNormalizedLoaded } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 
-export type AgendaTab = 'reservas' | 'espera' | 'cierre';
+export type AgendaTab = 'reservas' | 'espera';
 
 export interface SidebarOption {
   title: string;
@@ -32,7 +32,6 @@ const AGENDA_OPTIONS: SidebarOption[] = [
   { title: 'Nueva Reserva', icon: 'mdi-calendar-plus', to: '/appointments/agenda?tab=reservas&nueva=1', action: 'new-booking' },
   { title: 'Reservas', icon: 'mdi-clipboard-text-outline', to: '/appointments/agenda?tab=reservas', tab: 'reservas' },
   { title: 'Espera', icon: 'mdi-account-clock-outline', to: '/appointments/agenda?tab=espera', tab: 'espera' },
-  { title: 'Cierre', icon: 'mdi-clipboard-check-outline', to: '/appointments/agenda?tab=cierre', tab: 'cierre' },
   { title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' },
 ];
 
@@ -81,7 +80,6 @@ export function useSidebarModules() {
       if (role === 'employee') {
         list.push({ key: 'my-services', title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services', options: [] });
       }
-      list.push({ key: 'notifications', title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/appointments/notifications', options: [] });
     }
 
     if (m.digital_menu && admin) {
@@ -104,11 +102,11 @@ export function useSidebarModules() {
     if (path === '/') return 'dashboard';
     if (path.startsWith('/appointments/agenda')) return 'agenda';
     if (path === '/appointments/schedules') return 'agenda';
-    if (path === '/appointments/notifications') return 'notifications';
     if (path === '/appointments/my-services') return 'my-services';
     if (path.startsWith('/menu/')) return 'carta-digital';
     if (path.startsWith('/crm/')) return 'crm';
     if (path.startsWith('/settings/') || path.startsWith('/appointments/')) return 'config';
+    if (path.startsWith('/admin/')) return 'super-admin';
     return 'dashboard';
   }
 
@@ -124,6 +122,10 @@ export function useSidebarModules() {
 
   function getBreadcrumbs(route: RouteLocationNormalizedLoaded): BreadcrumbItem[] {
     const moduleKey = routeToModuleKey(route);
+    if (moduleKey === 'super-admin') {
+      const title = route.meta.title as string | undefined;
+      return title ? [{ title, to: route.fullPath, isCurrent: true }] : [];
+    }
     const mod = modules.value.find((m) => m.key === moduleKey);
     if (!mod) return [];
     const crumbs: BreadcrumbItem[] = [{ title: mod.title, to: mod.to, isCurrent: false }];

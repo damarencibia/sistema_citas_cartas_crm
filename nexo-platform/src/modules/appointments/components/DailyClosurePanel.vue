@@ -1,39 +1,11 @@
 <template>
-  <div class="daily-closure">
-    <!-- Header -->
-    <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3">
-      <div class="d-flex align-center ga-2">
-        <v-icon color="primary">mdi-clipboard-check-outline</v-icon>
-        <div>
-          <div class="text-subtitle-1 font-weight-semibold">Cierre del día</div>
-          <div class="text-caption text-medium-emphasis">{{ formattedDate }}</div>
-        </div>
-      </div>
-      <div class="d-flex align-center ga-2 flex-wrap">
-        <v-chip size="small" color="primary" variant="tonal">
-          {{ summary.attended }}/{{ summary.total }} asistieron
-        </v-chip>
-        <v-btn
-          color="primary"
-          variant="flat"
-          size="small"
-          prepend-icon="mdi-check-decagram"
-          :loading="saving"
-          :disabled="!canClose || saving"
-          :title="canClose ? 'Finalizar el cierre del día' : 'Faltan citas por atender'"
-          @click="showCloseDialog = true"
-        >
-          Cerrar día
-        </v-btn>
-      </div>
-    </div>
-
+  <div class="daily-closure d-flex flex-column h-100">
     <!-- Closed banner -->
     <v-alert
       v-if="closed"
       type="success"
       variant="tonal"
-      class="mb-3"
+      class="ma-3 mb-0"
       density="comfortable"
     >
       <div class="d-flex align-center justify-space-between flex-wrap ga-2">
@@ -53,242 +25,330 @@
     </v-alert>
 
     <!-- Loading -->
-    <div v-if="loading" class="text-center pa-6">
+    <div v-if="loading" class="text-center pa-6 flex-grow-1">
       <v-progress-circular indeterminate color="primary" size="28" />
     </div>
 
     <template v-else>
       <!-- No employee selected -->
-      <div v-if="!employeeId" class="text-center pa-6">
+      <div v-if="!employeeId" class="text-center pa-6 flex-grow-1">
         <v-icon size="48" color="medium-emphasis">mdi-account-search-outline</v-icon>
         <p class="text-body-2 text-medium-emphasis mt-2">
-          Selecciona un empleado y una fecha para ver su cierre.
+          Selecciona un empleado para ver su cierre.
         </p>
       </div>
 
       <template v-else>
-        <!-- Progress -->
-        <div v-if="summary.total > 0" class="mb-4">
-          <div class="d-flex align-center justify-space-between text-caption mb-1">
-            <span class="text-medium-emphasis">Progreso de atención</span>
-            <span class="font-weight-medium">{{ progressPct }}%</span>
-          </div>
-          <v-progress-linear
-            :model-value="progressPct"
-            height="8"
-            rounded
-            :color="progressPct === 100 ? 'success' : 'primary'"
-          />
-        </div>
+        <!-- Tabs -->
+        <v-tabs
+          v-model="activeTab"
+          density="compact"
+          color="primary"
+          grow
+          class="flex-shrink-0 px-2"
+        >
+          <v-tab value="scheduled">Programadas</v-tab>
+          <v-tab value="extras">Extras</v-tab>
+          <v-tab value="summary">Resumen</v-tab>
+        </v-tabs>
 
-        <!-- KPI cards -->
-        <v-row class="mb-4">
-          <v-col
-            v-for="kpi in kpis"
-            :key="kpi.label"
-            cols="6"
-            sm="4"
-            md="2"
-          >
-            <v-card
-              variant="tonal"
-              :color="kpi.color"
-              class="pa-3 text-center"
-            >
-              <div class="text-h6 font-weight-bold">{{ kpi.value }}</div>
-              <div class="text-caption text-medium-emphasis">{{ kpi.label }}</div>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <!-- Bookings section -->
-        <div class="mb-4">
-          <div class="d-flex align-center justify-space-between mb-2 flex-wrap ga-2">
-            <div class="text-caption text-medium-emphasis font-weight-medium">CITAS PROGRAMADAS</div>
-            <div class="d-flex align-center ga-2">
-              <v-btn
-                v-if="pendingBookings.length > 0"
-                size="small"
-                variant="tonal"
-                color="success"
-                prepend-icon="mdi-check-all"
-                @click="$emit('markAllAttended', pendingBookings)"
-              >
-                Marcar todos asistidos
-              </v-btn>
-              <v-chip
-                v-for="f in filterOptions"
-                :key="f.value"
-                size="small"
-                :variant="filter === f.value ? 'flat' : 'tonal'"
-                :color="filter === f.value ? 'primary' : 'default'"
-                @click="filter = f.value"
-              >
-                {{ f.label }}
-                <span class="ml-1 text-caption">{{ f.count }}</span>
-              </v-chip>
-            </div>
-          </div>
-
-          <div v-if="filteredBookings.length === 0" class="text-center pa-4">
-            <p class="text-body-2 text-medium-emphasis">Sin citas en esta vista</p>
-          </div>
-
-          <v-list
-            v-else
-            density="compact"
-            lines="two"
-            class="bg-transparent pa-0"
-          >
-            <v-list-item
-              v-for="b in filteredBookings"
-              :key="b.id"
-              class="px-2 mb-1 rounded"
-              :class="bookingBgClass(b)"
-            >
-              <template #prepend>
-                <v-icon
-                  :color="b.status === 'completed' ? 'success' : b.status === 'no_show' ? 'error' : 'grey'"
-                  size="20"
-                >
-                  {{ b.status === 'completed' ? 'mdi-check-circle' : b.status === 'no_show' ? 'mdi-close-circle' : 'mdi-clock-outline' }}
-                </v-icon>
-              </template>
-              <v-list-item-title class="text-body-2 font-weight-medium">
-                {{ b.customer_name || 'Sin nombre' }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="text-caption">
-                {{ b.service?.name || 'Servicio' }} · {{ formatTime(b.start_time) }}
-              </v-list-item-subtitle>
-              <template #append>
-                <div v-if="isPending(b)" class="d-flex ga-1">
-                  <v-btn
-                    size="small"
-                    icon="mdi-check"
-                    variant="tonal"
-                    color="success"
-                    title="Asistió"
-                    @click="$emit('markAttended', b)"
-                  />
-                  <v-btn
-                    size="small"
-                    icon="mdi-close"
-                    variant="tonal"
-                    color="error"
-                    title="No asistió"
-                    @click="$emit('markNoShow', b)"
-                  />
+        <v-tabs-window
+          v-model="activeTab"
+          class="daily-closure__window flex-grow-1"
+        >
+          <!-- Programadas -->
+          <v-tabs-window-item value="scheduled">
+            <div class="pa-3">
+              <div v-if="summary.total > 0" class="mb-4">
+                <div class="d-flex align-center justify-space-between text-caption mb-1">
+                  <span class="text-medium-emphasis">Progreso de atención</span>
+                  <span class="font-weight-medium">{{ progressPct }}%</span>
                 </div>
-                <v-chip
-                  v-else-if="b.status === 'completed'"
-                  size="x-small"
-                  color="success"
-                  variant="tonal"
-                >
-                  Asistió
-                </v-chip>
-                <v-chip
-                  v-else-if="b.status === 'no_show'"
-                  size="x-small"
-                  color="error"
-                  variant="tonal"
-                >
-                  No asistió
-                </v-chip>
-              </template>
-            </v-list-item>
-          </v-list>
-        </div>
-
-        <!-- Extras section -->
-        <div class="mb-4">
-          <div class="d-flex align-center justify-space-between mb-2">
-            <div class="text-caption text-medium-emphasis font-weight-medium">EXTRAS ATENDIDOS</div>
-            <div class="d-flex align-center ga-1">
-              <v-btn
-                size="x-small"
-                variant="text"
-                color="primary"
-                prepend-icon="mdi-layers"
-                @click="showAddExtraBatch = true"
-              >
-                Por lote
-              </v-btn>
-              <v-btn
-                size="x-small"
-                variant="text"
-                color="primary"
-                prepend-icon="mdi-plus"
-                @click="showAddExtra = true"
-              >
-                Agregar
-              </v-btn>
-            </div>
-          </div>
-
-          <div v-if="extras.length === 0" class="text-body-2 text-medium-emphasis text-center pa-2">
-            Sin extras registrados
-          </div>
-
-          <v-list
-            v-else
-            density="compact"
-            lines="one"
-            class="bg-transparent pa-0"
-          >
-            <v-list-item
-              v-for="extra in extras"
-              :key="extra.id"
-              class="px-2 mb-1 rounded"
-            >
-              <template #prepend>
-                <v-icon size="20" color="amber">mdi-account-plus</v-icon>
-              </template>
-              <v-list-item-title class="text-body-2">
-                {{ extra.customer_name }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="text-caption">
-                {{ extra.service?.name || 'Sin servicio' }}
-              </v-list-item-subtitle>
-              <template #append>
-                <v-btn
-                  icon="mdi-delete-outline"
-                  size="x-small"
-                  variant="text"
-                  color="error"
-                  @click="$emit('removeExtra', extra)"
+                <v-progress-linear
+                  :model-value="progressPct"
+                  height="8"
+                  rounded
+                  :color="progressPct === 100 ? 'success' : 'primary'"
                 />
-              </template>
-            </v-list-item>
-          </v-list>
-        </div>
+              </div>
 
-        <!-- Summary -->
-        <v-divider class="mb-3" />
-        <div class="d-flex justify-space-between text-body-2">
-          <span class="text-medium-emphasis">Programadas:</span>
-          <span class="font-weight-medium">{{ summary.total }}</span>
-        </div>
-        <div class="d-flex justify-space-between text-body-2">
-          <span class="text-medium-emphasis">Asistieron:</span>
-          <span class="font-weight-medium text-success">{{ summary.attended }}</span>
-        </div>
-        <div class="d-flex justify-space-between text-body-2">
-          <span class="text-medium-emphasis">No asistieron:</span>
-          <span class="font-weight-medium text-error">{{ summary.noShows }}</span>
-        </div>
-        <div class="d-flex justify-space-between text-body-2">
-          <span class="text-medium-emphasis">Pendientes:</span>
-          <span class="font-weight-medium text-warning">{{ summary.pending }}</span>
-        </div>
-        <div class="d-flex justify-space-between text-body-2">
-          <span class="text-medium-emphasis">Extras:</span>
-          <span class="font-weight-medium text-amber">{{ summary.extras }}</span>
-        </div>
-        <v-divider class="my-2" />
-        <div class="d-flex justify-space-between text-body-1 font-weight-bold">
-          <span>Total atendidos:</span>
-          <span class="text-primary">{{ summary.totalAttended }}</span>
+              <!-- KPI cards -->
+              <v-row class="mb-2">
+                <v-col
+                  v-for="kpi in kpis"
+                  :key="kpi.label"
+                  cols="6"
+                  sm="4"
+                  md="3"
+                >
+                  <v-card
+                    variant="tonal"
+                    :color="kpi.color"
+                    class="pa-2 text-center"
+                  >
+                    <div class="text-h6 font-weight-bold">{{ kpi.value }}</div>
+                    <div class="text-caption text-medium-emphasis">{{ kpi.label }}</div>
+                  </v-card>
+                </v-col>
+              </v-row>
+
+              <div class="d-flex align-center justify-space-between mb-2 flex-wrap ga-2">
+                <div class="text-caption text-medium-emphasis font-weight-medium">CITAS PROGRAMADAS</div>
+                <v-btn
+                  v-if="pendingBookings.length > 0"
+                  size="small"
+                  variant="tonal"
+                  color="success"
+                  prepend-icon="mdi-check-all"
+                  @click="$emit('markAllAttended', pendingBookings)"
+                >
+                  Marcar todos asistidos
+                </v-btn>
+              </div>
+
+              <div class="d-flex ga-1 flex-wrap mb-2">
+                <v-chip
+                  v-for="f in filterOptions"
+                  :key="f.value"
+                  size="small"
+                  :variant="filter === f.value ? 'flat' : 'tonal'"
+                  :color="filter === f.value ? 'primary' : 'default'"
+                  @click="filter = f.value"
+                >
+                  {{ f.label }}
+                  <span class="ml-1 text-caption">{{ f.count }}</span>
+                </v-chip>
+              </div>
+
+              <div v-if="filteredBookings.length === 0" class="text-center pa-4">
+                <p class="text-body-2 text-medium-emphasis">Sin citas en esta vista</p>
+              </div>
+
+              <v-list
+                v-else
+                density="compact"
+                lines="two"
+                class="bg-transparent pa-0"
+              >
+                <v-list-item
+                  v-for="b in filteredBookings"
+                  :key="b.id"
+                  class="px-2 mb-1 rounded"
+                  :class="bookingBgClass(b)"
+                >
+                  <template #prepend>
+                    <v-icon
+                      :color="b.status === 'completed' ? 'success' : b.status === 'no_show' ? 'error' : 'grey'"
+                      size="20"
+                    >
+                      {{ b.status === 'completed' ? 'mdi-check-circle' : b.status === 'no_show' ? 'mdi-close-circle' : 'mdi-clock-outline' }}
+                    </v-icon>
+                  </template>
+                  <v-list-item-title class="text-body-2 font-weight-medium">
+                    {{ b.customer_name || 'Sin nombre' }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-caption">
+                    {{ b.service?.name || 'Servicio' }} · {{ formatTime(b.start_time) }}
+                  </v-list-item-subtitle>
+                  <template #append>
+                    <div v-if="isPending(b)" class="d-flex ga-1">
+                      <v-btn
+                        size="small"
+                        icon="mdi-check"
+                        variant="tonal"
+                        color="success"
+                        title="Asistió"
+                        @click="$emit('markAttended', b)"
+                      />
+                      <v-btn
+                        size="small"
+                        icon="mdi-close"
+                        variant="tonal"
+                        color="error"
+                        title="No asistió"
+                        @click="$emit('markNoShow', b)"
+                      />
+                    </div>
+                    <v-chip
+                      v-else-if="b.status === 'completed'"
+                      size="x-small"
+                      color="success"
+                      variant="tonal"
+                    >
+                      Asistió
+                    </v-chip>
+                    <v-chip
+                      v-else-if="b.status === 'no_show'"
+                      size="x-small"
+                      color="error"
+                      variant="tonal"
+                    >
+                      No asistió
+                    </v-chip>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </div>
+          </v-tabs-window-item>
+
+          <!-- Extras -->
+          <v-tabs-window-item value="extras">
+            <div class="pa-3">
+              <div class="d-flex align-center justify-space-between mb-2 flex-wrap ga-2">
+                <div class="text-caption text-medium-emphasis font-weight-medium">EXTRAS ATENDIDOS</div>
+                <div class="d-flex align-center ga-1">
+                  <v-btn
+                    size="x-small"
+                    variant="text"
+                    color="primary"
+                    prepend-icon="mdi-layers"
+                    @click="showAddExtraBatch = true"
+                  >
+                    Por lote
+                  </v-btn>
+                  <v-btn
+                    size="x-small"
+                    variant="text"
+                    color="primary"
+                    prepend-icon="mdi-plus"
+                    @click="showAddExtra = true"
+                  >
+                    Agregar
+                  </v-btn>
+                </div>
+              </div>
+
+              <div v-if="extras.length === 0" class="text-body-2 text-medium-emphasis text-center pa-2">
+                Sin extras registrados
+              </div>
+
+              <v-list
+                v-else
+                density="compact"
+                lines="two"
+                class="bg-transparent pa-0"
+              >
+                <v-list-item
+                  v-for="extra in extras"
+                  :key="extra.id"
+                  class="px-2 mb-1 rounded"
+                >
+                  <template #prepend>
+                    <v-icon size="20" color="amber">mdi-account-plus</v-icon>
+                  </template>
+                  <v-list-item-title class="text-body-2">
+                    {{ extra.customer_name }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-caption">
+                    {{ extra.service?.name || 'Sin servicio' }}
+                    <template v-if="extra.service?.price">
+                      · {{ formatCurrency(extra.service.price) }}
+                    </template>
+                  </v-list-item-subtitle>
+                  <template #append>
+                    <v-btn
+                      icon="mdi-delete-outline"
+                      size="x-small"
+                      variant="text"
+                      color="error"
+                      @click="$emit('removeExtra', extra)"
+                    />
+                  </template>
+                </v-list-item>
+              </v-list>
+            </div>
+          </v-tabs-window-item>
+
+          <!-- Resumen económico-contable -->
+          <v-tabs-window-item value="summary">
+            <div class="pa-3">
+              <div class="text-caption text-medium-emphasis font-weight-medium mb-2">CONTEOS DEL DÍA</div>
+              <v-row>
+                <v-col
+                  v-for="kpi in kpis"
+                  :key="kpi.label"
+                  cols="6"
+                  sm="4"
+                  md="3"
+                >
+                  <v-card
+                    variant="tonal"
+                    :color="kpi.color"
+                    class="pa-2 text-center"
+                  >
+                    <div class="text-h6 font-weight-bold">{{ kpi.value }}</div>
+                    <div class="text-caption text-medium-emphasis">{{ kpi.label }}</div>
+                  </v-card>
+                </v-col>
+              </v-row>
+
+              <v-divider class="my-3" />
+
+              <div class="text-caption text-medium-emphasis font-weight-medium mb-2">RESUMEN ECONÓMICO</div>
+
+              <v-card variant="tonal" color="primary" class="pa-4 text-center mb-3">
+                <div class="text-caption text-medium-emphasis">Total ganado</div>
+                <div class="text-h5 font-weight-bold">{{ formatCurrency(totalRevenue) }}</div>
+              </v-card>
+
+              <div class="d-flex justify-space-between text-body-2 mb-1">
+                <span class="text-medium-emphasis">Ingresos programadas</span>
+                <span class="font-weight-medium text-success">{{ formatCurrency(revenueScheduled) }}</span>
+              </div>
+              <div class="d-flex justify-space-between text-body-2">
+                <span class="text-medium-emphasis">Ingresos extras</span>
+                <span class="font-weight-medium text-amber">{{ formatCurrency(revenueExtras) }}</span>
+              </div>
+
+              <v-divider class="my-3" />
+
+              <div class="text-caption text-medium-emphasis font-weight-medium mb-2">SERVICIOS REALIZADOS</div>
+              <div v-if="serviceBreakdown.length === 0" class="text-body-2 text-medium-emphasis text-center pa-2">
+                Sin servicios registrados
+              </div>
+              <v-list
+                v-else
+                density="compact"
+                lines="two"
+                class="bg-transparent pa-0"
+              >
+                <v-list-item
+                  v-for="row in serviceBreakdown"
+                  :key="row.name"
+                  class="px-2 mb-1 rounded"
+                >
+                  <v-list-item-title class="text-body-2 font-weight-medium">
+                    {{ row.name }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-caption">
+                    {{ row.count }} × {{ formatCurrency(row.unitPrice) }}
+                  </v-list-item-subtitle>
+                  <template #append>
+                    <span class="text-body-2 font-weight-medium">
+                      {{ formatCurrency(row.amount) }}
+                    </span>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </div>
+          </v-tabs-window-item>
+        </v-tabs-window>
+
+        <!-- Sticky footer -->
+        <div class="pa-3 flex-shrink-0 daily-closure__footer">
+          <v-btn
+            block
+            color="primary"
+            variant="flat"
+            size="large"
+            prepend-icon="mdi-check-decagram"
+            :loading="saving"
+            :disabled="!canClose || saving"
+            :title="canClose ? 'Finalizar el cierre del día' : 'Faltan citas por atender'"
+            @click="showCloseDialog = true"
+          >
+            Cerrar Día
+          </v-btn>
         </div>
       </template>
     </template>
@@ -314,6 +374,10 @@
           <div class="d-flex justify-space-between text-body-2">
             <span class="text-medium-emphasis">Extras</span>
             <span class="font-weight-medium text-amber">{{ summary.extras }}</span>
+          </div>
+          <div class="d-flex justify-space-between text-body-2">
+            <span class="text-medium-emphasis">Total ganado</span>
+            <span class="font-weight-medium text-primary">{{ formatCurrency(totalRevenue) }}</span>
           </div>
           <v-divider class="my-3" />
           <div class="d-flex justify-space-between text-body-1 font-weight-bold">
@@ -420,6 +484,7 @@ import { dailyClosureRepository } from '../repositories/daily-closure.repository
 import { useEmployeeStore } from '../stores/employee.store';
 import { useBookingStore } from '../stores/booking.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { formatCurrency } from '@/shared/utils/format';
 import type { Booking, DailyExtra } from '../types/booking.types';
 
 const props = defineProps<{
@@ -450,6 +515,7 @@ const batchForm = ref({ service_id: '' as string | '', count: 1 as number });
 const filter = ref<'all' | 'pending' | 'attended' | 'no_show'>('all');
 const showCloseDialog = ref(false);
 const closed = ref(false);
+const activeTab = ref<'scheduled' | 'extras' | 'summary'>('scheduled');
 
 const bookings = computed(() => {
   if (!props.employeeId) return [];
@@ -512,14 +578,38 @@ const filteredBookings = computed(() => {
   }
 });
 
-const formattedDate = computed(() => {
-  if (!props.date) return '';
-  return new Date(props.date + 'T12:00:00').toLocaleDateString('es-MX', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+const revenueScheduled = computed(() =>
+  bookings.value
+    .filter((b) => b.status === 'completed')
+    .reduce((sum, b) => sum + (b.service?.price ?? 0), 0),
+);
+
+const revenueExtras = computed(() =>
+  extras.value.reduce((sum, e) => sum + (e.service?.price ?? 0), 0),
+);
+
+const totalRevenue = computed(() => revenueScheduled.value + revenueExtras.value);
+
+const serviceBreakdown = computed(() => {
+  const map = new Map<string, { name: string; count: number; unitPrice: number; amount: number }>();
+  for (const b of bookings.value) {
+    if (b.status !== 'completed') continue;
+    const name = b.service?.name || 'Servicio';
+    const price = b.service?.price ?? 0;
+    const row = map.get(name) ?? { name, count: 0, unitPrice: price, amount: 0 };
+    row.count += 1;
+    row.amount += price;
+    map.set(name, row);
+  }
+  for (const e of extras.value) {
+    const name = e.service?.name || 'Extra';
+    const price = e.service?.price ?? 0;
+    const row = map.get(name) ?? { name, count: 0, unitPrice: price, amount: 0 };
+    row.count += 1;
+    row.amount += price;
+    map.set(name, row);
+  }
+  return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
 });
 
 const serviceOptions = computed(() =>
@@ -642,6 +732,7 @@ async function onAddExtraBatch() {
 
 watch(() => [props.employeeId, props.date], () => {
   filter.value = 'all';
+  activeTab.value = 'scheduled';
   loadClosure();
   loadExtras();
   if (props.employeeId) {
@@ -651,3 +742,15 @@ watch(() => [props.employeeId, props.date], () => {
 
 defineExpose({ loadExtras });
 </script>
+
+<style scoped>
+.daily-closure__window {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.daily-closure__footer {
+  border-top: 1px solid rgb(var(--v-border));
+}
+</style>

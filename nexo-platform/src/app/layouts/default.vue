@@ -2,6 +2,7 @@
   <v-layout>
     <AppSidebar />
     <AppTopbar />
+    <NotificationDrawer />
     <PushOptInBanner />
     <PwaInstallBanner />
     <v-main :style="mainStyle" class="app-main">
@@ -28,6 +29,7 @@ import { computed } from 'vue';
 import { useDisplay } from 'vuetify';
 import AppSidebar from '@/shared/components/AppSidebar.vue';
 import AppTopbar from '@/shared/components/AppTopbar.vue';
+import NotificationDrawer from '@/modules/notifications/components/NotificationDrawer.vue';
 import PushOptInBanner from '@/shared/components/PushOptInBanner.vue';
 import PwaInstallBanner from '@/shared/components/PwaInstallBanner.vue';
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';

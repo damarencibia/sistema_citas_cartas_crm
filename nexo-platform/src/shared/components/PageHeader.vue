@@ -1,11 +1,15 @@
 <template>
   <div class="page-header mb-6">
     <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
-      <div>
-        <h1 class="page-header__title">{{ title }}</h1>
+      <div
+        v-if="title || subtitle"
+        class="page-header__titles"
+        :class="{ 'd-sm-none': !alwaysShowTitle }"
+      >
+        <h1 v-if="title" class="page-header__title">{{ title }}</h1>
         <p v-if="subtitle" class="page-header__subtitle">{{ subtitle }}</p>
       </div>
-      <div class="d-flex ga-2 flex-wrap">
+      <div class="d-flex ga-2 flex-wrap ml-auto">
         <slot name="actions" />
       </div>
     </div>
@@ -17,8 +21,9 @@
 
 <script setup lang="ts">
 defineProps<{
-  title: string;
+  title?: string;
   subtitle?: string;
+  alwaysShowTitle?: boolean;
 }>();
 </script>
 

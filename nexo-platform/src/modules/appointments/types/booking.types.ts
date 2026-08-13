@@ -36,7 +36,7 @@ export interface Booking extends BaseEntity {
   requires_approval: boolean;
   participant_count: number;
   whatsapp_consent: boolean;
-  service?: { name: string; duration_minutes: number; color: string };
+  service?: { name: string; duration_minutes: number; color: string; price?: number };
   employee?: { first_name: string; last_name: string; color: string };
 }
 
@@ -93,7 +93,6 @@ export interface BookingFilters {
   date_from?: string;
   date_to?: string;
   employee_id?: string | null;
-  status?: BookingStatus | null;
 }
 
 export interface AvailableSlot {
@@ -272,7 +271,7 @@ export interface DailyExtra {
   service_id: string | null;
   notes: string | null;
   created_at: string;
-  service?: { name: string; duration_minutes: number; color: string };
+  service?: { name: string; duration_minutes: number; color: string; price?: number };
 }
 
 export interface CreateDailyExtraDTO {

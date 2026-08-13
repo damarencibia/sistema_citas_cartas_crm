@@ -64,12 +64,6 @@ export const routes: RouteRecordRaw[] = [
             component: () => import('@/modules/appointments/views/BookingHistoryView.vue'),
             meta: { title: 'Historial' },
           },
-          {
-            path: 'notifications',
-            name: 'notifications',
-            component: () => import('@/modules/notifications/views/NotificationsView.vue'),
-            meta: { title: 'Notificaciones' },
-          },
         ],
       },
       {

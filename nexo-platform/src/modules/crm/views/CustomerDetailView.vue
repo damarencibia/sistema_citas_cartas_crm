@@ -3,6 +3,7 @@
     <PageHeader
       :title="`Cliente: ${customer.first_name} ${customer.last_name}`"
       subtitle="Perfil completo del cliente"
+      always-show-title
     />
     <v-row>
       <v-col cols="12" md="4">

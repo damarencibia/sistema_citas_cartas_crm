@@ -4,7 +4,17 @@
 
     <v-card v-if="tabKey === 'reservas'">
       <v-card-text class="pa-4">
-        <div class="d-flex justify-center mb-4">
+        <div class="d-flex align-center justify-center ga-4 mb-4 flex-wrap">
+          <v-select
+            v-model="filters.employee_id"
+            :items="employeeOptions"
+            item-title="text"
+            item-value="value"
+            label="Empleado"
+            density="compact"
+            hide-details
+            style="max-width: 240px;"
+          />
           <v-btn-toggle
             v-model="viewSegment"
             density="compact"
@@ -14,6 +24,7 @@
           >
             <v-btn value="dia">Día</v-btn>
             <v-btn value="semana">Semana</v-btn>
+            <v-btn value="mes">Mes</v-btn>
           </v-btn-toggle>
         </div>
 
@@ -30,8 +41,21 @@
           />
         </template>
 
+        <template v-else-if="viewSegment === 'mes'">
+          <MonthCalendar
+            :month-anchor="monthAnchor"
+            :counts="monthCounts"
+            :selected-date="filters.date"
+            :loading="monthLoading"
+            @select-date="onSelectMonthDay"
+            @prev-month="shiftMonth(-1)"
+            @next-month="shiftMonth(1)"
+            @today="goToTodayMonth"
+          />
+        </template>
+
         <template v-else>
-          <div class="d-flex align-center ga-2 mb-4 flex-wrap">
+          <div class="d-flex align-center justify-space-between ga-2 mb-4 flex-wrap">
             <v-tabs v-model="reservasTab" density="compact" color="primary">
               <v-tab value="all">Todas</v-tab>
               <v-tab value="approval">
@@ -45,46 +69,21 @@
                 />
               </v-tab>
             </v-tabs>
+            <span v-if="filters.date" class="text-subtitle-2 text-medium-emphasis">
+              Reservas del {{ formatDate(filters.date) }}
+            </span>
+            <v-btn
+              size="small"
+              color="primary"
+              variant="tonal"
+              prepend-icon="mdi-clipboard-check-outline"
+              :disabled="!filters.employee_id"
+              :title="filters.employee_id ? 'Abrir el cierre del día' : 'Selecciona un empleado para cerrar el día'"
+              @click="openClosure"
+            >
+              Cerrar Día
+            </v-btn>
           </div>
-
-          <v-card class="mb-4 pa-4">
-            <v-row>
-              <v-col cols="12" sm="4">
-                <v-text-field
-                  v-model="filters.date"
-                  label="Fecha"
-                  type="date"
-                  density="compact"
-                  hide-details
-                  clearable
-                />
-              </v-col>
-              <v-col cols="12" sm="4">
-                <v-select
-                  v-model="filters.employee_id"
-                  :items="employeeOptions"
-                  item-title="text"
-                  item-value="value"
-                  label="Empleado"
-                  density="compact"
-                  hide-details
-                  clearable
-                />
-              </v-col>
-              <v-col cols="12" sm="4">
-                <v-select
-                  v-model="filters.status"
-                  :items="statusOptions"
-                  item-title="text"
-                  item-value="value"
-                  label="Estado"
-                  density="compact"
-                  hide-details
-                  clearable
-                />
-              </v-col>
-            </v-row>
-          </v-card>
 
           <v-tabs-window v-model="reservasTab">
             <v-tabs-window-item value="all">
@@ -130,47 +129,6 @@
       </v-card-text>
     </v-card>
 
-    <v-card v-else>
-      <v-card-text class="pa-4">
-        <v-card class="mb-4 pa-4">
-          <v-row>
-            <v-col cols="12" sm="6">
-              <v-select
-                v-model="closureEmployeeId"
-                :items="employeeOptions"
-                item-title="text"
-                item-value="value"
-                label="Empleado"
-                density="compact"
-                hide-details
-                clearable
-              />
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="closureDate"
-                label="Fecha"
-                type="date"
-                density="compact"
-                hide-details
-              />
-            </v-col>
-          </v-row>
-        </v-card>
-
-        <DailyClosurePanel
-          ref="closurePanelRef"
-          :employee-id="closureEmployeeId"
-          :date="closureDate"
-          :tenant-id="tenantId"
-          @mark-attended="onMarkAttended"
-          @mark-no-show="onMarkNoShow"
-          @mark-all-attended="onMarkAllAttended"
-          @remove-extra="onRemoveExtra"
-        />
-      </v-card-text>
-    </v-card>
-
     <BookingForm
       :visible="showForm"
       :booking="editingBooking"
@@ -189,12 +147,65 @@
       @delete="onDeleteBooking"
       @edit="onEditBooking"
     />
+
+    <v-dialog
+      v-model="showClosure"
+      :fullscreen="smAndDown"
+      class="closure-dialog"
+      content-class="closure-dialog__content"
+    >
+      <v-card class="d-flex flex-column h-100">
+        <v-toolbar density="compact" color="transparent" class="flex-shrink-0">
+          <v-icon color="primary" class="ml-4">mdi-clipboard-check-outline</v-icon>
+          <v-toolbar-title class="text-subtitle-1 font-weight-semibold ml-1">
+            Cierre del Día
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn
+            icon="mdi-close"
+            size="small"
+            variant="text"
+            aria-label="Cerrar cierre del día"
+            @click="showClosure = false"
+          />
+        </v-toolbar>
+
+        <div class="px-4 pb-2 d-flex align-center ga-2 flex-wrap flex-shrink-0">
+          <v-chip
+            size="small"
+            variant="tonal"
+            color="primary"
+            prepend-icon="mdi-calendar-today"
+          >
+            {{ filters.date ? formatDate(filters.date) : '' }}
+          </v-chip>
+          <v-chip size="small" variant="tonal" prepend-icon="mdi-account">
+            {{ closureEmployeeName }}
+          </v-chip>
+        </div>
+        <v-divider />
+
+        <div class="flex-grow-1 d-flex flex-column closure-dialog__body">
+          <DailyClosurePanel
+            ref="closurePanelRef"
+            :employee-id="filters.employee_id"
+            :date="filters.date ?? ''"
+            :tenant-id="tenantId"
+            @mark-attended="onMarkAttended"
+            @mark-no-show="onMarkNoShow"
+            @mark-all-attended="onMarkAllAttended"
+            @remove-extra="onRemoveExtra"
+          />
+        </div>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useDisplay } from 'vuetify';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useBookingStore } from '../stores/booking.store';
@@ -206,11 +217,13 @@ import BookingApprovalList from '../components/BookingApprovalList.vue';
 import WaitlistPanel from '../components/WaitlistPanel.vue';
 import DailyClosurePanel from '../components/DailyClosurePanel.vue';
 import WeekDayStrip from '../components/WeekDayStrip.vue';
+import MonthCalendar from '../components/MonthCalendar.vue';
 import type { WeekDayCount } from '../components/WeekDayStrip.vue';
 import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
 import { bookingRepository } from '../repositories/booking.repository';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { formatDate } from '@/shared/utils/format';
 import type { Booking, CreateBookingDTO, WaitlistEntry, DailyExtra } from '../types/booking.types';
 
 const bookingStore = useBookingStore();
@@ -220,38 +233,39 @@ const authStore = useAuthStore();
 const notification = useNotification();
 const route = useRoute();
 const router = useRouter();
+const { smAndDown } = useDisplay();
 
 const reservasTab = ref<'all' | 'approval'>('all');
-const viewSegment = ref<'dia' | 'semana'>('dia');
+const viewSegment = ref<'dia' | 'semana' | 'mes'>('dia');
 const weekAnchor = ref(new Date().toISOString().split('T')[0]);
 const weekLoading = ref(false);
 const weekCounts = ref<Record<string, WeekDayCount>>({});
+const monthAnchor = ref(new Date().toISOString().split('T')[0]);
+const monthLoading = ref(false);
+const monthCounts = ref<Record<string, WeekDayCount>>({});
 const showForm = ref(false);
 const showDetail = ref(false);
+const showClosure = ref(false);
 const selectedBooking = ref<Booking | null>(null);
 const editingBooking = ref<Booking | null>(null);
 const closurePanelRef = ref<InstanceType<typeof DailyClosurePanel> | null>(null);
 const pendingWaitlistConversion = ref<WaitlistEntry | null>(null);
-const closureDate = ref(new Date().toISOString().split('T')[0]);
-const closureEmployeeId = ref<string | null>(null);
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
 
 const filters = reactive({
   date: new Date().toISOString().split('T')[0] as string | null,
   employee_id: null as string | null,
-  status: null as string | null,
 });
 
-const tabKey = computed<'reservas' | 'espera' | 'cierre'>(() => {
+const tabKey = computed<'reservas' | 'espera'>(() => {
   const t = route.query.tab;
-  return t === 'espera' || t === 'cierre' ? t : 'reservas';
+  return t === 'espera' ? 'espera' : 'reservas';
 });
 
 const submoduleTitle = computed(() => {
   switch (tabKey.value) {
     case 'espera': return 'Espera';
-    case 'cierre': return 'Cierre';
     default: return 'Reservas';
   }
 });
@@ -265,15 +279,17 @@ const employeeOptions = computed(() =>
   })),
 );
 
-const statusOptions = [
-  { value: 'confirmed', text: 'Confirmada' },
-  { value: 'in_progress', text: 'En Progreso' },
-  { value: 'completed', text: 'Completada' },
-  { value: 'no_show', text: 'No Asistió' },
-  { value: 'cancelled', text: 'Cancelada' },
-  { value: 'pending_approval', text: 'Pendiente Aprobación' },
-  { value: 'pending_confirmation', text: 'Pendiente Confirmación' },
-];
+const closureEmployeeName = computed(() => {
+  if (!filters.employee_id) return 'Sin empleado';
+  const emp = employeeStore.employees.find((e) => e.id === filters.employee_id);
+  return emp ? `${emp.first_name} ${emp.last_name}` : 'Empleado';
+});
+
+function openClosure() {
+  if (!filters.employee_id || !filters.date) return;
+  showClosure.value = true;
+  employeeStore.fetchEmployeeServices(filters.employee_id);
+}
 
 const weekDates = computed(() => {
   const d = new Date(weekAnchor.value + 'T12:00:00');
@@ -326,16 +342,73 @@ function onSelectWeekDay(day: string) {
   viewSegment.value = 'dia';
 }
 
+const monthDates = computed(() => {
+  const d = new Date(monthAnchor.value + 'T12:00:00');
+  const first = new Date(d.getFullYear(), d.getMonth(), 1);
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return { start: toIsoDate(first), end: toIsoDate(last) };
+});
+
+async function loadMonthCounts() {
+  monthLoading.value = true;
+  try {
+    const { start, end } = monthDates.value;
+    const data = await bookingRepository.getByFilters({
+      date_from: start,
+      date_to: end,
+      employee_id: filters.employee_id,
+    });
+    const counts: Record<string, WeekDayCount> = {};
+    for (const b of data) {
+      if (b.status === 'cancelled' || b.status === 'no_show') continue;
+      counts[b.date] = counts[b.date] ?? { total: 0, pending: 0 };
+      counts[b.date].total += 1;
+      if (b.status === 'pending_approval') counts[b.date].pending += 1;
+    }
+    monthCounts.value = counts;
+  } finally {
+    monthLoading.value = false;
+  }
+}
+
+function shiftMonth(months: number) {
+  const d = new Date(monthAnchor.value + 'T12:00:00');
+  d.setMonth(d.getMonth() + months);
+  monthAnchor.value = toIsoDate(d);
+}
+
+function goToTodayMonth() {
+  monthAnchor.value = new Date().toISOString().split('T')[0];
+}
+
+function onSelectMonthDay(day: string) {
+  filters.date = day;
+  viewSegment.value = 'dia';
+}
+
+function toIsoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 watch(() => viewSegment.value, (segment) => {
   if (segment === 'semana') loadWeekCounts();
+  if (segment === 'mes') loadMonthCounts();
 });
 
 watch(() => filters.employee_id, () => {
   if (viewSegment.value === 'semana') loadWeekCounts();
+  if (viewSegment.value === 'mes') loadMonthCounts();
 });
 
 watch(weekAnchor, () => {
   if (viewSegment.value === 'semana') loadWeekCounts();
+});
+
+watch(monthAnchor, () => {
+  if (viewSegment.value === 'mes') loadMonthCounts();
 });
 
 onMounted(async () => {
@@ -347,8 +420,10 @@ onMounted(async () => {
       (e) => e.user_id === userId || e.supabase_user_id === userId,
     );
     myEmployeeId.value = match?.id ?? null;
-    closureEmployeeId.value = myEmployeeId.value;
     filters.employee_id = myEmployeeId.value;
+  } else {
+    const firstEmployeeId = employeeStore.activeEmployees[0]?.id ?? null;
+    filters.employee_id = firstEmployeeId;
   }
   await loadForTab(tabKey.value);
   await bookingStore.fetchWaitlist();
@@ -373,7 +448,6 @@ watch(filters, () => {
   bookingStore.setFilters({
     date: filters.date ?? undefined,
     employee_id: filters.employee_id,
-    status: filters.status as Booking['status'] | null,
   });
   if (tabKey.value === 'reservas') bookingStore.fetchBookings();
 }, { deep: true });
@@ -383,7 +457,6 @@ async function loadForTab(tab: string) {
     await bookingStore.fetchBookings({
       date: filters.date ?? undefined,
       employee_id: filters.employee_id,
-      status: filters.status as Booking['status'] | null,
     });
   }
 }
@@ -627,3 +700,18 @@ async function onRemoveExtra(extra: DailyExtra) {
   }
 }
 </script>
+
+<style scoped>
+.closure-dialog__body {
+  min-height: 0;
+}
+</style>
+
+<style>
+@media (min-width: 600px) {
+  .closure-dialog__content {
+    width: 600px;
+    height: min(90vh, 720px);
+  }
+}
+</style>

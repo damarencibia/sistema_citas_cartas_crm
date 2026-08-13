@@ -8,13 +8,13 @@ function ttlCutoff(): string {
 }
 
 export const notificationRepository = {
-  async getMine(limit = 50): Promise<AppNotification[]> {
+  async getMine(limit = 50, offset = 0): Promise<AppNotification[]> {
     const { data, error } = await (supabase as any)
       .from('notifications')
       .select('*')
       .gte('created_at', ttlCutoff())
       .order('created_at', { ascending: false })
-      .limit(limit);
+      .range(offset, offset + limit - 1);
     if (error) throw error;
     return (data ?? []) as AppNotification[];
   },

@@ -5,11 +5,15 @@ import type { AppNotification } from '../types/notification.types';
 
 type RealtimeChannel = ReturnType<typeof supabase.channel>;
 
+const PAGE_SIZE = 20;
+
 export const useNotificationStore = defineStore('notifications', {
   state: () => ({
     items: [] as AppNotification[],
     unreadCount: 0,
     loading: false,
+    loadingMore: false,
+    hasMore: false,
     channel: null as RealtimeChannel | null,
   }),
 
@@ -22,13 +26,34 @@ export const useNotificationStore = defineStore('notifications', {
       this.loading = true;
       try {
         const [items, unread] = await Promise.all([
-          notificationRepository.getMine(30),
+          notificationRepository.getMine(PAGE_SIZE + 1, 0),
           notificationRepository.getUnreadCount(),
         ]);
-        this.items = items;
+        if (items.length > PAGE_SIZE) {
+          this.items = items.slice(0, PAGE_SIZE);
+          this.hasMore = true;
+        } else {
+          this.items = items;
+          this.hasMore = false;
+        }
         this.unreadCount = unread;
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchMore() {
+      if (this.loadingMore || !this.hasMore) return;
+      this.loadingMore = true;
+      try {
+        const more = await notificationRepository.getMine(PAGE_SIZE + 1, this.items.length);
+        const incoming = more.length > PAGE_SIZE ? more.slice(0, PAGE_SIZE) : more;
+        this.items = this.items.concat(
+          incoming.filter((n) => !this.items.some((existing) => existing.id === n.id)),
+        );
+        this.hasMore = more.length > PAGE_SIZE;
+      } finally {
+        this.loadingMore = false;
       }
     },
 

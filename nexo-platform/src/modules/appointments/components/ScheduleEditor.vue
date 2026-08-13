@@ -71,12 +71,22 @@
 
           <div class="d-flex align-center ga-1 mb-3">
             <v-switch
-              v-model="autoConfirmDefault"
+              :model-value="autoConfirmGlobal"
+              :indeterminate="autoConfirmGlobal === null"
               label="Auto-confirmar reservas"
               color="primary"
               density="compact"
               hide-details
+              @update:model-value="onAutoConfirmToggle"
             />
+            <v-chip
+              v-if="autoConfirmGlobal === null"
+              size="small"
+              color="info"
+              variant="tonal"
+            >
+              Personalizado
+            </v-chip>
             <v-tooltip location="top" max-width="300">
               <template #activator="{ props }">
                 <v-icon v-bind="props" size="small" color="medium-emphasis">
@@ -86,7 +96,8 @@
               <span>
                 Si está activo, las reservas del portal se agendan automáticamente en todos los
                 turnos de este horario. Si no, quedan como Pendientes de Confirmación para aprobar.
-                Puedes ajustar cada turno individualmente.
+                Puedes ajustar cada turno individualmente. Si hay turnos con ambas opciones, el
+                estado global queda como Personalizado.
               </span>
             </v-tooltip>
           </div>
@@ -202,8 +213,6 @@ const selectedEmployeeId = computed<string | null>({
 const saving = ref(false);
 const dirty = ref(false);
 const suppressWatch = ref(false);
-const syncAutoConfirm = ref(false);
-const autoConfirmDefault = ref(true);
 
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
@@ -239,6 +248,27 @@ function resolveEmployeeId(id: string | null): string | null {
 
 const localShifts = reactive<Map<number, ScheduleShiftInput[]>>(new Map());
 
+const hasAnyShift = computed(() => {
+  for (const [, shifts] of localShifts) {
+    if (shifts.length) return true;
+  }
+  return false;
+});
+
+const autoConfirmGlobal = computed<boolean | null>(() => {
+  let hasTrue = false;
+  let hasFalse = false;
+  for (const [, shifts] of localShifts) {
+    for (const s of shifts) {
+      if (s.auto_confirm === false) hasFalse = true;
+      else hasTrue = true;
+      if (hasTrue && hasFalse) return null;
+    }
+  }
+  if (hasFalse && !hasTrue) return false;
+  return true;
+});
+
 const daysOfWeek = [
   { value: 1, label: 'Lunes' },
   { value: 2, label: 'Martes' },
@@ -257,38 +287,38 @@ function defaultShift(): ScheduleShiftInput {
     slot_interval_minutes: 30,
     advance_booking_days: 7,
     min_advance_minutes: 15,
-    auto_confirm: autoConfirmDefault.value,
+    auto_confirm: autoConfirmGlobal.value === false ? false : true,
   };
 }
 
 function initLocalShifts() {
   localShifts.clear();
-  let allAutoConfirm = true;
-  let hasShifts = false;
   for (const day of daysOfWeek) {
     const daySchedules = scheduleStore.schedules.filter(
       (s) => s.day_of_week === day.value && s.is_active,
     );
-    if (daySchedules.length) hasShifts = true;
     localShifts.set(
       day.value,
-      daySchedules.map((s) => {
-        if (s.auto_confirm === false) allAutoConfirm = false;
-        return {
-          start_time: s.start_time,
-          end_time: s.end_time,
-          slot_mode: s.slot_mode ?? 'fixed',
-          slot_interval_minutes: s.slot_interval_minutes ?? 30,
-          advance_booking_days: s.advance_booking_days ?? 7,
-          min_advance_minutes: s.min_advance_minutes ?? 15,
-          auto_confirm: s.auto_confirm ?? true,
-        };
-      }),
+      daySchedules.map((s) => ({
+        start_time: s.start_time,
+        end_time: s.end_time,
+        slot_mode: s.slot_mode ?? 'fixed',
+        slot_interval_minutes: s.slot_interval_minutes ?? 30,
+        advance_booking_days: s.advance_booking_days ?? 7,
+        min_advance_minutes: s.min_advance_minutes ?? 15,
+        auto_confirm: s.auto_confirm ?? true,
+      })),
     );
   }
-  syncAutoConfirm.value = true;
-  autoConfirmDefault.value = !hasShifts || allAutoConfirm;
-  syncAutoConfirm.value = false;
+}
+
+function onAutoConfirmToggle() {
+  if (!hasAnyShift.value) return;
+  const next = autoConfirmGlobal.value === true ? false : true;
+  for (const [, shifts] of localShifts) {
+    for (const s of shifts) s.auto_confirm = next;
+  }
+  dirty.value = true;
 }
 
 const summary = computed(() => {
@@ -489,16 +519,4 @@ watch(selectedEmployeeId, async (id) => {
   initLocalShifts();
   dirty.value = false;
 });
-
-watch(
-  autoConfirmDefault,
-  (val) => {
-    if (syncAutoConfirm.value) return;
-    for (const [, shifts] of localShifts) {
-      for (const s of shifts) s.auto_confirm = val;
-    }
-    dirty.value = true;
-  },
-  { flush: 'sync' },
-);
 </script>

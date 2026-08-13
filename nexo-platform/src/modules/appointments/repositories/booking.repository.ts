@@ -95,7 +95,7 @@ export const bookingRepository = {
     let query = supabase
       .from(TABLE)
       .select(
-        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+        '*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)',
       )
       .is('deleted_at', null)
       .order('date', { ascending: true })
@@ -113,9 +113,6 @@ export const bookingRepository = {
     if (filters.employee_id) {
       query = query.eq('employee_id', filters.employee_id);
     }
-    if (filters.status) {
-      query = query.eq('status', filters.status);
-    }
 
     const { data, error } = await query;
     if (error) throw error;
@@ -126,7 +123,7 @@ export const bookingRepository = {
     const { data, error } = await supabase
       .from(TABLE)
       .select(
-        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+        '*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)',
       )
       .eq('id', id)
       .single();
@@ -531,7 +528,7 @@ export const bookingRepository = {
     const { data, error } = await supabase
       .from(TABLE)
       .select(
-        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+        '*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)',
       )
       .eq('employee_id', employeeId)
       .eq('date', date)

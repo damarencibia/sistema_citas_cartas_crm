@@ -13,10 +13,10 @@
             <v-avatar
               color="primary"
               size="40"
-        variant="outlined"
+              variant="flat"
               rounded="lg"
             >
-              <span class="text-white font-weight-bold" style="font-size: 18px;">N</span>
+              <span class="text-white font-weight-bold" style="font-size: 18px;">{{ tenantInitial }}</span>
             </v-avatar>
             <div class="overflow-hidden">
               <div class="text-h6 font-weight-semibold text-truncate" style="line-height: 1.2;">
@@ -174,6 +174,11 @@ const route = useRoute();
 const router = useRouter();
 const { smAndDown } = useDisplay();
 
+const tenantInitial = computed(() => {
+  const name = tenantStore.tenant?.name?.trim();
+  return name ? name.charAt(0).toUpperCase() : 'N';
+});
+
 const isDesktop = computed(() => !smAndDown.value);
 const primaryExpanded = ref(false);
 const mobileView = ref<'modules' | string>('modules');
@@ -201,7 +206,9 @@ function onMobileModuleClick(mod: SidebarModule) {
 }
 
 watch(() => uiStore.sidebar, (open) => {
-  if (open) mobileView.value = 'modules';
+  if (!open) return;
+  const mod = activeModule.value;
+  mobileView.value = mod && mod.options.length ? mod.key : 'modules';
 });
 
 watch(isDesktop, (val) => {

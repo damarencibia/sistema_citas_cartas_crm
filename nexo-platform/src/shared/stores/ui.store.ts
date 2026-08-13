@@ -12,6 +12,7 @@ interface UiStoreState {
   theme: 'light' | 'dark';
   globalLoading: boolean;
   snackbar: Snackbar;
+  notificationsOpen: boolean;
 }
 
 export const useUiStore = defineStore('ui', {
@@ -21,6 +22,7 @@ export const useUiStore = defineStore('ui', {
     theme: 'light',
     globalLoading: false,
     snackbar: { visible: false, message: '', color: 'info' },
+    notificationsOpen: false,
   }),
 
   actions: {
