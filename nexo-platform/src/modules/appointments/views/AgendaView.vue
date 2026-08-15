@@ -76,12 +76,18 @@
               size="small"
               color="primary"
               variant="tonal"
-              prepend-icon="mdi-clipboard-check-outline"
+              :prepend-icon="dayClosed ? 'mdi-clipboard-text-outline' : 'mdi-clipboard-check-outline'"
               :disabled="!filters.employee_id"
-              :title="filters.employee_id ? 'Abrir el cierre del día' : 'Selecciona un empleado para cerrar el día'"
+              :title="
+                dayClosed
+                  ? 'Ver el resumen del cierre del día'
+                  : filters.employee_id
+                    ? 'Abrir el cierre del día'
+                    : 'Selecciona un empleado para cerrar el día'
+              "
               @click="openClosure"
             >
-              Cerrar Día
+              {{ dayClosed ? 'Ver Resumen' : 'Cerrar Día' }}
             </v-btn>
           </div>
 
@@ -149,10 +155,10 @@
     />
 
     <v-dialog
+      v-if="smAndDown"
       v-model="showClosure"
-      :fullscreen="smAndDown"
+      fullscreen
       class="closure-dialog"
-      content-class="closure-dialog__content"
     >
       <v-card class="d-flex flex-column h-100">
         <v-toolbar density="compact" color="transparent" class="flex-shrink-0">
@@ -195,10 +201,70 @@
             @mark-no-show="onMarkNoShow"
             @mark-all-attended="onMarkAllAttended"
             @remove-extra="onRemoveExtra"
+            @closure-changed="dayClosed = $event"
+            @close-dialog="showClosure = false"
           />
         </div>
       </v-card>
     </v-dialog>
+
+    <v-navigation-drawer
+      v-else
+      v-model="showClosure"
+      temporary
+      location="right"
+      width="600"
+      :scrim="false"
+      class="closure-drawer"
+      :style="{ position: 'fixed', top: '0', height: '100dvh', zIndex: 1001 }"
+    >
+      <div class="d-flex flex-column h-100">
+        <v-toolbar density="compact" color="transparent" class="flex-shrink-0">
+          <v-icon color="primary" class="ml-4">mdi-clipboard-check-outline</v-icon>
+          <v-toolbar-title class="text-subtitle-1 font-weight-semibold ml-1">
+            Cierre del Día
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn
+            icon="mdi-close"
+            size="small"
+            variant="text"
+            aria-label="Cerrar cierre del día"
+            @click="showClosure = false"
+          />
+        </v-toolbar>
+
+        <div class="px-4 pb-2 d-flex align-center ga-2 flex-wrap flex-shrink-0">
+          <v-chip
+            size="small"
+            variant="tonal"
+            color="primary"
+            prepend-icon="mdi-calendar-today"
+          >
+            {{ filters.date ? formatDate(filters.date) : '' }}
+          </v-chip>
+          <v-chip size="small" variant="tonal" prepend-icon="mdi-account">
+            {{ closureEmployeeName }}
+          </v-chip>
+        </div>
+        <v-divider />
+
+        <div class="flex-grow-1 d-flex flex-column closure-dialog__body">
+          <DailyClosurePanel
+            ref="closurePanelRef"
+            :employee-id="filters.employee_id"
+            :date="filters.date ?? ''"
+            :tenant-id="tenantId"
+            @mark-attended="onMarkAttended"
+            @mark-no-show="onMarkNoShow"
+            @mark-all-attended="onMarkAllAttended"
+            @remove-extra="onRemoveExtra"
+            @closure-changed="dayClosed = $event"
+            @close-dialog="showClosure = false"
+          />
+        </div>
+      </div>
+    </v-navigation-drawer>
   </div>
 </template>
 
@@ -220,6 +286,7 @@ import WeekDayStrip from '../components/WeekDayStrip.vue';
 import MonthCalendar from '../components/MonthCalendar.vue';
 import type { WeekDayCount } from '../components/WeekDayStrip.vue';
 import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
+import { dailyClosureRepository } from '../repositories/daily-closure.repository';
 import { bookingRepository } from '../repositories/booking.repository';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
@@ -246,6 +313,7 @@ const monthCounts = ref<Record<string, WeekDayCount>>({});
 const showForm = ref(false);
 const showDetail = ref(false);
 const showClosure = ref(false);
+const dayClosed = ref(false);
 const selectedBooking = ref<Booking | null>(null);
 const editingBooking = ref<Booking | null>(null);
 const closurePanelRef = ref<InstanceType<typeof DailyClosurePanel> | null>(null);
@@ -289,6 +357,22 @@ function openClosure() {
   if (!filters.employee_id || !filters.date) return;
   showClosure.value = true;
   employeeStore.fetchEmployeeServices(filters.employee_id);
+}
+
+async function loadDayClosed() {
+  if (!filters.employee_id || !filters.date) {
+    dayClosed.value = false;
+    return;
+  }
+  try {
+    const closure = await dailyClosureRepository.getByEmployeeAndDate(
+      filters.employee_id,
+      filters.date,
+    );
+    dayClosed.value = !!closure;
+  } catch {
+    dayClosed.value = false;
+  }
 }
 
 const weekDates = computed(() => {
@@ -402,6 +486,8 @@ watch(() => filters.employee_id, () => {
   if (viewSegment.value === 'semana') loadWeekCounts();
   if (viewSegment.value === 'mes') loadMonthCounts();
 });
+
+watch(() => [filters.employee_id, filters.date], loadDayClosed, { immediate: true });
 
 watch(weekAnchor, () => {
   if (viewSegment.value === 'semana') loadWeekCounts();
@@ -708,10 +794,22 @@ async function onRemoveExtra(extra: DailyExtra) {
 </style>
 
 <style>
-@media (min-width: 600px) {
-  .closure-dialog__content {
-    width: 600px;
-    height: min(90vh, 720px);
-  }
+.closure-drawer {
+  position: fixed !important;
+  top: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 1001 !important;
+  transition-property: transform !important;
+  transition-duration: 0.35s !important;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+  will-change: transform;
+  box-shadow: none !important;
+  border-right: none !important;
+  border-left: 1px solid rgb(var(--v-border)) !important;
+}
+
+.closure-drawer :deep(.v-navigation-drawer__content) {
+  overscroll-behavior: contain;
 }
 </style>

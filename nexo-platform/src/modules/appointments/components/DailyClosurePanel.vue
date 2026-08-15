@@ -13,14 +13,6 @@
           Día cerrado — <strong>{{ summary.totalAttended }}</strong> atendidos
           ({{ summary.attended }} citas + {{ summary.extras }} extras)
         </span>
-        <v-btn
-          size="small"
-          variant="text"
-          :loading="saving"
-          @click="onReopen"
-        >
-          Reabrir
-        </v-btn>
       </div>
     </v-alert>
 
@@ -100,6 +92,7 @@
                   variant="tonal"
                   color="success"
                   prepend-icon="mdi-check-all"
+                  :disabled="closed"
                   @click="$emit('markAllAttended', pendingBookings)"
                 >
                   Marcar todos asistidos
@@ -158,6 +151,7 @@
                         variant="tonal"
                         color="success"
                         title="Asistió"
+                        :disabled="closed"
                         @click="$emit('markAttended', b)"
                       />
                       <v-btn
@@ -166,6 +160,7 @@
                         variant="tonal"
                         color="error"
                         title="No asistió"
+                        :disabled="closed"
                         @click="$emit('markNoShow', b)"
                       />
                     </div>
@@ -202,6 +197,7 @@
                     variant="text"
                     color="primary"
                     prepend-icon="mdi-layers"
+                    :disabled="closed"
                     @click="showAddExtraBatch = true"
                   >
                     Por lote
@@ -211,6 +207,7 @@
                     variant="text"
                     color="primary"
                     prepend-icon="mdi-plus"
+                    :disabled="closed"
                     @click="showAddExtra = true"
                   >
                     Agregar
@@ -251,6 +248,7 @@
                       size="x-small"
                       variant="text"
                       color="error"
+                      :disabled="closed"
                       @click="$emit('removeExtra', extra)"
                     />
                   </template>
@@ -337,6 +335,21 @@
         <!-- Sticky footer -->
         <div class="pa-3 flex-shrink-0 daily-closure__footer">
           <v-btn
+            v-if="closed"
+            block
+            color="primary"
+            variant="flat"
+            size="large"
+            prepend-icon="mdi-lock-open-outline"
+            :loading="saving"
+            :disabled="saving"
+            title="Reabrir el día para volver a editar el cierre"
+            @click="onReopen"
+          >
+            Reabrir Cierre
+          </v-btn>
+          <v-btn
+            v-else
             block
             color="primary"
             variant="flat"
@@ -493,12 +506,14 @@ const props = defineProps<{
   tenantId: string;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   markAttended: [booking: Booking];
   markNoShow: [booking: Booking];
   markAllAttended: [bookings: Booking[]];
   removeExtra: [extra: DailyExtra];
   refresh: [];
+  closureChanged: [closed: boolean];
+  closeDialog: [];
 }>();
 
 const bookingStore = useBookingStore();
@@ -645,6 +660,8 @@ async function confirmClose() {
     });
     closed.value = true;
     showCloseDialog.value = false;
+    emit('closureChanged', true);
+    emit('closeDialog');
   } catch {
     closed.value = false;
   } finally {
@@ -658,6 +675,7 @@ async function onReopen() {
   try {
     await dailyClosureRepository.reopen(props.employeeId, props.date);
     closed.value = false;
+    emit('closureChanged', false);
   } catch {
     /* empty */
   } finally {
