@@ -1,6 +1,11 @@
 <template>
   <div class="week-grid">
-    <div v-for="day in days" :key="day.value" class="day-column">
+    <v-card
+      v-for="day in days"
+      :key="day.value"
+      variant="outlined"
+      class="day-column"
+    >
       <div class="day-header">
         <v-switch
           :model-value="isActive(day.value)"
@@ -80,7 +85,7 @@
         </template>
         <div v-else class="day-empty rest">Descanso</div>
       </div>
-    </div>
+    </v-card>
   </div>
 </template>
 
@@ -132,26 +137,26 @@ function formatTime(t: string): string {
 <style scoped>
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(150px, 1fr));
-  gap: 8px;
-  overflow-x: auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
   padding-bottom: 4px;
 }
 
 @media (max-width: 959.98px) {
   .week-grid {
-    display: flex;
-    flex-direction: column;
-    overflow-x: visible;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .day-column {
-  border: 1px solid rgba(var(--v-theme-outline), 0.35);
-  border-radius: 8px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.day-column:hover {
+  border-color: rgb(var(--v-border-strong, var(--v-border))) !important;
 }
 
 .day-header {

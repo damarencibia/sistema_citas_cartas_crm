@@ -2,34 +2,39 @@
   <div class="schedule-editor">
     <v-card variant="flat" border>
       <v-card-text>
-        <div class="d-flex align-center ga-2 mb-4 flex-wrap">
-          <div class="me-2">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
+          <div>
             <h3 class="text-subtitle-1 font-weight-medium">Turnos Semanales</h3>
             <div class="text-caption text-medium-emphasis">Horario recurrente de citas</div>
           </div>
+          <div class="d-flex align-center ga-2">
+            <v-chip
+              v-if="isEmployeeView"
+              color="primary"
+              variant="tonal"
+              size="small"
+            >
+              <v-icon start size="16">mdi-account-badge-outline</v-icon>
+              Configurando tu horario
+            </v-chip>
+            <v-chip v-if="dirty" color="warning" size="small">
+              <v-icon start size="16">mdi-alert-outline</v-icon>
+              Sin guardar
+            </v-chip>
+          </div>
+        </div>
+
+        <div class="d-flex align-center flex-wrap ga-2 mb-4">
           <EmployeeSelect
             :model-value="selectedEmployeeId"
             label="Turnos de"
             class="flex-grow-1"
-            :style="$vuetify.display.xs ? undefined : { maxWidth: '320px' }"
+            :style="{ maxWidth: '420px' }"
             :allowed-ids="allowedIds"
             :include-default="!isEmployeeView"
             :disabled="isEmployeeView"
             @update:model-value="onEmployeeChange"
           />
-          <v-chip
-            v-if="isEmployeeView"
-            color="primary"
-            variant="tonal"
-            size="small"
-          >
-            <v-icon start size="16">mdi-account-badge-outline</v-icon>
-            Configurando tu horario
-          </v-chip>
-          <v-chip v-if="dirty" color="warning" size="small">
-            <v-icon start size="16">mdi-alert-outline</v-icon>
-            Sin guardar
-          </v-chip>
           <v-btn
             v-if="!isEmployeeView && selectedEmployeeId"
             size="small"

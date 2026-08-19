@@ -29,6 +29,17 @@
           <p v-if="tenant" class="text-body-2 text-medium-emphasis mt-1">{{ tenant.name }}</p>
         </div>
 
+        <v-alert
+          v-if="actionError"
+          type="error"
+          variant="tonal"
+          closable
+          class="mb-3"
+          @click:close="actionError = null"
+        >
+          {{ actionError }}
+        </v-alert>
+
         <div v-if="bookings.length" class="d-flex justify-end mb-2">
           <v-btn
             size="small"
@@ -73,6 +84,39 @@
                   {{ formatTime(b.start_time) }} – {{ formatTime(b.end_time) }}
                 </div>
               </div>
+              <template v-if="b.status === 'pending_confirmation'">
+                <v-divider class="mt-3 mb-3" />
+                <v-alert
+                  type="warning"
+                  variant="tonal"
+                  density="compact"
+                  class="mb-3"
+                >
+                  Tu turno fue aprobado en la agenda del negocio. ¿Vas a asistir?
+                </v-alert>
+                <div class="d-flex ga-3">
+                  <v-btn
+                    color="success"
+                    variant="flat"
+                    prepend-icon="mdi-check"
+                    size="small"
+                    :loading="confirmingId === b.booking_id"
+                    @click="confirmAttendance(b, true)"
+                  >
+                    Sí, asistiré
+                  </v-btn>
+                  <v-btn
+                    color="error"
+                    variant="tonal"
+                    prepend-icon="mdi-cancel"
+                    size="small"
+                    :disabled="confirmingId === b.booking_id"
+                    @click="confirmAttendance(b, false)"
+                  >
+                    No podré asistir
+                  </v-btn>
+                </div>
+              </template>
             </v-card-text>
           </v-card>
         </div>
@@ -115,6 +159,8 @@ const tenantStore = useTenantStore();
 
 const loading = ref(true);
 const refreshing = ref(false);
+const confirmingId = ref<string | null>(null);
+const actionError = ref<string | null>(null);
 const error = ref<string | null>(null);
 const bookings = ref<CustomerBookingSummary[]>([]);
 
@@ -164,6 +210,20 @@ async function refresh() {
     await load();
   } finally {
     refreshing.value = false;
+  }
+}
+
+async function confirmAttendance(b: CustomerBookingSummary, attends: boolean) {
+  const token = route.params.token as string;
+  confirmingId.value = b.booking_id;
+  actionError.value = null;
+  try {
+    await bookingStore.confirmBookingAttendance(token, b.booking_id, attends);
+    await load();
+  } catch (e) {
+    actionError.value = (e as Error).message || 'No se pudo procesar la confirmación.';
+  } finally {
+    confirmingId.value = null;
   }
 }
 

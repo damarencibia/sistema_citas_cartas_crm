@@ -8,7 +8,7 @@ export interface Service extends BaseEntity {
   price: number;
   color: string;
   category_id: string;
-  employee_id: string;
+  employee_id: string | null;
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
@@ -25,8 +25,10 @@ export interface CreateServiceDTO {
   price: number;
   color?: string;
   category_id: string;
-  employee_id: string;
+  employee_id: string | null;
   image_url?: string;
+  max_participants?: number;
+  requires_approval?: boolean;
 }
 
 export type UpdateServiceDTO = Partial<CreateServiceDTO>;

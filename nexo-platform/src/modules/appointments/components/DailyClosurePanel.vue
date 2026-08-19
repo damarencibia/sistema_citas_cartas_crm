@@ -2,7 +2,7 @@
   <div class="daily-closure d-flex flex-column h-100">
     <!-- Closed banner -->
     <v-alert
-      v-if="closed"
+      v-if="closed && activeTab !== 'summary'"
       type="success"
       variant="tonal"
       class="ma-3 mb-0"
@@ -37,7 +37,7 @@
           density="compact"
           color="primary"
           grow
-          class="flex-shrink-0 px-2"
+          class="flex-shrink-0 px-2 daily-closure__tabs"
         >
           <v-tab value="scheduled">Programadas</v-tab>
           <v-tab value="extras">Extras</v-tab>
@@ -50,7 +50,7 @@
         >
           <!-- Programadas -->
           <v-tabs-window-item value="scheduled">
-            <div class="pa-3">
+            <div class="px-3 pb-3 pt-1">
               <div v-if="summary.total > 0" class="mb-4">
                 <div class="d-flex align-center justify-space-between text-caption mb-1">
                   <span class="text-medium-emphasis">Progreso de atención</span>
@@ -63,26 +63,6 @@
                   :color="progressPct === 100 ? 'success' : 'primary'"
                 />
               </div>
-
-              <!-- KPI cards -->
-              <v-row class="mb-2">
-                <v-col
-                  v-for="kpi in kpis"
-                  :key="kpi.label"
-                  cols="6"
-                  sm="4"
-                  md="3"
-                >
-                  <v-card
-                    variant="tonal"
-                    :color="kpi.color"
-                    class="pa-2 text-center"
-                  >
-                    <div class="text-h6 font-weight-bold">{{ kpi.value }}</div>
-                    <div class="text-caption text-medium-emphasis">{{ kpi.label }}</div>
-                  </v-card>
-                </v-col>
-              </v-row>
 
               <div class="d-flex align-center justify-space-between mb-2 flex-wrap ga-2">
                 <div class="text-caption text-medium-emphasis font-weight-medium">CITAS PROGRAMADAS</div>
@@ -144,7 +124,7 @@
                     {{ b.service?.name || 'Servicio' }} · {{ formatTime(b.start_time) }}
                   </v-list-item-subtitle>
                   <template #append>
-                    <div v-if="isPending(b)" class="d-flex ga-1">
+                    <div v-if="canMark(b)" class="d-flex ga-1">
                       <v-btn
                         size="small"
                         icon="mdi-check"
@@ -164,22 +144,44 @@
                         @click="$emit('markNoShow', b)"
                       />
                     </div>
-                    <v-chip
-                      v-else-if="b.status === 'completed'"
-                      size="x-small"
-                      color="success"
-                      variant="tonal"
+                    <v-menu
+                      v-else-if="b.status === 'completed' || b.status === 'no_show'"
+                      location="bottom end"
                     >
-                      Asistió
-                    </v-chip>
-                    <v-chip
-                      v-else-if="b.status === 'no_show'"
-                      size="x-small"
-                      color="error"
-                      variant="tonal"
-                    >
-                      No asistió
-                    </v-chip>
+                      <template #activator="{ props: menuProps }">
+                        <v-chip
+                          v-bind="menuProps"
+                          size="x-small"
+                          :color="b.status === 'completed' ? 'success' : 'error'"
+                          variant="tonal"
+                          :disabled="closed"
+                          class="cursor-pointer"
+                        >
+                          {{ b.status === 'completed' ? 'Asistió' : 'No asistió' }}
+                          <v-icon end size="14">mdi-chevron-down</v-icon>
+                        </v-chip>
+                      </template>
+                      <v-list density="compact">
+                        <v-list-item
+                          v-if="b.status === 'completed'"
+                          @click="$emit('markNoShow', b)"
+                        >
+                          <v-list-item-title class="text-caption">
+                            Marcar no asistió
+                          </v-list-item-title>
+                        </v-list-item>
+                        <v-list-item v-else @click="$emit('markAttended', b)">
+                          <v-list-item-title class="text-caption">
+                            Marcar asistió
+                          </v-list-item-title>
+                        </v-list-item>
+                        <v-list-item @click="$emit('cancelSelection', b)">
+                          <v-list-item-title class="text-caption">
+                            Cancelar selección
+                          </v-list-item-title>
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
                   </template>
                 </v-list-item>
               </v-list>
@@ -188,7 +190,7 @@
 
           <!-- Extras -->
           <v-tabs-window-item value="extras">
-            <div class="pa-3">
+            <div class="px-3 pb-3 pt-1">
               <div class="d-flex align-center justify-space-between mb-2 flex-wrap ga-2">
                 <div class="text-caption text-medium-emphasis font-weight-medium">EXTRAS ATENDIDOS</div>
                 <div class="d-flex align-center ga-1">
@@ -259,7 +261,7 @@
 
           <!-- Resumen económico-contable -->
           <v-tabs-window-item value="summary">
-            <div class="pa-3">
+            <div class="px-3 pb-3 pt-1">
               <div class="text-caption text-medium-emphasis font-weight-medium mb-2">CONTEOS DEL DÍA</div>
               <v-row>
                 <v-col
@@ -334,6 +336,15 @@
 
         <!-- Sticky footer -->
         <div class="pa-3 flex-shrink-0 daily-closure__footer">
+          <v-alert
+            v-if="isFutureDate && !closed"
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-3"
+          >
+            No se puede cerrar un día futuro. El cierre aplica solo a hoy o días anteriores.
+          </v-alert>
           <v-btn
             v-if="closed"
             block
@@ -356,8 +367,14 @@
             size="large"
             prepend-icon="mdi-check-decagram"
             :loading="saving"
-            :disabled="!canClose || saving"
-            :title="canClose ? 'Finalizar el cierre del día' : 'Faltan citas por atender'"
+            :disabled="!canClose || saving || isFutureDate"
+            :title="
+              isFutureDate
+                ? 'No se puede cerrar un día futuro'
+                : canClose
+                  ? 'Finalizar el cierre del día'
+                  : 'Faltan citas por atender'
+            "
             @click="showCloseDialog = true"
           >
             Cerrar Día
@@ -504,11 +521,13 @@ const props = defineProps<{
   employeeId: string | null;
   date: string;
   tenantId: string;
+  visible?: boolean;
 }>();
 
 const emit = defineEmits<{
   markAttended: [booking: Booking];
   markNoShow: [booking: Booking];
+  cancelSelection: [booking: Booking];
   markAllAttended: [bookings: Booking[]];
   removeExtra: [extra: DailyExtra];
   refresh: [];
@@ -542,6 +561,8 @@ const bookings = computed(() => {
 const isPending = (b: Booking) =>
   b.status === 'confirmed' || b.status === 'in_progress' || b.status === 'pending_confirmation';
 
+const canMark = (b: Booking) => b.status === 'confirmed' || b.status === 'in_progress';
+
 const summary = computed(() => {
   const total = bookings.value.length;
   const attended = bookings.value.filter((b) => b.status === 'completed').length;
@@ -558,7 +579,9 @@ const summary = computed(() => {
 
 const pendingBookings = computed(() => bookings.value.filter(isPending));
 
-const canClose = computed(() => summary.value.total > 0 && summary.value.pending === 0);
+const canClose = computed(() => summary.value.pending === 0);
+
+const isFutureDate = computed(() => props.date > new Date().toISOString().slice(0, 10));
 
 const progressPct = computed(() =>
   summary.value.total > 0 ? Math.round((summary.value.attended / summary.value.total) * 100) : 0,
@@ -645,7 +668,7 @@ function bookingBgClass(b: Booking): string {
 }
 
 async function confirmClose() {
-  if (!props.employeeId) return;
+  if (!props.employeeId || isFutureDate.value) return;
   saving.value = true;
   try {
     await dailyClosureRepository.close(props.tenantId, {
@@ -748,20 +771,33 @@ async function onAddExtraBatch() {
   }
 }
 
-watch(() => [props.employeeId, props.date], () => {
+async function resetForDate() {
   filter.value = 'all';
-  activeTab.value = 'scheduled';
-  loadClosure();
+  await loadClosure();
   loadExtras();
+  activeTab.value = closed.value ? 'summary' : 'scheduled';
   if (props.employeeId) {
     employeeStore.fetchEmployeeServices(props.employeeId);
   }
-}, { immediate: true });
+}
+
+watch(() => [props.employeeId, props.date], resetForDate, { immediate: true });
+
+watch(
+  () => props.visible,
+  (visible) => {
+    if (visible) resetForDate();
+  },
+);
 
 defineExpose({ loadExtras });
 </script>
 
 <style scoped>
+.daily-closure__tabs {
+  flex-grow: 0;
+}
+
 .daily-closure__window {
   min-height: 0;
   overflow-y: auto;

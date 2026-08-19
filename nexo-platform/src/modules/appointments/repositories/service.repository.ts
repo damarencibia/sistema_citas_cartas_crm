@@ -73,8 +73,10 @@ export const serviceRepository = {
         price: dto.price,
         color: dto.color ?? '#1976D2',
         category_id: dto.category_id,
-        employee_id: dto.employee_id,
+        employee_id: dto.employee_id ?? null,
         image_url: dto.image_url ?? null,
+        max_participants: dto.max_participants ?? 1,
+        requires_approval: dto.requires_approval ?? false,
       })
       .select(`
         *,
@@ -89,7 +91,11 @@ export const serviceRepository = {
   async update(id: string, dto: UpdateServiceDTO): Promise<Service> {
     const { data, error } = await (supabase as any)
       .from(TABLE)
-      .update({ ...dto, updated_at: new Date().toISOString() })
+      .update({
+        ...dto,
+        employee_id: dto.employee_id === undefined ? undefined : (dto.employee_id ?? null),
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .select(`
         *,

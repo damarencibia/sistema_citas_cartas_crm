@@ -67,6 +67,18 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
       {
+        path: 'events',
+        meta: { title: 'Eventos', icon: 'mdi-calendar-star' },
+        children: [
+          {
+            path: '',
+            name: 'events',
+            component: () => import('@/modules/events/views/EventsView.vue'),
+            meta: { title: 'Eventos' },
+          },
+        ],
+      },
+      {
         path: 'menu',
         meta: { title: 'Carta Digital', icon: 'mdi-menu' },
         children: [
@@ -201,6 +213,24 @@ export const routes: RouteRecordRaw[] = [
         name: 'public-booking',
         component: () => import('@/modules/appointments/views/PublicBookingView.vue'),
         meta: { title: 'Reservar Cita' },
+      },
+      {
+        path: 'events',
+        name: 'public-events',
+        component: () => import('@/modules/events/views/PublicEventsView.vue'),
+        meta: { title: 'Eventos' },
+      },
+      {
+        path: 'events/:eventId',
+        name: 'public-event-detail',
+        component: () => import('@/modules/events/views/PublicEventDetailView.vue'),
+        meta: { title: 'Evento' },
+      },
+      {
+        path: 'events/registration/:token',
+        name: 'public-registration-status',
+        component: () => import('@/modules/events/views/PublicRegistrationStatusView.vue'),
+        meta: { title: 'Mi Registro' },
       },
       {
         path: 'menu',

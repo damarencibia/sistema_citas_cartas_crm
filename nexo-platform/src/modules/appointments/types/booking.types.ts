@@ -16,7 +16,7 @@ export interface Booking extends BaseEntity {
   tenant_id: string;
   customer_id: string | null;
   service_id: string;
-  employee_id: string;
+  employee_id: string | null;
   date: string;
   start_time: string;
   end_time: string;
@@ -36,13 +36,19 @@ export interface Booking extends BaseEntity {
   requires_approval: boolean;
   participant_count: number;
   whatsapp_consent: boolean;
-  service?: { name: string; duration_minutes: number; color: string; price?: number };
+  service?: {
+    name: string;
+    duration_minutes: number;
+    color: string;
+    price?: number;
+    category?: { name: string } | null;
+  };
   employee?: { first_name: string; last_name: string; color: string };
 }
 
 export interface CreateBookingDTO {
   service_id: string;
-  employee_id: string;
+  employee_id: string | null;
   date: string;
   start_time: string;
   customer_name?: string;
@@ -56,9 +62,24 @@ export interface CreateBookingDTO {
   whatsapp_consent?: boolean;
 }
 
+export interface BookingFormPrefill {
+  service_id?: string;
+  employee_id?: string;
+  date?: string;
+  start_time?: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+}
+
 export interface CreateBookingResult {
   booking: Booking;
   accessToken: string | null;
+}
+
+export interface TransferBookingResult {
+  new_booking_id: string;
+  customer_access_token: string | null;
 }
 
 export interface CustomerBookingSummary {
@@ -162,6 +183,19 @@ export interface ReassignBookingDTO {
   booking_id: string;
   new_date: string;
   new_start_time: string;
+}
+
+export interface BlockedSlot {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  reason: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export type WaitlistPreference = 'exact' | 'flexible';

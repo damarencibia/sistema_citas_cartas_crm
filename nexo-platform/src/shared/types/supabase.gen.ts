@@ -263,7 +263,7 @@ export type Database = {
           customer_phone: string | null;
           date: string;
           deleted_at: string | null;
-          employee_id: string;
+          employee_id: string | null;
           end_time: string;
           id: string;
           late_minutes: number | null;
@@ -292,7 +292,7 @@ export type Database = {
           customer_phone?: string | null;
           date: string;
           deleted_at?: string | null;
-          employee_id: string;
+          employee_id: string | null;
           end_time: string;
           id?: string;
           late_minutes?: number | null;
@@ -321,7 +321,7 @@ export type Database = {
           customer_phone?: string | null;
           date?: string;
           deleted_at?: string | null;
-          employee_id?: string;
+          employee_id?: string | null;
           end_time?: string;
           id?: string;
           late_minutes?: number | null;
@@ -829,6 +829,141 @@ export type Database = {
             columns: ['user_id'];
             isOneToOne: true;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      event_registrations: {
+        Row: {
+          access_token: string | null;
+          created_at: string;
+          customer_email: string | null;
+          customer_name: string | null;
+          customer_phone: string | null;
+          deleted_at: string | null;
+          event_id: string;
+          id: string;
+          notes: string | null;
+          participant_count: number;
+          status: string;
+          tenant_id: string;
+          updated_at: string;
+          whatsapp_consent: boolean;
+        };
+        Insert: {
+          access_token?: string | null;
+          created_at?: string;
+          customer_email?: string | null;
+          customer_name?: string | null;
+          customer_phone?: string | null;
+          deleted_at?: string | null;
+          event_id: string;
+          id?: string;
+          notes?: string | null;
+          participant_count?: number;
+          status?: string;
+          tenant_id: string;
+          updated_at?: string;
+          whatsapp_consent?: boolean;
+        };
+        Update: {
+          access_token?: string | null;
+          created_at?: string;
+          customer_email?: string | null;
+          customer_name?: string | null;
+          customer_phone?: string | null;
+          deleted_at?: string | null;
+          event_id?: string;
+          id?: string;
+          notes?: string | null;
+          participant_count?: number;
+          status?: string;
+          tenant_id?: string;
+          updated_at?: string;
+          whatsapp_consent?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_registrations_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'event_registrations_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          category_id: string | null;
+          created_at: string;
+          deleted_at: string | null;
+          description: string | null;
+          end_time: string;
+          event_date: string;
+          id: string;
+          is_active: boolean;
+          max_participants: number | null;
+          name: string;
+          reservation_close_offset_minutes: number | null;
+          reservation_open_date: string | null;
+          start_time: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          category_id?: string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          description?: string | null;
+          end_time: string;
+          event_date: string;
+          id?: string;
+          is_active?: boolean;
+          max_participants?: number | null;
+          name: string;
+          reservation_close_offset_minutes?: number | null;
+          reservation_open_date?: string | null;
+          start_time: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          category_id?: string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          description?: string | null;
+          end_time?: string;
+          event_date?: string;
+          id?: string;
+          is_active?: boolean;
+          max_participants?: number | null;
+          name?: string;
+          reservation_close_offset_minutes?: number | null;
+          reservation_open_date?: string | null;
+          start_time?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'events_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'events_category_id_fkey';
+            columns: ['category_id'];
+            isOneToOne: false;
+            referencedRelation: 'service_categories';
             referencedColumns: ['id'];
           },
         ];

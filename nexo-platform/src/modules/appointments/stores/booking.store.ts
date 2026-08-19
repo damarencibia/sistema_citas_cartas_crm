@@ -16,6 +16,7 @@ import type {
   CreateRecurringDTO,
   RecurringInstance,
   CustomerBookingSummary,
+  TransferBookingResult,
 } from '../types/booking.types';
 
 interface BookingStoreState {
@@ -152,14 +153,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
           userName,
           reason,
         );
-
-        if (status === 'no_show' && booking?.customer_email) {
-          await this.handleNoShowBlock(tenantId, booking.customer_email);
-        }
-
-        if (status === 'cancelled' && booking) {
-          await this.promoteWaitlistForBooking(tenantId, booking);
-        }
       }
 
       return updated;
@@ -168,59 +161,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
     async hardDeleteBooking(id: string): Promise<void> {
       await bookingRepository.hardDelete(id);
       this.bookings = this.bookings.filter((b) => b.id !== id);
-    },
-
-    async handleNoShowBlock(tenantId: string, customerEmail: string) {
-      const config = await bookingRepository.getAppointmentConfig(tenantId);
-      if (!config) return;
-
-      const noShowCount = await bookingRepository.getNoShowCount(tenantId, customerEmail);
-      if (noShowCount >= config.max_no_shows) {
-        const blockedUntil = new Date();
-        blockedUntil.setDate(blockedUntil.getDate() + config.block_duration_days);
-
-        const existingBlock = await bookingRepository.checkClientBlock(tenantId, customerEmail);
-        const newBlockDate = blockedUntil.toISOString().split('T')[0];
-        if (existingBlock.blocked_until && existingBlock.blocked_until >= newBlockDate) {
-          return;
-        }
-
-        await bookingRepository.createClientBlock(
-          tenantId,
-          customerEmail,
-          newBlockDate,
-          `${noShowCount} no-show(s) en los últimos ${config.block_duration_days} días`,
-          noShowCount,
-        );
-      }
-    },
-
-    async promoteWaitlistForBooking(tenantId: string, booking: Booking) {
-      try {
-        const entry = await bookingRepository.promoteFromWaitlist(
-          tenantId,
-          booking.service_id,
-          booking.employee_id,
-          booking.date,
-          booking.start_time,
-          booking.end_time,
-        );
-        if (entry?.offer_token) {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const functionsBase = `${supabaseUrl}/functions/v1`;
-          const authStore = useAuthStore();
-          await fetch(`${functionsBase}/send-waitlist-notification`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${authStore.session?.access_token ?? ''}`,
-            },
-            body: JSON.stringify({ token: entry.offer_token, tenant_id: tenantId }),
-          });
-        }
-      } catch {
-        // Waitlist promotion is best-effort
-      }
     },
 
     async checkClientBlock(customerEmail: string): Promise<ClientBlockCheck> {
@@ -268,10 +208,11 @@ export const useBookingStore = defineStore('appointments/bookings', {
       const oldDate = booking?.date;
       const oldTime = booking?.start_time;
 
-      if (tenantId) {
+      const employeeId = booking?.employee_id;
+      if (tenantId && employeeId) {
         const slots = await bookingRepository.getAvailableSlots(
           tenantId,
-          booking!.employee_id,
+          employeeId,
           newDate,
           serviceDuration,
           booking!.service_id,
@@ -399,6 +340,23 @@ export const useBookingStore = defineStore('appointments/bookings', {
     async cancelWaitlistEntry(id: string): Promise<void> {
       await bookingRepository.cancelWaitlistEntry(id);
       this.waitlist = this.waitlist.filter((w) => w.id !== id);
+    },
+
+    async markWaitlistConverted(id: string): Promise<void> {
+      await bookingRepository.markWaitlistConverted(id);
+      const entry = this.waitlist.find((w) => w.id === id);
+      if (entry) entry.status = 'converted';
+    },
+
+    async transferBookingToWaitlist(
+      bookingId: string,
+      waitlistId: string,
+    ): Promise<TransferBookingResult> {
+      return bookingRepository.transferBookingToWaitlist(bookingId, waitlistId);
+    },
+
+    async confirmBookingAttendance(token: string, bookingId: string, attends: boolean): Promise<void> {
+      await bookingRepository.confirmBookingAttendance(token, bookingId, attends);
     },
 
     async removeWaitlistEntry(id: string): Promise<void> {

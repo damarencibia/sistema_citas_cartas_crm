@@ -740,6 +740,7 @@ const minDate = new Date().toISOString().split('T')[0];
 
 const activeServices = computed(() => serviceStore.services.filter((s) => s.is_active));
 
+
 const categoryOptions = computed(() => {
   const map = new Map<
     string,

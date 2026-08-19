@@ -19,6 +19,7 @@ import type {
   RecurringInstance,
   BookingStatus,
   BookingStatusLog,
+  TransferBookingResult,
 } from '../types/booking.types';
 
 const TABLE = 'bookings' as const;
@@ -31,8 +32,8 @@ const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   pending_confirmation: ['confirmed', 'cancelled'],
   confirmed: ['in_progress', 'completed', 'cancelled', 'no_show'],
   in_progress: ['completed', 'cancelled', 'no_show'],
-  completed: [],
-  no_show: [],
+  completed: ['no_show', 'confirmed'],
+  no_show: ['completed', 'confirmed'],
   cancelled: [],
 };
 
@@ -95,9 +96,10 @@ export const bookingRepository = {
     let query = supabase
       .from(TABLE)
       .select(
-        '*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)',
+        '*, service:service_id(name, duration_minutes, color, price, category:category_id(name)), employee:employee_id(first_name, last_name, color)',
       )
       .is('deleted_at', null)
+      .not('status', 'eq', 'cancelled')
       .order('date', { ascending: true })
       .order('start_time', { ascending: true });
 
@@ -123,7 +125,7 @@ export const bookingRepository = {
     const { data, error } = await supabase
       .from(TABLE)
       .select(
-        '*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)',
+        '*, service:service_id(name, duration_minutes, color, price, category:category_id(name)), employee:employee_id(first_name, last_name, color)',
       )
       .eq('id', id)
       .single();
@@ -307,6 +309,9 @@ export const bookingRepository = {
     }
     if (status === 'no_show') {
       updatePayload.no_show_at = new Date().toISOString();
+    }
+    if (currentStatus === 'no_show' && status !== 'no_show') {
+      updatePayload.no_show_at = null;
     }
     const { data, error } = await supabase
       .from(TABLE)
@@ -528,7 +533,7 @@ export const bookingRepository = {
     const { data, error } = await supabase
       .from(TABLE)
       .select(
-        '*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)',
+        '*, service:service_id(name, duration_minutes, color, price, category:category_id(name)), employee:employee_id(first_name, last_name, color)',
       )
       .eq('employee_id', employeeId)
       .eq('date', date)
@@ -611,7 +616,7 @@ export const bookingRepository = {
     const { data, error } = await (supabase as any)
       .from('waitlist')
       .select(
-        '*, service:service_id(name, duration_minutes, color), employee:employee_id(first_name, last_name, color)',
+        '*, service:service_id(name, duration_minutes, color, category:category_id(name)), employee:employee_id(first_name, last_name, color)',
       )
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: true });
@@ -671,25 +676,37 @@ export const bookingRepository = {
     if (error) throw error;
   },
 
-  async promoteFromWaitlist(
-    tenantId: string,
-    serviceId: string,
-    employeeId: string,
-    date: string,
-    slotStart: string,
-    slotEnd: string,
-  ): Promise<WaitlistEntry | null> {
-    const { data, error } = await supabase.rpc('promote_from_waitlist', {
-      p_tenant_id: tenantId,
-      p_service_id: serviceId,
-      p_employee_id: employeeId,
-      p_date: date,
-      p_slot_start: slotStart,
-      p_slot_end: slotEnd,
+  async markWaitlistConverted(id: string): Promise<void> {
+    const { error } = await (supabase as any).rpc('mark_waitlist_converted', {
+      p_waitlist_id: id,
     });
     if (error) throw error;
-    const entry = data?.[0];
-    return entry ? (entry as unknown as WaitlistEntry) : null;
+  },
+
+  async transferBookingToWaitlist(
+    bookingId: string,
+    waitlistId: string,
+  ): Promise<TransferBookingResult> {
+    const { data, error } = await (supabase as any).rpc('transfer_booking_to_waitlist', {
+      p_booking_id: bookingId,
+      p_waitlist_id: waitlistId,
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    if (!row) throw new Error('No se pudo transferir el turno');
+    return {
+      new_booking_id: row.new_booking_id,
+      customer_access_token: row.customer_access_token ?? null,
+    };
+  },
+
+  async confirmBookingAttendance(token: string, bookingId: string, attends: boolean): Promise<void> {
+    const { error } = await (supabase as any).rpc('confirm_booking_attendance', {
+      p_token: token,
+      p_booking_id: bookingId,
+      p_attends: attends,
+    });
+    if (error) throw error;
   },
 
   async getWaitlistCount(
@@ -712,7 +729,7 @@ export const bookingRepository = {
     const { data, error } = await (supabase as any)
       .from('waitlist')
       .select(
-        '*, service:service_id(name, duration_minutes, color, price), employee:employee_id(first_name, last_name, color)',
+        '*, service:service_id(name, duration_minutes, color, price, category:category_id(name)), employee:employee_id(first_name, last_name, color)',
       )
       .eq('offer_token', token)
       .single();

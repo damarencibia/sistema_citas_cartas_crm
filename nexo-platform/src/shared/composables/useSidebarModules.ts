@@ -35,6 +35,10 @@ const AGENDA_OPTIONS: SidebarOption[] = [
   { title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' },
 ];
 
+const EVENTS_OPTIONS: SidebarOption[] = [
+  { title: 'Mis Eventos', icon: 'mdi-calendar-star', to: '/events' },
+];
+
 const CARTA_OPTIONS: SidebarOption[] = [
   { title: 'Categorías', icon: 'mdi-shape-outline', to: '/menu/categories' },
   { title: 'Productos', icon: 'mdi-food-outline', to: '/menu/products' },
@@ -68,6 +72,16 @@ export function useSidebarModules() {
     const list: SidebarModule[] = [
       { key: 'dashboard', title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/', options: [] },
     ];
+
+    if (m.events) {
+      list.push({
+        key: 'events',
+        title: 'Eventos',
+        icon: 'mdi-calendar-star',
+        to: '/events',
+        options: EVENTS_OPTIONS,
+      });
+    }
 
     if (m.appointments) {
       list.push({
@@ -103,6 +117,7 @@ export function useSidebarModules() {
     if (path.startsWith('/appointments/agenda')) return 'agenda';
     if (path === '/appointments/schedules') return 'agenda';
     if (path === '/appointments/my-services') return 'my-services';
+    if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/menu/')) return 'carta-digital';
     if (path.startsWith('/crm/')) return 'crm';
     if (path.startsWith('/settings/') || path.startsWith('/appointments/')) return 'config';

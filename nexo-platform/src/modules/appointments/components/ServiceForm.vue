@@ -119,6 +119,7 @@ const localForm = reactive<CreateServiceDTO>({
   color: '#1976D2',
   category_id: '',
   employee_id: '',
+  max_participants: 1,
 });
 
 const categoryOptions = computed(() =>
@@ -146,7 +147,8 @@ watch(
       localForm.price = s.price;
       localForm.color = s.color;
       localForm.category_id = s.category_id;
-      localForm.employee_id = s.employee_id;
+      localForm.employee_id = s.employee_id ?? '';
+      localForm.max_participants = s.max_participants;
     } else {
       editing.value = false;
       localForm.name = '';
@@ -156,6 +158,7 @@ watch(
       localForm.color = '#1976D2';
       localForm.category_id = '';
       localForm.employee_id = props.preselectedEmployeeId ?? '';
+      localForm.max_participants = 1;
     }
   },
   { immediate: true },
@@ -170,7 +173,8 @@ async function onSubmit() {
   const { valid } = await formRef.value.validate();
   if (!valid) return;
   submitting.value = true;
-  emit('save', { ...localForm });
+  const payload: CreateServiceDTO = { ...localForm };
+  emit('save', payload);
   submitting.value = false;
 }
 </script>

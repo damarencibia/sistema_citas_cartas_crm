@@ -4,7 +4,7 @@ import { applyTenantTheme } from '@/app/plugins/vuetify';
 import type { Database } from '@/shared/types/supabase.gen';
 
 type Tenant = Omit<Database['public']['Tables']['tenants']['Row'], 'modules' | 'config'> & {
-  modules: { appointments: boolean; digital_menu: boolean; crm: boolean };
+  modules: { appointments: boolean; digital_menu: boolean; crm: boolean; events: boolean };
   config: Record<string, unknown>;
 };
 
@@ -22,7 +22,21 @@ export const useTenantStore = defineStore('tenant', {
   getters: {
     activeModules: (state) => {
       const t: any = state.tenant;
-      return { appointments: !!t?.modules?.appointments, digital_menu: !!t?.modules?.digital_menu, crm: !!t?.modules?.crm };
+      return {
+        appointments: !!t?.modules?.appointments,
+        digital_menu: !!t?.modules?.digital_menu,
+        crm: !!t?.modules?.crm,
+        events: !!t?.modules?.events,
+      };
+    },
+    businessType: (state) => {
+      const m: any = state.tenant?.modules;
+      const appointments = !!m?.appointments;
+      const events = !!m?.events;
+      if (appointments && events) return 'both';
+      if (events) return 'events';
+      if (appointments) return 'appointments';
+      return 'none';
     },
     primaryColor: (state) => state.tenant?.primary_color ?? '#1976D2',
     secondaryColor: (state) => state.tenant?.secondary_color ?? '#424242',

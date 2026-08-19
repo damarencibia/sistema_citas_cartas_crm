@@ -21,20 +21,35 @@
       </div>
       <BookingStatusChip v-if="!compact" :status="booking.status" :size="xs ? 'x-small' : 'small'" />
     </v-card-text>
+
+    <v-divider v-if="waitlistCount" />
+
+    <div
+      v-if="waitlistCount"
+      class="booking-card__waitlist px-3 py-1"
+      :title="'Ver quién está en cola para este turno'"
+    >
+      <v-icon size="small" class="mr-1">mdi-account-clock-outline</v-icon>
+      <span class="text-caption font-weight-medium">{{ waitlistCount }} en cola</span>
+    </div>
   </v-card>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import BookingStatusChip from './BookingStatusChip.vue';
-import type { Booking } from '../types/booking.types';
+import type { Booking, WaitlistEntry } from '../types/booking.types';
 import { useDisplay } from 'vuetify';
 
 const { xs } = useDisplay();
 
-defineProps<{
+const props = defineProps<{
   booking: Booking;
   compact?: boolean;
+  waitlistEntries?: WaitlistEntry[];
 }>();
+
+const waitlistCount = computed(() => props.waitlistEntries?.length ?? 0);
 
 const emit = defineEmits<{
   detail: [booking: Booking];
@@ -50,6 +65,13 @@ const emit = defineEmits<{
 
 .booking-card:hover {
   filter: brightness(0.97);
+}
+
+.booking-card__waitlist {
+  display: flex;
+  align-items: center;
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
 }
 
 .booking-time {

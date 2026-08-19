@@ -47,6 +47,14 @@
             Reservar
           </v-btn>
           <v-btn
+            v-if="tenantStore.activeModules.events"
+            variant="text"
+            size="small"
+            :to="`/${tenantStore.tenant.slug}/events`"
+          >
+            Eventos
+          </v-btn>
+          <v-btn
             v-if="tenantStore.activeModules.digital_menu"
             variant="text"
             size="small"

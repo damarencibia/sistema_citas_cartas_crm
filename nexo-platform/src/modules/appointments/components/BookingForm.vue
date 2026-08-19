@@ -185,11 +185,12 @@ import { useNotification } from '@/shared/composables/useNotification';
 import EmployeeSelect from './EmployeeSelect.vue';
 import TimeSlotPicker from './TimeSlotPicker.vue';
 import ResourceSelect from './ResourceSelect.vue';
-import type { Booking, CreateBookingDTO } from '../types/booking.types';
+import type { Booking, BookingFormPrefill, CreateBookingDTO } from '../types/booking.types';
 
 const props = defineProps<{
   visible: boolean;
   booking?: Booking | null;
+  prefill?: BookingFormPrefill | null;
 }>();
 
 const emit = defineEmits<{
@@ -323,7 +324,7 @@ watch(
       const svc = serviceStore.activeServices.find((s) => s.id === b.service_id);
       form.category_id = svc?.category_id ?? '';
       form.service_id = b.service_id;
-      form.employee_id = b.employee_id;
+      form.employee_id = b.employee_id ?? '';
       form.date = b.date;
       form.start_time = b.start_time;
       form.customer_name = b.customer_name ?? '';
@@ -355,6 +356,29 @@ watch(
 );
 
 watch(
+  () => props.prefill,
+  (p) => {
+    if (!p) return;
+    editing.value = false;
+    const svc = serviceStore.activeServices.find((s) => s.id === p.service_id);
+    form.category_id = svc?.category_id ?? '';
+    form.service_id = p.service_id ?? '';
+    form.employee_id = p.employee_id ?? '';
+    form.date = p.date ?? '';
+    form.start_time = p.start_time ?? '';
+    form.customer_name = p.customer_name ?? '';
+    form.customer_email = p.customer_email ?? '';
+    form.customer_phone = p.customer_phone ?? '';
+    form.notes = '';
+    form.participant_count = 1;
+    form.resource_id = null;
+    form.whatsapp_consent = false;
+    waitlistTimes.value = [];
+    availability.clear();
+  },
+);
+
+watch(
   () => props.visible,
   async (v) => {
     if (!v) {
@@ -366,8 +390,14 @@ watch(
         resourceStore.fetchResources(),
       ]);
       if (!editing.value) {
-        form.date = new Date().toISOString().split('T')[0];
-        if (form.service_id && form.employee_id) {
+        if (!form.category_id && form.service_id) {
+          const svc = serviceStore.activeServices.find((s) => s.id === form.service_id);
+          form.category_id = svc?.category_id ?? '';
+        }
+        if (!form.date) {
+          form.date = new Date().toISOString().split('T')[0];
+        }
+        if (form.service_id && form.employee_id && form.date) {
           loadSlots();
         }
       } else if (form.service_id && form.employee_id && form.date) {

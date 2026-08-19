@@ -71,6 +71,12 @@ const moduleDefs = [
     icon: 'mdi-calendar-clock',
   },
   {
+    key: 'events',
+    name: 'Eventos',
+    description: 'Eventos con cupo limitado: fechas, capacidad y reservas',
+    icon: 'mdi-calendar-star',
+  },
+  {
     key: 'digital_menu',
     name: 'Carta Digital',
     description: 'Menú digital, pedidos y gestión de mesas',
