@@ -221,16 +221,16 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: 'Eventos' },
       },
       {
-        path: 'events/:eventId',
-        name: 'public-event-detail',
-        component: () => import('@/modules/events/views/PublicEventDetailView.vue'),
-        meta: { title: 'Evento' },
-      },
-      {
         path: 'events/registration/:token',
         name: 'public-registration-status',
         component: () => import('@/modules/events/views/PublicRegistrationStatusView.vue'),
         meta: { title: 'Mi Registro' },
+      },
+      {
+        path: 'events/:eventId',
+        name: 'public-event-detail',
+        component: () => import('@/modules/events/views/PublicEventDetailView.vue'),
+        meta: { title: 'Evento' },
       },
       {
         path: 'menu',

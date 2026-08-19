@@ -84,26 +84,26 @@
 
       <v-col cols="12" sm="6" md="6">
         <v-card variant="outlined" rounded="lg" class="h-100">
-          <div class="pa-3 d-flex flex-column ga-2">
+          <div class="pa-5 d-flex flex-column ga-3">
             <div class="section-title">
               <v-icon size="small" class="mr-1">mdi-calendar-cursor</v-icon>
               Cita
             </div>
-            <div class="d-flex flex-column ga-1">
+            <div class="d-flex flex-column ga-2">
               <div class="d-flex align-center ga-2">
-                <v-icon size="small" color="medium-emphasis">mdi-calendar</v-icon>
-                <span class="text-body-2">{{ dateLine }}</span>
+                <v-icon color="medium-emphasis">mdi-calendar</v-icon>
+                <span class="text-body-1">{{ dateLine }}</span>
               </div>
               <div class="d-flex align-center ga-2">
-                <v-icon size="small" color="medium-emphasis">mdi-clock-outline</v-icon>
-                <span class="text-body-2">{{ timeRange }}</span>
+                <v-icon color="medium-emphasis">mdi-clock-outline</v-icon>
+                <span class="text-body-1">{{ timeRange }}</span>
                 <span v-if="durationLabel" class="text-caption text-medium-emphasis">
                   · {{ durationLabel }}
                 </span>
               </div>
               <div class="d-flex align-center ga-2">
-                <v-icon size="small" color="medium-emphasis">mdi-calendar-check-outline</v-icon>
-                <span class="text-body-2 text-medium-emphasis">
+                <v-icon color="medium-emphasis">mdi-calendar-check-outline</v-icon>
+                <span class="text-body-1 text-medium-emphasis">
                   Reservado el {{ reservedOn }}
                 </span>
               </div>
@@ -293,6 +293,6 @@ function onCancelTurnConfirm(data: {
   display: flex;
   align-items: center;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 </style>
