@@ -14,133 +14,128 @@
       </v-chip>
     </div>
 
-    <v-row dense>
-      <v-col cols="12" sm="6" md="6">
-        <v-card variant="outlined" rounded="lg" class="h-100">
-          <div class="pa-4 d-flex flex-column ga-3">
-            <div class="section-title">
-              <v-icon size="small" class="mr-1">mdi-account-circle-outline</v-icon>
-              Cliente
+    <v-card variant="outlined" rounded="lg">
+      <div class="pa-5 d-flex flex-column ga-4">
+
+        <div>
+          <div class="section-title mb-3">
+            <v-icon size="small" class="mr-1">mdi-calendar-cursor</v-icon>
+            Cita
+          </div>
+          <div class="d-flex flex-column ga-2">
+            <div class="d-flex align-center ga-3">
+              <v-icon size="small" color="medium-emphasis">mdi-calendar</v-icon>
+              <span class="text-body-1">{{ dateLine }}</span>
             </div>
             <div class="d-flex align-center ga-3">
-              <v-icon color="primary" size="32">mdi-account</v-icon>
-              <div class="flex-grow-1" style="min-width: 0">
-                <div class="text-subtitle-2 text-truncate">{{ booking.customer_name || 'Sin nombre' }}</div>
-                <div
-                  v-if="booking.participant_count > 1"
-                  class="text-caption text-medium-emphasis"
-                >
-                  {{ booking.participant_count }} participantes
-                </div>
-              </div>
+              <v-icon size="small" color="medium-emphasis">mdi-clock-outline</v-icon>
+              <span class="text-body-1">{{ timeRange }}</span>
+              <span v-if="durationLabel" class="text-caption text-medium-emphasis">
+                · {{ durationLabel }}
+              </span>
             </div>
-            <v-divider />
-            <div class="d-flex flex-column ga-2">
-              <div class="d-flex align-center ga-2">
-                <v-icon size="small" color="medium-emphasis">mdi-phone</v-icon>
-                <span class="text-body-2">{{ booking.customer_phone || 'Sin teléfono' }}</span>
-              </div>
-              <div class="d-flex align-center ga-2">
-                <v-icon size="small" color="medium-emphasis">mdi-email</v-icon>
-                <span class="text-body-2">{{ booking.customer_email || 'Sin email' }}</span>
-              </div>
-            </div>
-            <div class="d-flex flex-column ga-2">
-              <v-btn
-                v-if="hasWhatsapp"
-                color="green"
-                variant="outlined"
-                block
-                prepend-icon="mdi-whatsapp"
-                :href="whatsappUrl"
-                target="_blank"
-                rel="noopener"
-              >
-                WhatsApp
-              </v-btn>
-              <v-btn
-                v-if="hasPhone && xs"
-                color="teal"
-                variant="outlined"
-                block
-                prepend-icon="mdi-phone"
-                :href="telUrl"
-              >
-                Llamar
-              </v-btn>
-              <v-btn
-                v-if="booking.customer_email"
-                variant="outlined"
-                block
-                prepend-icon="mdi-email-outline"
-                :href="`mailto:${booking.customer_email}`"
-              >
-                Correo
-              </v-btn>
+            <div class="d-flex align-center ga-3">
+              <v-icon size="small" color="medium-emphasis">mdi-calendar-check-outline</v-icon>
+              <span class="text-body-1 text-medium-emphasis">
+                Reservado el {{ reservedOn }}
+              </span>
             </div>
           </div>
-        </v-card>
-      </v-col>
+        </div>
 
-      <v-col cols="12" sm="6" md="6">
-        <v-card variant="outlined" rounded="lg" class="h-100">
-          <div class="pa-5 d-flex flex-column ga-3">
-            <div class="section-title">
-              <v-icon size="small" class="mr-1">mdi-calendar-cursor</v-icon>
-              Cita
-            </div>
-            <div class="d-flex flex-column ga-2">
-              <div class="d-flex align-center ga-2">
-                <v-icon color="medium-emphasis">mdi-calendar</v-icon>
-                <span class="text-body-1">{{ dateLine }}</span>
-              </div>
-              <div class="d-flex align-center ga-2">
-                <v-icon color="medium-emphasis">mdi-clock-outline</v-icon>
-                <span class="text-body-1">{{ timeRange }}</span>
-                <span v-if="durationLabel" class="text-caption text-medium-emphasis">
-                  · {{ durationLabel }}
-                </span>
-              </div>
-              <div class="d-flex align-center ga-2">
-                <v-icon color="medium-emphasis">mdi-calendar-check-outline</v-icon>
-                <span class="text-body-1 text-medium-emphasis">
-                  Reservado el {{ reservedOn }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </v-card>
-      </v-col>
+        <v-divider />
 
-      <v-col cols="12" sm="6" md="6">
-        <v-card variant="outlined" rounded="lg" class="h-100">
-          <div class="pa-3 d-flex flex-column ga-2">
-            <div class="section-title">
-              <v-icon size="small" class="mr-1">mdi-tag-multiple-outline</v-icon>
-              Servicio
+        <div>
+          <div class="section-title mb-3">
+            <v-icon size="small" class="mr-1">mdi-tag-multiple-outline</v-icon>
+            Servicio
+          </div>
+          <div class="d-flex flex-column ga-2">
+            <div class="d-flex align-center ga-3">
+              <v-icon size="small" color="medium-emphasis">mdi-view-grid-outline</v-icon>
+              <span class="text-body-1 text-truncate">
+                {{ booking.service?.category?.name || 'Sin categoría' }}
+              </span>
             </div>
-            <div class="d-flex flex-column ga-1">
-              <div class="d-flex align-center ga-2">
-                <v-icon size="small" color="medium-emphasis">mdi-view-grid-outline</v-icon>
-                <span class="text-body-2 text-truncate">
-                  {{ booking.service?.category?.name || 'Sin categoría' }}
-                </span>
-              </div>
-              <div class="d-flex align-center ga-2">
-                <v-avatar :color="serviceColor" size="12" />
-                <span class="text-body-2 font-weight-medium text-truncate">
-                  {{ booking.service?.name || 'Servicio' }}
-                </span>
-              </div>
-              <div class="d-flex align-center ga-2">
-                <v-icon size="small" color="medium-emphasis">mdi-cash</v-icon>
-                <span class="text-body-2">{{ servicePrice }}</span>
+            <div class="d-flex align-center ga-3">
+              <v-avatar :color="serviceColor" size="12" />
+              <span class="text-body-1 font-weight-medium text-truncate">
+                {{ booking.service?.name || 'Servicio' }}
+              </span>
+            </div>
+            <div class="d-flex align-center ga-3">
+              <v-icon size="small" color="medium-emphasis">mdi-cash</v-icon>
+              <span class="text-body-1">{{ servicePrice }}</span>
+            </div>
+          </div>
+        </div>
+
+        <v-divider />
+
+        <div>
+          <div class="section-title mb-3">
+            <v-icon size="small" class="mr-1">mdi-account-circle-outline</v-icon>
+            Cliente
+          </div>
+          <div class="d-flex align-center ga-3">
+            <v-icon size="small" color="medium-emphasis">mdi-account</v-icon>
+            <div class="flex-grow-1" style="min-width: 0">
+              <div class="text-subtitle-2 text-truncate">{{ booking.customer_name || 'Sin nombre' }}</div>
+              <div
+                v-if="booking.participant_count > 1"
+                class="text-caption text-medium-emphasis"
+              >
+                {{ booking.participant_count }} participantes
               </div>
             </div>
           </div>
-        </v-card>
-      </v-col>
-    </v-row>
+          <div class="d-flex flex-column ga-2 mt-3">
+            <div class="d-flex align-center ga-3">
+              <v-icon size="small" color="medium-emphasis">mdi-phone</v-icon>
+              <span class="text-body-1">{{ booking.customer_phone || 'Sin teléfono' }}</span>
+            </div>
+            <div class="d-flex align-center ga-3">
+              <v-icon size="small" color="medium-emphasis">mdi-email</v-icon>
+              <span class="text-body-1">{{ booking.customer_email || 'Sin email' }}</span>
+            </div>
+          </div>
+          <div class="d-flex flex-column ga-2 mt-3">
+            <v-btn
+              v-if="hasWhatsapp"
+              color="green"
+              variant="outlined"
+              block
+              prepend-icon="mdi-whatsapp"
+              :href="whatsappUrl"
+              target="_blank"
+              rel="noopener"
+            >
+              WhatsApp
+            </v-btn>
+            <v-btn
+              v-if="hasPhone && xs"
+              color="teal"
+              variant="outlined"
+              block
+              prepend-icon="mdi-phone"
+              :href="telUrl"
+            >
+              Llamar
+            </v-btn>
+            <v-btn
+              v-if="booking.customer_email"
+              variant="outlined"
+              block
+              prepend-icon="mdi-email-outline"
+              :href="`mailto:${booking.customer_email}`"
+            >
+              Correo
+            </v-btn>
+          </div>
+        </div>
+
+      </div>
+    </v-card>
 
     <div v-if="showActions && canUpdate" class="d-flex flex-column ga-2">
       <v-btn

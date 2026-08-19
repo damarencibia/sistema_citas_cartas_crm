@@ -19,13 +19,12 @@ export const useServiceCategoryStore = defineStore('appointments/service-categor
   },
 
   actions: {
-    async fetchCategories() {
-      const authStore = useAuthStore();
-      const tenantId = authStore.user?.tenant_id;
-      if (!tenantId) return;
+    async fetchCategories(tenantId?: string) {
+      const id = tenantId ?? useAuthStore().user?.tenant_id;
+      if (!id) return;
       this.loading = true;
       try {
-        this.categories = await serviceCategoryRepository.getAll(tenantId);
+        this.categories = await serviceCategoryRepository.getAll(id);
       } finally {
         this.loading = false;
       }

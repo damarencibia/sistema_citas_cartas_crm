@@ -811,7 +811,7 @@ onMounted(async () => {
   await Promise.all([
     serviceStore.fetchServices(),
     employeeStore.fetchEmployees(),
-    categoryStore.fetchCategories(),
+    categoryStore.fetchCategories(tenantStore.tenant?.id),
   ]);
   const qEmpId = route.query.employee_id;
   if (typeof qEmpId === 'string') {
