@@ -144,13 +144,16 @@ ctx.addEventListener('push', (event) => {
   }
 
   const title = payload.title || 'Nexo Platform';
+  const tag = typeof (payload as Record<string, unknown>).tag === 'string'
+    ? (payload as Record<string, unknown>).tag as string
+    : 'nexo-notification';
   const options: NexoNotificationOptions = {
     body: payload.body || '',
     icon: new URL('icons/pwa-512x512.png', ctx.location.origin).href,
     badge: new URL('icons/pwa-64x64.png', ctx.location.origin).href,
     data: { url: payload.url || '/' },
     vibrate: [200, 100, 200],
-    tag: 'nexo-notification',
+    tag,
     renotify: true,
     actions: [{ action: 'open', title: 'Abrir' }],
   };

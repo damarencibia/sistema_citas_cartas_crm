@@ -254,7 +254,7 @@ serve(async (req: Request) => {
       return successResponse({ sent: 0, deleted: 0, skipped: 0 });
     }
 
-    const plaintext = JSON.stringify({ title, body, url: buildNotificationUrl(data) });
+    const plaintext = JSON.stringify({ title, body, url: buildNotificationUrl(data), tag: job?.notification_id || `nexo-${Date.now()}` });
 
     let sent = 0;
     let deleted = 0;
@@ -310,6 +310,7 @@ serve(async (req: Request) => {
       } else if (hadFailures) {
         status = 'failed';
       }
+      console.log(`send-push: delivery=${deliveryId} notification=${job.notification_id} sent=${sent} deleted=${deleted} skipped=${skipped} status=${status}`);
       await supabase.from('push_deliveries').update({
         attempts: attempt,
         sent_count: sent,
