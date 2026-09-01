@@ -359,6 +359,7 @@ import { bookingRepository } from '../repositories/booking.repository';
 import { blockedSlotsRepository } from '../repositories/blocked-slots.repository';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useUiStore } from '@/shared/stores/ui.store';
 import { formatDate } from '@/shared/utils/format';
 import type { Booking, BookingFormPrefill, CreateBookingDTO, WaitlistEntry, DailyExtra, BlockedSlot } from '../types/booking.types';
 
@@ -366,6 +367,7 @@ const bookingStore = useBookingStore();
 const employeeStore = useEmployeeStore();
 const tenantStore = useTenantStore();
 const authStore = useAuthStore();
+const uiStore = useUiStore();
 const notification = useNotification();
 const route = useRoute();
 const router = useRouter();
@@ -720,6 +722,12 @@ watch(filters, () => {
   });
   if (tabKey.value === 'reservas') bookingStore.fetchBookings();
 }, { deep: true });
+
+watch(() => uiStore.sidebar, (open) => {
+  if (open && showDetail.value) {
+    showDetail.value = false;
+  }
+});
 
 async function loadForTab(tab: string) {
   if (tab === 'reservas') {

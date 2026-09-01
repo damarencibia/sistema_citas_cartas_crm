@@ -40,8 +40,8 @@
           class="flex-shrink-0 px-2 daily-closure__tabs"
         >
           <v-tab value="scheduled">Programadas</v-tab>
-          <v-tab value="extras">Extras</v-tab>
-          <v-tab value="summary">Resumen</v-tab>
+          <v-tab value="extras" :disabled="isFutureDate">Extras</v-tab>
+          <v-tab value="summary" :disabled="isFutureDate">Resumen</v-tab>
         </v-tabs>
 
         <v-tabs-window
@@ -72,7 +72,7 @@
                   variant="tonal"
                   color="success"
                   prepend-icon="mdi-check-all"
-                  :disabled="closed"
+                  :disabled="closed || isFutureDate"
                   @click="$emit('markAllAttended', pendingBookings)"
                 >
                   Marcar todos asistidos
@@ -131,7 +131,7 @@
                         variant="tonal"
                         color="success"
                         title="Asistió"
-                        :disabled="closed"
+                        :disabled="closed || isFutureDate"
                         @click="$emit('markAttended', b)"
                       />
                       <v-btn
@@ -140,7 +140,7 @@
                         variant="tonal"
                         color="error"
                         title="No asistió"
-                        :disabled="closed"
+                        :disabled="closed || isFutureDate"
                         @click="$emit('markNoShow', b)"
                       />
                     </div>
@@ -154,7 +154,7 @@
                           size="x-small"
                           :color="b.status === 'completed' ? 'success' : 'error'"
                           variant="tonal"
-                          :disabled="closed"
+                          :disabled="closed || isFutureDate"
                           class="cursor-pointer"
                         >
                           {{ b.status === 'completed' ? 'Asistió' : 'No asistió' }}
@@ -199,7 +199,7 @@
                     variant="text"
                     color="primary"
                     prepend-icon="mdi-layers"
-                    :disabled="closed"
+                    :disabled="closed || isFutureDate"
                     @click="showAddExtraBatch = true"
                   >
                     Por lote
@@ -209,7 +209,7 @@
                     variant="text"
                     color="primary"
                     prepend-icon="mdi-plus"
-                    :disabled="closed"
+                    :disabled="closed || isFutureDate"
                     @click="showAddExtra = true"
                   >
                     Agregar
@@ -250,7 +250,7 @@
                       size="x-small"
                       variant="text"
                       color="error"
-                      :disabled="closed"
+                      :disabled="closed || isFutureDate"
                       @click="$emit('removeExtra', extra)"
                     />
                   </template>

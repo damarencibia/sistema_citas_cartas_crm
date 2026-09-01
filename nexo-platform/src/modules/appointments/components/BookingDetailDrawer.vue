@@ -33,7 +33,7 @@
           </v-tabs>
           <v-btn
             icon="mdi-close"
-            size="small"
+            size="default"
             variant="text"
             aria-label="Cerrar detalle"
             class="mr-1"

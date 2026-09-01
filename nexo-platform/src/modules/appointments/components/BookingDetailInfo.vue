@@ -1,5 +1,5 @@
 <template>
-  <div class="h-100 flex-grow-1 overflow-y-auto pa-4 d-flex flex-column ga-3">
+  <div class="flex-grow-1 overflow-y-auto pa-4 d-flex flex-column ga-3">
     <div class="d-flex align-center ga-2">
       <v-icon size="small" color="primary">mdi-information-outline</v-icon>
       <span class="text-subtitle-2 font-weight-bold">Detalle de la cita</span>
@@ -16,7 +16,6 @@
 
     <v-card variant="outlined" rounded="lg">
       <div class="pa-5 d-flex flex-column ga-4">
-
         <div>
           <div class="section-title mb-3">
             <v-icon size="small" class="mr-1">mdi-calendar-cursor</v-icon>
@@ -133,7 +132,6 @@
             </v-btn>
           </div>
         </div>
-
       </div>
     </v-card>
 
