@@ -56,6 +56,19 @@
           El permiso está bloqueado en el navegador. Habilítalo desde la configuración del
           sitio para volver a activar las notificaciones.
         </v-alert>
+        <v-alert
+          v-if="showBatteryTip"
+          type="info"
+          density="compact"
+          variant="tonal"
+          closable
+          class="mt-2"
+          @click:close="dismissBatteryTip"
+        >
+          Para no perderte avisos en Android: instala la aplicación (banner «Instalar
+          aplicación») y desactiva la optimización de batería de Chrome
+          (Ajustes del teléfono → Batería → Optimización de batería).
+        </v-alert>
       </div>
       <v-divider />
 
@@ -153,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import SwipeToDelete from '@/shared/components/SwipeToDelete.vue';
 import { usePushStore } from '@/shared/stores/push.store';
@@ -222,6 +235,28 @@ const canToggle = computed(
 );
 
 const permissionDenied = computed(() => pushStore.permission === 'denied');
+
+// Guía de batería (Android): los task killers de MIUI/Huawei pueden
+// matar el proceso del navegador y perder pushes. Ver docs/22.
+const BATTERY_TIP_KEY = 'nexo-push-battery-tip-dismissed';
+const isAndroid = computed(() =>
+  typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent),
+);
+const batteryTipDismissed = ref(
+  typeof localStorage !== 'undefined' && localStorage.getItem(BATTERY_TIP_KEY) === '1',
+);
+const showBatteryTip = computed(
+  () => isAndroid.value && pushStore.isEnabled && !batteryTipDismissed.value,
+);
+
+function dismissBatteryTip() {
+  batteryTipDismissed.value = true;
+  try {
+    localStorage.setItem(BATTERY_TIP_KEY, '1');
+  } catch {
+    /* localStorage no disponible */
+  }
+}
 
 const statusText = computed(() => {
   if (!pushStore.supported) return 'Este navegador no soporta notificaciones push.';

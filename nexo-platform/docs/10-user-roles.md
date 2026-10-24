@@ -29,7 +29,7 @@ Cubre los 5 roles del sistema: Super Administrador, Propietario, Administrador, 
 | Propietario         | `owner`       | Por tenant | Dueño del negocio. Acceso completo a la configuración y datos de su tenant. Solo puede haber uno por tenant.            |
 | Administrador       | `admin`       | Por tenant | Personal de gestión. Acceso a funciones operativas sin acceso a configuración de pago o plan.                           |
 | Empleado            | `employee`    | Por tenant | Personal operativo. Acceso limitado a funciones del día a día según su asignación.                                      |
-| Cliente             | `customer`    | Por tenant | Usuario final. Solo acceso a sus propios datos (citas, pedidos, perfil).                                                |
+| Cliente             | `customer`    | Por tenant | Usuario final. Solo acceso a sus propios datos (citas, perfil).                                                          |
 
 ---
 
@@ -77,24 +77,6 @@ Cubre los 5 roles del sistema: Super Administrador, Propietario, Administrador, 
 | Ver historial de citas                     |      R      |      R      |   R   | R (asignadas) | R (propias) |
 | Exportar historial a CSV                   |    CRUD     |    CRUD     | CRUD  |       —       |      —      |
 
-### Módulo: Carta Digital
-
-| Funcionalidad                 | Super Admin | Propietario | Admin | Empleado |   Cliente   |
-| ----------------------------- | :---------: | :---------: | :---: | :------: | :---------: |
-| Gestionar categorías          |    CRUD     |    CRUD     | CRUD  |    —     |      —      |
-| Gestionar productos           |    CRUD     |    CRUD     | CRUD  |    —     |      —      |
-| Gestionar variantes y extras  |    CRUD     |    CRUD     | CRUD  |    —     |      —      |
-| Gestionar menús               |    CRUD     |    CRUD     | CRUD  |    —     |      —      |
-| Marcar producto no disponible |      U      |      U      |   U   |    U     |      —      |
-| Gestionar mesas y QRs         |    CRUD     |    CRUD     | CRUD  |    —     |      —      |
-| Ver carta digital (gestión)   |      R      |      R      |   R   |    R     |      —      |
-| Ver carta digital (pública)   |      —      |      —      |   —   |    —     |      R      |
-| Ver panel de pedidos          |      R      |      R      |   R   |    R     |      —      |
-| Actualizar estado de pedido   |      U      |      U      |   U   |    U     |      —      |
-| Ver historial de pedidos      |      R      |      R      |   R   |    R     | R (propios) |
-| Crear pedido (público)        |      —      |      —      |   —   |    —     |    CRUD     |
-| Ver estado de pedido propio   |      —      |      —      |   —   |    —     |      R      |
-
 ### Módulo: CRM
 
 | Funcionalidad                              | Super Admin | Propietario | Admin | Empleado |    Cliente    |
@@ -109,7 +91,7 @@ Cubre los 5 roles del sistema: Super Administrador, Propietario, Administrador, 
 | Ver puntos del cliente                     |      R      |      R      |   R   |    R     |  R (propios)  |
 | Canjear puntos                             |      U      |      U      |   U   |    U     | R (solicitar) |
 | Ver estadísticas de clientes               |      R      |      R      |   R   |    —     |       —       |
-| Ver historial de cliente (citas + pedidos) |      R      |      R      |   R   |    R     |  R (propio)   |
+| Ver historial de cliente (citas)           |      R      |      R      |   R   |    R     |  R (propio)   |
 | Exportar clientes a CSV                    |    CRUD     |    CRUD     | CRUD  |    —     |       —       |
 
 ---
@@ -336,7 +318,7 @@ Los clientes no tienen un rol en la tabla `users`. Su autorización se maneja me
 
 2. **RLS para clientes**: Las policies RLS verifican que `supabase_user_id = auth.uid()` para acceder a sus datos.
 
-3. **Guest (sin autenticación)**: Las policies RLS permiten INSERT en bookings y orders con validaciones específicas (sin acceso a SELECT de otros datos).
+3. **Guest (sin autenticación)**: Las policies RLS permiten INSERT en bookings con validaciones específicas (sin acceso a SELECT de otros datos).
 
 ---
 
@@ -353,8 +335,8 @@ Los clientes no tienen un rol en la tabla `users`. Su autorización se maneja me
 
 ## Posibles Mejoras Futuras
 
-- **Roles personalizados**: Permitir que el propietario cree roles con permisos específicos (ej: "Cajero" que solo ve pedidos pero no clientes).
-- **Permisos a nivel de recurso**: Control granular sobre qué empleados pueden gestionar qué servicios o productos.
+- **Roles personalizados**: Permitir que el propietario cree roles con permisos específicos (ej: un rol "Recepción" que solo ve la agenda pero no los clientes).
+- **Permisos a nivel de recurso**: Control granular sobre qué empleados pueden gestionar qué servicios.
 - **Sesiones impersonadas**: Super admin puede "actuar como" un usuario de un tenant para depuración (con registro en auditoría).
 - **Grupos de permisos**: Conjuntos reutilizables de permisos que se asignan a roles.
 - **Temporal role elevation**: Elevar temporalmente permisos para una acción específica (ej: cubrir ausencia de admin).

@@ -43,8 +43,8 @@ Cubre todas las tecnologías del stack: frontend, backend, base de datos, hostin
 | **Supabase**                | Última estable | Backend como servicio (BaaS)  | Proporciona PostgreSQL, Auth, Storage, Realtime y Edge Functions en una plataforma integrada. Plan gratuito generoso. Elimina la necesidad de gestionar servidores. API REST y cliente JavaScript nativo.          |
 | **PostgreSQL**              | 15+            | Base de datos relacional      | La base de datos más avanzada y confiable. Soporte nativo de RLS para multi-tenancy. JSONB para datos flexibles. Extensiones como pgcrypto, pg_stat_statements.                                                    |
 | **Supabase Auth**           | —              | Autenticación                 | Manejo completo de registro, login, recuperación de contraseña, sesiones JWT, OAuth (Google, Facebook, Apple). Integración directa con RLS.                                                                        |
-| **Supabase Storage**        | —              | Almacenamiento de archivos    | Para logos, imágenes de productos, etc. CDN integrada. Políticas de acceso basadas en RLS. Límites de almacenamiento por plan.                                                                                     |
-| **Supabase Realtime**       | —              | Tiempo real                   | Basado en WebSockets y la extensión `pg_websockets` de PostgreSQL. Permite suscripciones a cambios en tablas. Esencial para notificaciones de pedidos en tiempo real.                                              |
+| **Supabase Storage**        | —              | Almacenamiento de archivos    | Para logos y avatares, etc. CDN integrada. Políticas de acceso basadas en RLS. Límites de almacenamiento por plan.                                                                                                 |
+| **Supabase Realtime**       | —              | Tiempo real                   | Basado en WebSockets y la extensión `pg_websockets` de PostgreSQL. Permite suscripciones a cambios en tablas. Esencial para notificaciones en tiempo real.                                                        |
 | **Supabase Edge Functions** | —              | Lógica de servidor serverless | Escritas en Deno (TypeScript). Se usan para lógica de negocio que no puede ejecutarse solo con RLS: validaciones complejas, notificaciones, procesamiento de pagos futuro. Se ejecutan en el edge (baja latencia). |
 | **Deno**                    | 1.x            | Runtime de Edge Functions     | Integrado en Supabase Edge Functions. TypeScript nativo, seguro por defecto (sin acceso al sistema de archivos sin permiso).                                                                                       |
 
@@ -101,7 +101,7 @@ Cubre todas las tecnologías del stack: frontend, backend, base de datos, hostin
 
 - **Vuetify** proporciona 80+ componentes listos para producción (datatables, diálogos, calendarios, formularios) que serían muy lentos de implementar desde cero.
 - **Tailwind** requiere construir cada componente manualmente o usar una librería de componentes headless.
-- Para un SaaS que necesita módulos complejos (agenda, carta digital, CRM) con deadline ajustado, Vuetify acelera significativamente el desarrollo.
+- Para un SaaS que necesita módulos complejos (agenda, eventos, CRM) con deadline ajustado, Vuetify acelera significativamente el desarrollo.
 - El theming de Vuetify permite personalizar colores por tenant (requisito BR-008).
 
 ### ¿Por qué Axios y no el cliente nativo de Supabase?

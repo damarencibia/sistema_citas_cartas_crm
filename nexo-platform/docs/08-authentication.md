@@ -186,7 +186,7 @@ $$;
    b. Carga datos del tenant (logo, nombre, colores)
    c. Redirige al dashboard según rol:
       - owner/admin → Dashboard del negocio
-      - employee → Agenda del día (citas) o panel de pedidos
+      - employee → Agenda del día (citas)
       - super_admin → Panel de administración de plataforma
 
 7. Frontend configura el cliente supabase con la sesión:
@@ -227,9 +227,9 @@ $$;
 
 ```
 Opción A: Sin cuenta (guest)
-1. Cliente agenda cita o hace pedido sin registrarse
+1. Cliente agenda cita sin registrarse
 2. Frontend envía datos sin autenticación (anon key de Supabase)
-3. RLS permite INSERT en bookings/orders con validaciones
+3. RLS permite INSERT en bookings con validaciones
 4. El cliente recibe email/link para ver/cancelar su cita
 5. Este link contiene un token de acceso temporal (signed URL)
 
@@ -362,12 +362,10 @@ axios.interceptors.request.use(async (config) => {
 | `/login`, `/register`   | `redirectIfAuthenticated`                     | `/dashboard`                  |
 | `/dashboard`            | `requireAuth`                                 | `/login`                      |
 | `/appointments/*`       | `requireAuth + requireModule('appointments')` | `/dashboard`                  |
-| `/digital-menu/*`       | `requireAuth + requireModule('digital_menu')` | `/dashboard`                  |
 | `/crm/*`                | `requireAuth + requireModule('crm')`          | `/dashboard`                  |
 | `/admin/*`              | `requireAuth + requireAdmin`                  | `/dashboard`                  |
 | `/super-admin/*`        | `requireAuth + requireSuperAdmin`             | `/login`                      |
 | `/public/:slug/booking` | `publicAccess`                                | Ninguna (página pública)      |
-| `/public/:slug/menu`    | `publicAccess`                                | Ninguna (página pública)      |
 
 ### Implementación de Guards
 

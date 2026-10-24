@@ -433,4 +433,4 @@ El negocio puede:
 
 _Documento generado el: 04/07/2026_
 _Versión: 1.0_
-_Próximo documento: 14-module-digital-menu.md_
+_Próximo documento: 15-module-crm.md_

@@ -265,7 +265,6 @@ Campo de búsqueda con debounce y limpieza.
 │   Módulos   │  │                                    │  │
 │             │  │  Main Content (router-view)         │  │
 │   - Citas   │  │                                    │  │
-│   - Menú    │  │                                    │  │
 │   - CRM     │  │                                    │  │
 │             │  └────────────────────────────────────┘  │
 │   Perfil    │                                          │
@@ -287,7 +286,7 @@ Campo de búsqueda con debounce y limpieza.
 │                                                        │
 ├────────────────────────────────────────────────────────┤
 │                                                        │
-│   Main Content (carta digital / formulario reserva)     │
+│   Main Content (formulario reserva / eventos)            │
 │                                                        │
 │                                                        │
 ├────────────────────────────────────────────────────────┤
@@ -368,7 +367,7 @@ Usamos el sistema de espaciado de Vuetify (basado en un factor de 4px).
 
 - **Snackbars** para confirmaciones y errores (duración: 3s éxito, 6s error).
 - **Banners** para información persistente (ej: "Estás en periodo de prueba").
-- **Badges** en el sidebar para notificaciones de nuevos pedidos.
+- **Badges** en el sidebar para notificaciones de nuevas reservas.
 
 ### Estados de Carga
 
@@ -409,7 +408,7 @@ Usamos **Material Design Icons** (`@mdi/font`) que vienen incluidos con Vuetify.
 - **Teclado**: Todos los elementos interactivos son accesibles por teclado (Tab, Enter, Escape).
 - **ARIA**: Roles y atributos ARIA en componentes personalizados.
 - **Focus**: Indicador de foco visible en todos los elementos.
-- **Textos alternativos**: En todas las imágenes (logo, productos, avatares).
+- **Textos alternativos**: En todas las imágenes (logo, avatares).
 - **Tamaño de fuente**: Respetamos el zoom del navegador (no usamos unidades fijas que impidan escalar).
 
 ---

@@ -79,36 +79,6 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
       {
-        path: 'menu',
-        meta: { title: 'Carta Digital', icon: 'mdi-menu' },
-        children: [
-          {
-            path: 'categories',
-            name: 'menu-categories',
-            component: () => import('@/modules/digital-menu/views/CategoriesView.vue'),
-            meta: { title: 'Categorías' },
-          },
-          {
-            path: 'products',
-            name: 'menu-products',
-            component: () => import('@/modules/digital-menu/views/ProductsView.vue'),
-            meta: { title: 'Productos' },
-          },
-          {
-            path: 'tables',
-            name: 'menu-tables',
-            component: () => import('@/modules/digital-menu/views/TablesView.vue'),
-            meta: { title: 'Mesas' },
-          },
-          {
-            path: 'orders',
-            name: 'menu-orders',
-            component: () => import('@/modules/digital-menu/views/OrdersPanelView.vue'),
-            meta: { title: 'Pedidos' },
-          },
-        ],
-      },
-      {
         path: 'crm',
         meta: { title: 'CRM', icon: 'mdi-account-group' },
         children: [
@@ -231,18 +201,6 @@ export const routes: RouteRecordRaw[] = [
         name: 'public-event-detail',
         component: () => import('@/modules/events/views/PublicEventDetailView.vue'),
         meta: { title: 'Evento' },
-      },
-      {
-        path: 'menu',
-        name: 'public-menu',
-        component: () => import('@/modules/digital-menu/views/PublicMenuView.vue'),
-        meta: { title: 'Carta Digital' },
-      },
-      {
-        path: 'order/:orderId',
-        name: 'public-order-tracking',
-        component: () => import('@/modules/digital-menu/views/PublicOrderTracking.vue'),
-        meta: { title: 'Seguimiento Pedido' },
       },
       {
         path: 'portal',

@@ -241,7 +241,6 @@ jobs:
   ],
   "redirects": [
     { "source": "/appointments", "destination": "/appointments/agenda", "permanent": true },
-    { "source": "/digital-menu", "destination": "/digital-menu/orders", "permanent": true },
     { "source": "/crm", "destination": "/crm/customers", "permanent": true }
   ],
   "rewrites": [{ "source": "/public/:slug/:path*", "destination": "/index.html" }]

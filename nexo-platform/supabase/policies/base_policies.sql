@@ -91,27 +91,6 @@ CREATE POLICY bookings_public_insert ON bookings
   FOR INSERT TO anon
   WITH CHECK (true);
 
--- Products: public read
-CREATE POLICY products_public_read ON products
-  FOR SELECT TO anon
-  USING (
-    is_available = true
-    AND deleted_at IS NULL
-  );
-
--- Products: tenant isolation
-CREATE POLICY products_tenant_isolation ON products
-  FOR ALL USING (
-    tenant_id = (auth.jwt() -> 'app_metadata' ->> 'tenant_id')::uuid
-    AND deleted_at IS NULL
-  );
-
--- Orders: tenant isolation
-CREATE POLICY orders_tenant_isolation ON orders
-  FOR ALL USING (
-    tenant_id = (auth.jwt() -> 'app_metadata' ->> 'tenant_id')::uuid
-  );
-
 -- Customers: tenant isolation
 CREATE POLICY customers_tenant_isolation ON customers
   FOR ALL USING (

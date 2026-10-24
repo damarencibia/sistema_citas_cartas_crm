@@ -306,15 +306,15 @@ FOR INSERT
 TO authenticated
 WITH CHECK (
   (auth.jwt() ->> 'role') IN ('owner', 'admin')
-  AND bucket_id IN ('tenant-logos', 'product-images')
+  AND bucket_id IN ('tenant-logos')
 );
 
--- Lectura pública para imágenes de productos y logos
+-- Lectura pública para logos del negocio
 CREATE POLICY "public_read"
 ON storage.objects
 FOR SELECT
 TO public
-USING (bucket_id IN ('tenant-logos', 'product-images', 'qr-codes'));
+USING (bucket_id IN ('tenant-logos'));
 
 -- Validación de tipo de archivo (desde el frontend y con política)
 -- Nota: Supabase Storage no valida tipos MIME por política RLS.
@@ -326,9 +326,7 @@ USING (bucket_id IN ('tenant-logos', 'product-images', 'qr-codes'));
 | Tipo               | Tamaño Máximo | Formatos Permitidos |
 | ------------------ | ------------- | ------------------- |
 | Logo del negocio   | 200KB         | PNG, JPG, WebP      |
-| Imagen de producto | 300KB         | PNG, JPG, WebP      |
 | Avatar de empleado | 100KB         | PNG, JPG, WebP      |
-| QR generado        | 50KB          | PNG                 |
 
 ---
 

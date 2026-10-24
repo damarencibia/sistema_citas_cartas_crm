@@ -54,14 +54,6 @@
           >
             Eventos
           </v-btn>
-          <v-btn
-            v-if="tenantStore.activeModules.digital_menu"
-            variant="text"
-            size="small"
-            :to="`/${tenantStore.tenant.slug}/menu`"
-          >
-            Menú
-          </v-btn>
         </div>
       </v-container>
     </v-app-bar>

@@ -77,12 +77,6 @@ const moduleDefs = [
     icon: 'mdi-calendar-star',
   },
   {
-    key: 'digital_menu',
-    name: 'Carta Digital',
-    description: 'Menú digital, pedidos y gestión de mesas',
-    icon: 'mdi-menu',
-  },
-  {
     key: 'crm',
     name: 'CRM',
     description: 'Clientes, fidelización y programa de puntos',

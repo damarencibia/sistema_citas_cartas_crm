@@ -45,16 +45,6 @@ Cubre todas las rutas del frontend (Vue Router), la organización del sidebar, l
 │   ├── /appointments/bookings      → BookingsView     [admin/owner]
 │   └── /appointments/history       → BookingHistoryView [admin/owner]
 │
-├── /digital-menu                   → Módulo Carta Digital [default layout, auth]
-│   ├── /digital-menu/menus         → MenuManagementView [admin/owner]
-│   ├── /digital-menu/categories    → CategoriesView    [admin/owner]
-│   ├── /digital-menu/products      → ProductsView      [admin/owner]
-│   ├── /digital-menu/products/new  → ProductFormView   [admin/owner]
-│   ├── /digital-menu/products/:id  → ProductFormView   [admin/owner]
-│   ├── /digital-menu/tables        → TablesView        [admin/owner]
-│   ├── /digital-menu/orders        → OrdersPanelView   [employee/admin/owner]
-│   └── /digital-menu/orders/history→ OrderHistoryView  [admin/owner]
-│
 ├── /crm                            → Módulo CRM       [default layout, auth]
 │   ├── /crm/customers              → CustomerListView  [employee/admin/owner]
 │   ├── /crm/customers/:id          → CustomerDetailView [employee/admin/owner]
@@ -83,9 +73,7 @@ Cubre todas las rutas del frontend (Vue Router), la organización del sidebar, l
 │   └── /client/loyalty             → ClientLoyaltyView
 │
 ├── /public/:slug                   → Rutas Públicas    [public layout, anónimo]
-│   ├── /public/:slug/menu          → PublicMenuView        (carta digital)
-│   ├── /public/:slug/booking       → PublicBookingView     (reserva de citas)
-│   └── /public/:slug/order/:id     → PublicOrderTracking   (seguimiento de pedido)
+│   └── /public/:slug/booking       → PublicBookingView     (reserva de citas)
 │
 └── /:pathMatch(.*)*                → NotFoundView     [layout mínimo]
 ```
@@ -227,12 +215,6 @@ export const routes: RouteRecordRaw[] = [
 
   // ─── Public Routes ────────────────────────────────────────
   {
-    path: '/public/:slug/menu',
-    name: 'PublicMenu',
-    component: () => import('@modules/digital-menu/views/PublicMenuView.vue'),
-    meta: { layout: 'public', requiresSlugResolution: true },
-  },
-  {
     path: '/public/:slug/booking',
     name: 'PublicBooking',
     component: () => import('@modules/appointments/views/PublicBookingView.vue'),
@@ -287,22 +269,6 @@ const menuItems = computed(() => {
     });
   }
 
-  // Módulo: Carta Digital (si activo)
-  if (tenantStore.modules.digital_menu) {
-    items.push({
-      title: 'Carta Digital',
-      icon: 'mdi-food',
-      badge: orderStore.pendingCount, // Badge con pedidos pendientes
-      children: [
-        { title: 'Pedidos', route: '/digital-menu/orders' },
-        ...(can.manageProducts ? [{ title: 'Productos', route: '/digital-menu/products' }] : []),
-        ...(can.manageProducts ? [{ title: 'Categorías', route: '/digital-menu/categories' }] : []),
-        ...(can.manageProducts ? [{ title: 'Menús', route: '/digital-menu/menus' }] : []),
-        ...(can.manageProducts ? [{ title: 'Mesas', route: '/digital-menu/tables' }] : []),
-      ],
-    });
-  }
-
   // Módulo: CRM (si activo)
   if (tenantStore.modules.crm) {
     items.push({
@@ -342,7 +308,6 @@ const menuItems = computed(() => {
 | ----------- | -------------------------------- | --------------------- |
 | Por defecto | Expandido                        | Oculto (hamburguesa)  |
 | Colapsado   | Solo iconos (64px)               | —                     |
-| Con badge   | Muestra badge en ítem de pedidos | Mismo                 |
 | Submenús    | Expandibles por hover/click      | Expandibles por click |
 
 ---
@@ -399,13 +364,13 @@ Las rutas públicas no requieren autenticación. El tenant se identifica mediant
 ### Flujo de Navegación Pública
 
 ```
-1. Cliente escanea QR de mesa
+1. Cliente hace clic en el link de reserva del negocio
         │
         ▼
-2. URL: https://nexo.app/public/mi-cafeteria/menu?table=5
+2. URL: https://nexo.app/public/mi-cafeteria/booking
         │
         ▼
-3. Router: /public/:slug/menu
+3. Router: /public/:slug/booking
         │
         ▼
 4. Guard: resolveTenantSlug
@@ -414,19 +379,17 @@ Las rutas públicas no requieren autenticación. El tenant se identifica mediant
    → Configura tema Vuetify con colores del tenant
         │
         ▼
-5. Vista: PublicMenuView
-   → Muestra carta digital con colores del negocio
-   → Los productos se consultan con anon key + tenant_id
-   → El carrito persiste en localStorage
+5. Vista: PublicBookingView
+   → Muestra el portal de reservas con los colores del negocio
+   → Los servicios se consultan con anon key + tenant_id
+   → La selección del wizard persiste en el store
 ```
 
 ### Enlaces Navegación Pública
 
 | Acción del Cliente             | Ruta                                      | Descripción              |
 | ------------------------------ | ----------------------------------------- | ------------------------ |
-| Escanear QR                    | `/public/:slug/menu?table=N`              | Carta digital            |
 | Link de reserva                | `/public/:slug/booking`                   | Formulario de reserva    |
-| Seguimiento de pedido          | `/public/:slug/order/:id`                 | Estado del pedido        |
 | Cancelar cita (desde email)    | `/public/:slug/cancel-booking/:token`     | Cancelación con token    |
 | Reprogramar cita (desde email) | `/public/:slug/reschedule-booking/:token` | Reprogramación con token |
 
@@ -471,8 +434,8 @@ Las rutas públicas no requieren autenticación. El tenant se identifica mediant
 ## Posibles Mejoras Futuras
 
 - **Subdominios por tenant** (`mi-negocio.nexo.app`) para mejorar SEO de páginas públicas.
-- **Búsqueda global** (Ctrl+K) que busca en todos los módulos (clientes, servicios, productos, citas).
-- **Notificaciones en el sidebar** con contador de pedidos pendientes, citas próximas, etc.
+- **Búsqueda global** (Ctrl+K) que busca en todos los módulos (clientes, servicios, citas).
+- **Notificaciones en el sidebar** con contador de citas próximas, etc.
 - **Tour de onboarding** que guía al nuevo propietario paso a paso por las secciones principales.
 - **Atajos de teclado personalizables**.
 - **Navegación por gestos** en dispositivos móviles (swipe para sidebar).

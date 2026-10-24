@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ 'login-blurred': showModuleDialog }">
+  <div>
     <h2 class="text-h5 font-weight-bold text-center mb-1">Iniciar Sesión</h2>
     <p class="text-body-2 text-medium-emphasis text-center mb-6">
       Ingresa tus credenciales para acceder
@@ -62,30 +62,17 @@
       </router-link>
     </p>
   </div>
-
-  <ModuleSelectorDialog
-    v-model="showModuleDialog"
-    @select="onModuleSelect"
-  />
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
-import ModuleSelectorDialog from '@/modules/appointments/components/ModuleSelectorDialog.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const loading = ref(false);
 const authError = ref<string | null>(null);
-const showModuleDialog = ref(false);
-
-const MODULE_ROUTES: Record<string, string> = {
-  appointments: '/appointments/agenda',
-  digital_menu: '/menu',
-  crm: '/crm/customers',
-};
 
 const form = reactive({
   email: '',
@@ -101,7 +88,7 @@ async function handleLogin() {
   authError.value = null;
   try {
     await authStore.login(form.email, form.password);
-    showModuleDialog.value = true;
+    router.push('/appointments/agenda');
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Error al iniciar sesión';
     authError.value = message;
@@ -110,17 +97,6 @@ async function handleLogin() {
   }
 }
 
-function onModuleSelect(moduleId: string) {
-  const route = MODULE_ROUTES[moduleId] || '/';
-  router.push(route);
-}
 </script>
 
-<style scoped>
-.login-blurred {
-  filter: blur(6px);
-  pointer-events: none;
-  user-select: none;
-  transition: filter 0.3s ease;
-}
-</style>
+

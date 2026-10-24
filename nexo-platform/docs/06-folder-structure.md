@@ -63,7 +63,6 @@ nexo-platform/
 │   ├── 11-ui-design-system.md
 │   ├── 12-navigation.md
 │   ├── 13-module-appointments.md
-│   ├── 14-module-digital-menu.md
 │   ├── 15-module-crm.md
 │   ├── 16-api-design.md
 │   ├── 17-security.md
@@ -102,7 +101,7 @@ nexo-platform/
 │   │   ├── layouts/
 │   │   │   ├── default.vue         # Layout principal (sidebar + header)
 │   │   │   ├── auth.vue            # Layout para login/registro
-│   │   │   ├── public.vue          # Layout público (carta digital, booking)
+│   │   │   ├── public.vue          # Layout público (booking)
 │   │   │   └── admin.vue           # Layout para super admin
 │   │   │
 │   │   ├── App.vue                 # Componente raíz
@@ -206,64 +205,6 @@ nexo-platform/
 │   │   │   │   └── schedule.types.ts
 │   │   │   │
 │   │   │   └── i18n/               # Traducciones del módulo
-│   │   │       ├── en.json
-│   │   │       ├── es.json
-│   │   │       └── pt.json
-│   │   │
-│   │   ├── digital-menu/           # Módulo: Carta Digital
-│   │   │   ├── views/
-│   │   │   │   ├── MenuManagementView.vue
-│   │   │   │   ├── CategoriesView.vue
-│   │   │   │   ├── ProductsView.vue
-│   │   │   │   ├── ProductFormView.vue
-│   │   │   │   ├── TablesView.vue
-│   │   │   │   ├── OrdersPanelView.vue
-│   │   │   │   ├── OrderHistoryView.vue
-│   │   │   │   ├── PublicMenuView.vue        # Carta pública del cliente
-│   │   │   │   └── PublicOrderTracking.vue    # Seguimiento de pedido
-│   │   │   │
-│   │   │   ├── components/
-│   │   │   │   ├── CategoryList.vue
-│   │   │   │   ├── ProductCard.vue
-│   │   │   │   ├── ProductDetail.vue
-│   │   │   │   ├── ProductForm.vue
-│   │   │   │   ├── VariantSelector.vue
-│   │   │   │   ├── ExtraSelector.vue
-│   │   │   │   ├── CartDrawer.vue
-│   │   │   │   ├── CartItem.vue
-│   │   │   │   ├── OrderCard.vue
-│   │   │   │   ├── OrderStatusTimeline.vue
-│   │   │   │   ├── TableCard.vue
-│   │   │   │   ├── QRCodeDisplay.vue
-│   │   │   │   └── MenuScheduleConfig.vue
-│   │   │   │
-│   │   │   ├── stores/
-│   │   │   │   ├── category.store.ts
-│   │   │   │   ├── product.store.ts
-│   │   │   │   ├── order.store.ts
-│   │   │   │   ├── cart.store.ts
-│   │   │   │   └── table.store.ts
-│   │   │   │
-│   │   │   ├── composables/
-│   │   │   │   ├── useCart.ts
-│   │   │   │   ├── useOrderTracking.ts
-│   │   │   │   ├── useMenuDisplay.ts
-│   │   │   │   └── useQRGenerator.ts
-│   │   │   │
-│   │   │   ├── repositories/
-│   │   │   │   ├── category.repository.ts
-│   │   │   │   ├── product.repository.ts
-│   │   │   │   ├── order.repository.ts
-│   │   │   │   └── table.repository.ts
-│   │   │   │
-│   │   │   ├── types/
-│   │   │   │   ├── category.types.ts
-│   │   │   │   ├── product.types.ts
-│   │   │   │   ├── order.types.ts
-│   │   │   │   ├── cart.types.ts
-│   │   │   │   └── table.types.ts
-│   │   │   │
-│   │   │   └── i18n/
 │   │   │       ├── en.json
 │   │   │       ├── es.json
 │   │   │       └── pt.json
@@ -399,24 +340,18 @@ nexo-platform/
 │   │   ├── 20260101000002_create_users.sql
 │   │   ├── 20260101000003_create_services.sql
 │   │   ├── 20260101000004_create_bookings.sql
-│   │   ├── 20260101000005_create_categories.sql
-│   │   ├── 20260101000006_create_products.sql
-│   │   ├── 20260101000007_create_orders.sql
-│   │   ├── 20260101000008_create_customers.sql
+│   │   ├── 20260101000005_create_customers.sql
 │   │   └── ...                     # Más migraciones ordenadas
 │   │
 │   ├── policies/                   # Políticas RLS por tabla
 │   │   ├── tenants.policies.sql
 │   │   ├── services.policies.sql
 │   │   ├── bookings.policies.sql
-│   │   ├── products.policies.sql
-│   │   ├── orders.policies.sql
 │   │   └── customers.policies.sql
 │   │
 │   ├── triggers/                   # Triggers de PostgreSQL
 │   │   ├── booking_audit.sql
-│   │   ├── customer_visit.sql
-│   │   └── order_status_change.sql
+│   │   └── customer_visit.sql
 │   │
 │   ├── functions/                  # Funciones SQL reutilizables
 │   │   ├── get_available_slots.sql
@@ -433,9 +368,6 @@ nexo-platform/
 │       │   ├── index.ts            # Lógica de la función
 │       │   └── test.ts             # Tests
 │       │
-│       ├── send-order-notification/
-│       │   └── index.ts
-│       │
 │       ├── process-loyalty-points/
 │       │   └── index.ts
 │       │
@@ -449,8 +381,6 @@ nexo-platform/
 │   │   └── modules/
 │   │       ├── appointments/
 │   │       │   └── booking.store.test.ts
-│   │       ├── digital-menu/
-│   │       │   └── product.store.test.ts
 │   │       └── crm/
 │   │           └── customer.store.test.ts
 │   │
@@ -463,11 +393,9 @@ nexo-platform/
 │       │   └── test-data.ts
 │       ├── pages/
 │       │   ├── login.page.ts
-│       │   ├── booking.page.ts
-│       │   └── menu.page.ts
+│       │   └── booking.page.ts
 │       ├── specs/
 │       │   ├── appointment-flow.spec.ts
-│       │   ├── order-flow.spec.ts
 │       │   └── crm-flow.spec.ts
 │       └── playwright.config.ts
 │
@@ -507,7 +435,7 @@ nexo-platform/
 | Interfaces/Type    | PascalCase                    | `interface Booking`                 |
 | Variables          | camelCase                     | `const availableSlots`              |
 | Funciones          | camelCase                     | `function fetchBookings()`          |
-| Carpetas de módulo | kebab-case                    | `digital-menu`                      |
+| Carpetas de módulo | kebab-case                    | `appointments`                      |
 
 ---
 
@@ -583,7 +511,7 @@ pnpm create vite nexo-platform --template vue-ts
 
 # Dependencias principales
 pnpm add vue@3 vue-router@4 pinia@2 vuetify@3 @mdi/font
-pnpm add @supabase/supabase-js axios vue-i18n@9 zod date-fns qrcode
+pnpm add @supabase/supabase-js axios vue-i18n@9 zod date-fns
 
 # Dependencias de desarrollo
 pnpm add -D typescript@5 vite@5 @vitejs/plugin-vue vite-plugin-vuetify

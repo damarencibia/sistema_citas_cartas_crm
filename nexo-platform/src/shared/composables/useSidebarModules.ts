@@ -39,13 +39,6 @@ const EVENTS_OPTIONS: SidebarOption[] = [
   { title: 'Mis Eventos', icon: 'mdi-calendar-star', to: '/events' },
 ];
 
-const CARTA_OPTIONS: SidebarOption[] = [
-  { title: 'Categorías', icon: 'mdi-shape-outline', to: '/menu/categories' },
-  { title: 'Productos', icon: 'mdi-food-outline', to: '/menu/products' },
-  { title: 'Mesas', icon: 'mdi-table-furniture', to: '/menu/tables' },
-  { title: 'Pedidos', icon: 'mdi-clipboard-list-outline', to: '/menu/orders' },
-];
-
 const CRM_OPTIONS: SidebarOption[] = [
   { title: 'Clientes', icon: 'mdi-account-outline', to: '/crm/customers' },
   { title: 'Etiquetas', icon: 'mdi-tag-outline', to: '/crm/tags' },
@@ -96,10 +89,6 @@ export function useSidebarModules() {
       }
     }
 
-    if (m.digital_menu && admin) {
-      list.push({ key: 'carta-digital', title: 'Carta Digital', icon: 'mdi-silverware-fork-knife', to: '/menu/categories', options: CARTA_OPTIONS });
-    }
-
     if (m.crm && admin) {
       list.push({ key: 'crm', title: 'CRM', icon: 'mdi-account-group-outline', to: '/crm/customers', options: CRM_OPTIONS });
     }
@@ -118,7 +107,6 @@ export function useSidebarModules() {
     if (path === '/appointments/schedules') return 'agenda';
     if (path === '/appointments/my-services') return 'my-services';
     if (path.startsWith('/events')) return 'events';
-    if (path.startsWith('/menu/')) return 'carta-digital';
     if (path.startsWith('/crm/')) return 'crm';
     if (path.startsWith('/settings/') || path.startsWith('/appointments/')) return 'config';
     if (path.startsWith('/admin/')) return 'super-admin';

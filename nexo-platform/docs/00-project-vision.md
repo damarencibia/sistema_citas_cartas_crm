@@ -25,7 +25,7 @@ Cubre:
 
 Los pequeños y medianos negocios (pymes) carecen de herramientas digitales accesibles, integradas y asequibles para gestionar su operación diaria. Las soluciones existentes presentan los siguientes problemas:
 
-1. **Fragmentación**: Un negocio necesita una herramienta para citas, otra para menús digitales, otra para facturación y otra para CRM. No existe integración nativa entre ellas.
+1. **Fragmentación**: Un negocio necesita una herramienta para citas, otra para CRM y otra para facturación. No existe integración nativa entre ellas.
 2. **Costo elevado**: Las plataformas empresariales (Salesforce, HubSpot, etc.) tienen precios prohibitivos para pymes.
 3. **Complejidad**: Las soluciones existentes requieren configuraciones complejas y curvas de aprendizaje largas.
 4. **Falta de aislamiento**: Muchas herramientas no ofrecen verdadero aislamiento de datos entre empresas, lo que puede generar problemas de privacidad y合规.
@@ -42,7 +42,6 @@ Cada negocio (tenant) opera con sus propios datos completamente aislados, pero c
 Los módulos iniciales cubren las necesidades operativas más comunes:
 
 - **Citas**: Reservas, agenda, horarios, empleados, servicios.
-- **Carta Digital**: Menús interactivos, pedidos por mesa, QR, carrito.
 - **CRM**: Gestión de clientes, historial, etiquetas, fidelización.
 
 A futuro, el sistema podrá incorporar módulos como facturación, inventarios, reporting avanzado, etc., sin modificar la arquitectura principal.
@@ -96,7 +95,6 @@ La arquitectura debe permitir escalar horizontalmente tanto la base de datos com
 | Módulo            | Descripción                                                                                          | Valor para el negocio                                                                     |
 | ----------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | **Citas**         | Agenda digital, gestión de horarios, servicios, empleados, reservas con cancelación y reprogramación | Elimina la doble agenda, reduce ausencias, profesionaliza la atención al cliente          |
-| **Carta Digital** | Menú interactivo por QR, categorías, productos, variantes, extras, carrito y pedidos en tiempo real  | Reduce costos de impresión, agiliza la toma de pedidos, mejora la experiencia del cliente |
 | **CRM**           | Base de datos de clientes, historial de interacciones, notas, etiquetas, programa de fidelización    | Centraliza la información del cliente, permite personalizar la atención, retiene clientes |
 
 ---

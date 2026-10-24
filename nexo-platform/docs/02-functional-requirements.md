@@ -8,7 +8,7 @@ Desglosar los requisitos de negocio (01-business-requirements.md) en requisitos 
 
 ## Alcance
 
-Cubre todos los requisitos funcionales de los tres módulos iniciales y la plataforma base. Los requisitos están organizados por módulo y por funcionalidad. No cubre detalles de implementación técnica (API, base de datos, UI).
+Cubre todos los requisitos funcionales de los módulos iniciales y la plataforma base. Los requisitos están organizados por módulo y por funcionalidad. No cubre detalles de implementación técnica (API, base de datos, UI).
 
 ---
 
@@ -111,7 +111,7 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 | **Prioridad**               | Alta                                                                                                                                                           |
 | **Trazabilidad**            | BR-004                                                                                                                                                         |
 | **Criterios de aceptación** |                                                                                                                                                                |
-|                             | 1. El dashboard muestra: citas de hoy (totales, completadas, pendientes, canceladas), pedidos activos, clientes nuevos (este mes), ingresos estimados del día. |
+|                             | 1. El dashboard muestra: citas de hoy (totales, completadas, pendientes, canceladas), clientes nuevos (este mes), ingresos estimados del día. |
 |                             | 2. Los datos se actualizan en tiempo real (usando Supabase Realtime).                                                                                          |
 |                             | 3. Cada indicador es un enlace a la vista detallada correspondiente.                                                                                           |
 |                             | 4. El dashboard es responsivo y se ve correctamente en móvil.                                                                                                  |
@@ -127,10 +127,8 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 |                             | 1. Se envía email de confirmación al agendar una cita.                                     |
 |                             | 2. Se envía email recordatorio 24h antes de la cita.                                       |
 |                             | 3. Se envía email al cancelar o reprogramar una cita.                                      |
-|                             | 4. Se envía email al crear un pedido (al negocio).                                         |
-|                             | 5. Se envía email al cambiar estado del pedido (al cliente, si tiene cuenta).              |
-|                             | 6. Las notificaciones SMS se envían solo si el negocio tiene configurado un proveedor SMS. |
-|                             | 7. El negocio puede configurar qué notificaciones enviar y a quién.                        |
+|                             | 4. Las notificaciones SMS se envían solo si el negocio tiene configurado un proveedor SMS. |
+|                             | 5. El negocio puede configurar qué notificaciones enviar y a quién.                        |
 
 ### FR-008: Activación/desactivación de módulos
 
@@ -166,7 +164,7 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 | **Prioridad**               | Alta                                                                                                                                                          |
 | **Trazabilidad**            | BR-010                                                                                                                                                        |
 | **Criterios de aceptación** |                                                                                                                                                               |
-|                             | 1. Se registra: inicio de sesión (éxito/fallo), cierre de sesión, cambios en configuración del negocio, cambios en empleados, cambios en servicios/productos. |
+|                             | 1. Se registra: inicio de sesión (éxito/fallo), cierre de sesión, cambios en configuración del negocio, cambios en empleados, cambios en servicios. |
 |                             | 2. Cada registro incluye: timestamp, usuario, tenant, acción, detalles, dirección IP.                                                                         |
 |                             | 3. El super administrador puede ver logs de cualquier tenant.                                                                                                 |
 |                             | 4. Los logs no son editables ni eliminables por nadie.                                                                                                        |
@@ -338,177 +336,6 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 
 ---
 
-## Módulo: Carta Digital
-
-### FR-201: Gestión de categorías
-
-| Campo                       | Valor                                                                                           |
-| --------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Descripción**             | El negocio debe poder crear, editar, reordenar y desactivar categorías de productos.            |
-| **Prioridad**               | Alta                                                                                            |
-| **Trazabilidad**            | BR-201                                                                                          |
-| **Criterios de aceptación** |                                                                                                 |
-|                             | 1. El formulario de categoría incluye: nombre, descripción (opcional), ícono (opcional), orden. |
-|                             | 2. Las categorías se pueden reordenar mediante drag & drop.                                     |
-|                             | 3. Se puede desactivar una categoría. Al desactivarla, sus productos no se muestran.            |
-|                             | 4. Al eliminar una categoría (solo si no tiene productos), se elimina permanentemente.          |
-
-### FR-202: Gestión de productos
-
-| Campo                       | Valor                                                                                                                                   |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El negocio debe poder crear, editar, listar y desactivar productos.                                                                     |
-| **Prioridad**               | Alta                                                                                                                                    |
-| **Trazabilidad**            | BR-202, BR-214                                                                                                                          |
-| **Criterios de aceptación** |                                                                                                                                         |
-|                             | 1. El formulario de producto incluye: nombre, descripción, precio, categoría, imagen (opcional), disponible (sí/no), destacado (sí/no). |
-|                             | 2. Se pueden subir múltiples imágenes por producto.                                                                                     |
-|                             | 3. Las imágenes se optimizan automáticamente (WebP, max 300KB cada una).                                                                |
-|                             | 4. La disponibilidad se puede cambiar rápidamente desde el listado (toggle).                                                            |
-|                             | 5. Los productos no disponibles no aparecen en la carta digital activa.                                                                 |
-|                             | 6. El listado permite filtrar por categoría y estado.                                                                                   |
-
-### FR-203: Variantes de producto
-
-| Campo                       | Valor                                                                                                                              |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El negocio debe poder definir variantes para un producto (tamaños, presentaciones).                                                |
-| **Prioridad**               | Alta                                                                                                                               |
-| **Trazabilidad**            | BR-203                                                                                                                             |
-| **Criterios de aceptación** |                                                                                                                                    |
-|                             | 1. Cada variante tiene: nombre (ej: "Grande"), precio adicional (puede ser 0, puede ser negativo si la variante base es más cara). |
-|                             | 2. Una variante puede tener un precio independiente (reemplaza el precio base).                                                    |
-|                             | 3. Se requiere al menos 1 variante o ninguna (el producto se vende sin variantes).                                                 |
-|                             | 4. En la carta digital, el cliente debe seleccionar una variante obligatoriamente si existen.                                      |
-
-### FR-204: Extras / Modificadores
-
-| Campo                       | Valor                                                                                              |
-| --------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El negocio debe poder definir extras seleccionables para cada producto.                            |
-| **Prioridad**               | Alta                                                                                               |
-| **Trazabilidad**            | BR-204                                                                                             |
-| **Criterios de aceptación** |                                                                                                    |
-|                             | 1. Cada extra tiene: nombre, precio adicional, selección múltiple o única.                         |
-|                             | 2. Se puede limitar la cantidad máxima de extras seleccionables (ej: máximo 3 ingredientes extra). |
-|                             | 3. Los extras se agrupan en categorías de extras (ej: "Ingredientes extra", "Salsas").             |
-|                             | 4. En la carta digital, el cliente puede seleccionar extras antes de agregar al carrito.           |
-
-### FR-205: Generación de QR por mesa
-
-| Campo                       | Valor                                                                                                     |
-| --------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El sistema debe generar códigos QR únicos por mesa.                                                       |
-| **Prioridad**               | Alta                                                                                                      |
-| **Trazabilidad**            | BR-205                                                                                                    |
-| **Criterios de aceptación** |                                                                                                           |
-|                             | 1. El propietario/admin puede agregar mesas con nombre/número y generar su QR.                            |
-|                             | 2. El QR enlaza a la carta digital del negocio con el parámetro de mesa.                                  |
-|                             | 3. El QR se puede descargar en PNG y PDF para imprimir.                                                   |
-|                             | 4. Al escanear el QR, el cliente ve la carta digital y sus pedidos se asocian automáticamente a esa mesa. |
-|                             | 5. El formato del QR sigue el estándar QR Code.                                                           |
-
-### FR-206: Visualización de carta digital (cliente)
-
-| Campo                       | Valor                                                                                              |
-| --------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El cliente debe poder ver la carta digital en su dispositivo móvil sin registrarse.                |
-| **Prioridad**               | Crítica                                                                                            |
-| **Trazabilidad**            | BR-206                                                                                             |
-| **Criterios de aceptación** |                                                                                                    |
-|                             | 1. La carta se carga al escanear el QR o al acceder a la URL pública del negocio + ?table=N.       |
-|                             | 2. Muestra las categorías como pestañas o secciones desplazables.                                  |
-|                             | 3. Cada producto muestra: nombre, descripción breve, precio, imagen, indicador si tiene variantes. |
-|                             | 4. La carta es completamente responsive y optimizada para móvil.                                   |
-|                             | 5. No requiere autenticación ni registro.                                                          |
-
-### FR-207: Carrito de compras
-
-| Campo                       | Valor                                                                                                                                                          |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El cliente debe poder agregar productos al carrito y personalizarlos.                                                                                          |
-| **Prioridad**               | Crítica                                                                                                                                                        |
-| **Trazabilidad**            | BR-207                                                                                                                                                         |
-| **Criterios de aceptación** |                                                                                                                                                                |
-|                             | 1. Al hacer clic en un producto, se abre un modal/detalle con: selección de variante (si aplica), selección de extras, selector de cantidad, notas (opcional). |
-|                             | 2. El carrito muestra: lista de productos con variantes/extras seleccionados, cantidad, subtotal por producto, total general.                                  |
-|                             | 3. El cliente puede modificar cantidad o eliminar items del carrito.                                                                                           |
-|                             | 4. El carrito persiste mientras el navegador no se cierre (localStorage).                                                                                      |
-|                             | 5. El carrito visible en un botón flotante con el conteo de items.                                                                                             |
-
-### FR-208: Envío de pedido
-
-| Campo                       | Valor                                                                                                                 |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El cliente debe poder enviar el pedido a la cocina/barra.                                                             |
-| **Prioridad**               | Crítica                                                                                                               |
-| **Trazabilidad**            | BR-208                                                                                                                |
-| **Criterios de aceptación** |                                                                                                                       |
-|                             | 1. Desde el carrito, el cliente hace clic en "Enviar pedido".                                                         |
-|                             | 2. Si el cliente no ha ingresado sus datos, se solicita: nombre (obligatorio), email (opcional), teléfono (opcional). |
-|                             | 3. Al confirmar, el pedido se crea con estado "pendiente" y se asocia a la mesa.                                      |
-|                             | 4. Se muestra una pantalla de confirmación con el número de pedido y estado "pendiente".                              |
-|                             | 5. Se notifica al negocio (sonido + notificación visual en el panel de pedidos).                                      |
-
-### FR-209: Panel de pedidos (empleado)
-
-| Campo                       | Valor                                                                                                      |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El empleado debe ver los pedidos entrantes en tiempo real y gestionar su estado.                           |
-| **Prioridad**               | Crítica                                                                                                    |
-| **Trazabilidad**            | BR-209, BR-210                                                                                             |
-| **Criterios de aceptación** |                                                                                                            |
-|                             | 1. El panel muestra los pedidos agrupados por estado (pendiente, preparando, listo, entregado, cancelado). |
-|                             | 2. Cada pedido muestra: número, mesa, productos (con variantes/extras), notas, timestamp.                  |
-|                             | 3. Los nuevos pedidos aparecen en tiempo real con un efecto visual.                                        |
-|                             | 4. El empleado puede cambiar el estado del pedido con un clic.                                             |
-|                             | 5. Al cambiar a "listo", se notifica al cliente en la pantalla de seguimiento.                             |
-|                             | 6. Al cambiar a "entregado", el pedido se mueve a histórico.                                               |
-|                             | 7. Un pedido no puede pasar de "pendiente" a "entregado" directamente (debe pasar por "preparando").       |
-
-### FR-210: Seguimiento de pedido (cliente)
-
-| Campo                       | Valor                                                                                                   |
-| --------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El cliente debe poder ver el estado de su pedido en tiempo real.                                        |
-| **Prioridad**               | Alta                                                                                                    |
-| **Trazabilidad**            | BR-211                                                                                                  |
-| **Criterios de aceptación** |                                                                                                         |
-|                             | 1. Después de enviar el pedido, el cliente ve la pantalla de seguimiento.                               |
-|                             | 2. La pantalla muestra: número de pedido, mesa, lista de productos, estado actual, tiempo transcurrido. |
-|                             | 3. El estado se actualiza en tiempo real (pendiente → preparando → listo → entregado).                  |
-|                             | 4. El cliente puede cerrar la pantalla y volver a la carta para hacer otro pedido.                      |
-|                             | 5. Hay un botón "Hacer otro pedido" que limpia el carrito y vuelve a la carta.                          |
-
-### FR-211: Gestión de mesas
-
-| Campo                       | Valor                                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------------------- |
-| **Descripción**             | El negocio debe poder gestionar las mesas de su local.                                      |
-| **Prioridad**               | Alta                                                                                        |
-| **Trazabilidad**            | BR-212                                                                                      |
-| **Criterios de aceptación** |                                                                                             |
-|                             | 1. CRUD de mesas: número/nombre, capacidad (personas), ubicación (interior, terraza, etc.). |
-|                             | 2. Cada mesa tiene un QR único generado automáticamente.                                    |
-|                             | 3. Se puede imprimir/descargar el QR de una mesa o de todas.                                |
-|                             | 4. Desde el panel de empleados, se puede ver qué mesas tienen pedidos activos.              |
-
-### FR-212: Gestión de múltiples menús
-
-| Campo                       | Valor                                                                                                   |
-| --------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Descripción**             | El negocio debe poder crear múltiples menús para diferentes horarios o días.                            |
-| **Prioridad**               | Media                                                                                                   |
-| **Trazabilidad**            | BR-213                                                                                                  |
-| **Criterios de aceptación** |                                                                                                         |
-|                             | 1. Se pueden crear menús con nombre, descripción, horario de aplicación (ej: "Menú Lunch 12:00-17:00"). |
-|                             | 2. Cada menú tiene su propio conjunto de categorías y productos.                                        |
-|                             | 3. Se puede asignar un menú a días específicos de la semana.                                            |
-|                             | 4. El sistema muestra automáticamente el menú correspondiente según el día y hora actual.               |
-|                             | 5. Si no hay menú configurado para el día/hora, se muestra el menú por defecto.                         |
-
----
-
 ## Módulo: CRM
 
 ### FR-301: Registro automático de clientes
@@ -520,10 +347,9 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 | **Trazabilidad**            | BR-301                                                                                                                       |
 | **Criterios de aceptación** |                                                                                                                              |
 |                             | 1. Cuando un cliente agenda una cita (FR-104) proporcionando su email, se crea un registro de cliente si no existe.          |
-|                             | 2. Cuando un cliente hace un pedido (FR-208) proporcionando su email, se crea o actualiza su registro.                       |
-|                             | 3. Si el cliente ya existe (mismo email en el mismo tenant), se actualizan sus datos y se incrementa el contador de visitas. |
-|                             | 4. El cliente puede tener una cuenta opcional con contraseña para acceder a su historial.                                    |
-|                             | 5. La cuenta de cliente es independiente por tenant (un cliente puede tener cuentas en diferentes negocios).                 |
+|                             | 2. Si el cliente ya existe (mismo email en el mismo tenant), se actualizan sus datos y se incrementa el contador de visitas. |
+|                             | 3. El cliente puede tener una cuenta opcional con contraseña para acceder a su historial.                                    |
+|                             | 4. La cuenta de cliente es independiente por tenant (un cliente puede tener cuentas en diferentes negocios).                 |
 
 ### FR-302: Perfil de cliente
 
@@ -534,7 +360,7 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 | **Trazabilidad**            | BR-302                                                                                                                       |
 | **Criterios de aceptación** |                                                                                                                              |
 |                             | 1. El perfil muestra: nombre, email, teléfono, fecha de registro, última visita, total de visitas, total gastado, etiquetas. |
-|                             | 2. El perfil tiene pestañas: Información, Historial de citas, Historial de pedidos, Notas.                                   |
+|                             | 2. El perfil tiene pestañas: Información, Historial de citas, Notas.                                    |
 |                             | 3. La información se carga desde las interacciones registradas.                                                              |
 
 ### FR-303: Notas de cliente
@@ -574,9 +400,8 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 | **Trazabilidad**            | BR-305                                                                                                            |
 | **Criterios de aceptación** |                                                                                                                   |
 |                             | 1. El historial de citas muestra todas las citas del cliente en el negocio con fecha, servicio, empleado, estado. |
-|                             | 2. El historial de pedidos muestra todos los pedidos del cliente con fecha, productos, total, estado.             |
-|                             | 3. Ambos historiales son paginados y filtrables por fecha.                                                        |
-|                             | 4. Desde el historial se puede hacer clic para ver detalle de la cita o pedido.                                   |
+|                             | 2. El historial es paginado y filtrable por fecha.                                                                |
+|                             | 3. Desde el historial se puede hacer clic para ver el detalle de la cita.                                         |
 
 ### FR-306: Programa de fidelización
 
@@ -586,8 +411,8 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 | **Prioridad**               | Media                                                                                                                                                                                                                   |
 | **Trazabilidad**            | BR-306, BR-307                                                                                                                                                                                                          |
 | **Criterios de aceptación** |                                                                                                                                                                                                                         |
-|                             | 1. Configuración: puntos por visita (ej: 10 puntos por cita completada), puntos por gasto (ej: 1 punto por cada $100 gastados), puntos de bienvenida, valor del punto en descuento (ej: 100 puntos = $50 de descuento). |
-|                             | 2. El cliente acumula puntos automáticamente al completar citas o pedidos.                                                                                                                                              |
+|                             | 1. Configuración: puntos por cita completada (ej: 10 puntos por cita), puntos de bienvenida, valor del punto en descuento (ej: 100 puntos = $50 de descuento). |
+|                             | 2. El cliente acumula puntos automáticamente al completar citas.                                                                                              |
 |                             | 3. El cliente puede ver sus puntos desde su perfil (si tiene cuenta).                                                                                                                                                   |
 |                             | 4. El cliente puede canjear puntos en su próxima visita (el empleado aplica el descuento).                                                                                                                              |
 |                             | 5. Los puntos tienen fecha de expiración configurable (default: 6 meses).                                                                                                                                               |
@@ -628,7 +453,7 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 | **Criterios de aceptación** |                                                                                                       |
 |                             | 1. El cliente con cuenta puede iniciar sesión y ver/editar: nombre, email, teléfono, foto (opcional). |
 |                             | 2. El cliente puede cambiar su contraseña.                                                            |
-|                             | 3. El cliente puede ver su historial de citas y pedidos.                                              |
+|                             | 3. El cliente puede ver su historial de citas.                                                        |
 |                             | 4. El cliente puede ver sus puntos de fidelización y canjearlos.                                      |
 
 ---
@@ -649,7 +474,7 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 |                             | 4. El usuario puede cambiar de idioma desde la UI.                                                         |
 |                             | 5. La selección de idioma persiste (localStorage).                                                         |
 |                             | 6. Las traducciones se cargan bajo demanda (lazy loading).                                                 |
-|                             | 7. El contenido del negocio (servicios, productos, menús) es ingresado por el negocio en su propio idioma. |
+|                             | 7. El contenido del negocio (servicios) es ingresado por el negocio en su propio idioma.                  |
 
 ---
 
@@ -657,10 +482,7 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 
 | Decisión                           | Opción Elegida                             | Alternativas          | Justificación                                                                |
 | ---------------------------------- | ------------------------------------------ | --------------------- | ---------------------------------------------------------------------------- |
-| Guest checkout para pedidos        | Permitido sin registro                     | Obligar registro      | Reduce fricción. El cliente puede dar nombre sin email.                      |
-| Estados de pedido fijos            | Pendiente → Preparando → Listo → Entregado | Estados configurables | Simplicidad inicial. Los estados se pueden hacer configurables en el futuro. |
-| Puntos de fidelización automáticos | Por visita y por gasto                     | Solo por visita       | Mayor flexibilidad para el negocio.                                          |
-| Cache del carrito                  | localStorage                               | SessionStorage, API   | Persiste aunque el cierre la pestaña sin enviar el pedido.                   |
+| Puntos de fidelización automáticos | Por cita completada                        | Solo manual           | Mayor flexibilidad para el negocio y acumulación automática y transparente.  |
 | Notas del cliente inmutables       | No se eliminan                             | Eliminación libre     | Trazabilidad y auditoría.                                                    |
 
 ---
@@ -669,7 +491,6 @@ Cubre todos los requisitos funcionales de los tres módulos iniciales y la plata
 
 - Reserva recurrente (cliente agenda misma cita semanalmente).
 - Auto-check-in mediante QR en la recepción del negocio.
-- Pedidos para llevar / delivery.
 - Integración con Google Calendar del empleado.
 - Notificaciones push (vía Service Worker).
 - Chat en tiempo real cliente-negocio.

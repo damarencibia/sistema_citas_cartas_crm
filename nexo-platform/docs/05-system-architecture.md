@@ -54,17 +54,17 @@ Cubre la arquitectura de alto nivel, la separación en capas (frontend, backend,
 │  │  ┌──────────────────────────────────────────────────────────┐   │  │
 │  │  │           MODULE LAYER (Cada módulo independiente)       │   │  │
 │  │  │                                                          │   │  │
-│  │  │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────┐ │   │  │
-│  │  │  │   Appointments  │  │  Digital Menu   │  │   CRM    │ │   │  │
-│  │  │  │   Module        │  │   Module        │  │  Module  │ │   │  │
-│  │  │  │                 │  │                 │  │          │ │   │  │
-│  │  │  │ • Views         │  │ • Views         │  │ • Views  │ │   │  │
-│  │  │  │ • Components    │  │ • Components    │  │ • Comp.  │ │   │  │
-│  │  │  │ • Store (Pinia) │  │ • Store (Pinia) │  │ • Store  │ │   │  │
-│  │  │  │ • Composables   │  │ • Composables   │  │ • Compo. │ │   │  │
-│  │  │  │ • Types         │  │ • Types         │  │ • Types  │ │   │  │
-│  │  │  │ • i18n          │  │ • i18n          │  │ • i18n   │ │   │  │
-│  │  │  └─────────────────┘  └─────────────────┘  └──────────┘ │   │  │
+│  │  │  ┌─────────────────┐          ┌─────────────────┐        │   │  │
+│  │  │  │   Appointments  │          │       CRM       │        │   │  │
+│  │  │  │   Module        │          │     Module      │        │   │  │
+│  │  │  │                 │          │                 │        │   │  │
+│  │  │  │ • Views         │          │ • Views         │        │   │  │
+│  │  │  │ • Components    │          │ • Components    │        │   │  │
+│  │  │  │ • Store (Pinia) │          │ • Store (Pinia) │        │   │  │
+│  │  │  │ • Composables   │          │ • Composables   │        │   │  │
+│  │  │  │ • Types         │          │ • Types         │        │   │  │
+│  │  │  │ • i18n          │          │ • i18n          │        │   │  │
+│  │  │  └─────────────────┘          └─────────────────┘        │   │  │
 │  │  └──────────────────────────────────────────────────────────┘   │  │
 │  │                                                                  │  │
 │  │  ┌──────────────────────────────────────────────────────────┐   │  │
@@ -85,15 +85,16 @@ Cubre la arquitectura de alto nivel, la separación en capas (frontend, backend,
 │  │              DATABASE LAYER (PostgreSQL 15)                     │   │
 │  │                                                                  │   │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │   │
-│  │  │  Tenant      │  │  Appointments│  │  DigitalMenu │          │   │
-│  │  │  Schema      │  │  Tables      │  │  Tables      │          │   │
+│  │  │  Tenant      │  │  Appointments│  │     CRM      │          │   │
+│  │  │  Schema      │  │  Tables      │  │    Tables    │          │   │
 │  │  │              │  │              │  │              │          │   │
-│  │  │ • tenants    │  │ • services   │  │ • categories │          │   │
-│  │  │ • users      │  │ • employees  │  │ • products   │          │   │
-│  │  │ • plans      │  │ • schedules  │  │ • variants   │          │   │
-│  │  │ • modules    │  │ • bookings   │  │ • extras     │          │   │
-│  │  │              │  │              │  │ • orders     │          │   │
-│  │  │              │  │              │  │ • tables     │          │   │
+│  │  │ • tenants    │  │ • services   │  │ • customers  │          │   │
+│  │  │ • users      │  │ • employees  │  │ • tags       │          │   │
+│  │  │ • plans      │  │ • schedules  │  │ • notes      │          │   │
+│  │  │ • modules    │  │ • bookings   │  │ • loyalty    │          │   │
+│  │  │              │  │              │  │              │          │   │
+│  │  │              │  │              │  │              │          │   │
+│  │  │              │  │              │  │              │          │   │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘          │   │
 │  │                                                                  │   │
 │  │  ┌──────────────────────────────────────────────────────────┐   │   │
@@ -115,7 +116,6 @@ Cubre la arquitectura de alto nivel, la separación en capas (frontend, backend,
 │  │          EDGE FUNCTIONS (Deno - solo cuando necesario)          │   │
 │  │                                                                  │   │
 │  │  • notify-appointment-reminder  →  Envía recordatorio de cita  │   │
-│  │  • send-order-notification      →  Notifica nuevo pedido        │   │
 │  │  • process-loyalty-points       →  Calcula puntos de fidelización│   │
 │  │  • export-csv                   →  Exporta datos a CSV          │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
@@ -123,8 +123,7 @@ Cubre la arquitectura de alto nivel, la separación en capas (frontend, backend,
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │              STORAGE LAYER (S3 + CDN)                            │   │
 │  │  │  • tenant-logos      →  Logos de negocios                     │   │
-│  │  │  • product-images    →  Imágenes de productos                 │   │
-│  │  │  • qr-codes          →  Códigos QR generados                  │   │
+│  │  │  • employee-avatars  →  Avatares de empleados                │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -179,11 +178,7 @@ src/
       composables/        # Lógica del módulo
       types/              # Tipos del módulo
       i18n/               # Traducciones del módulo
-    digital-menu/         # Módulo de carta digital
-      ...
     crm/                  # Módulo de CRM
-      ...
-    admin/                # Módulo de administración del negocio
       ...
 ```
 
@@ -279,34 +274,15 @@ Las Edge Functions de Supabase ejecutan código TypeScript/Deno en el edge. Son 
 9. 24h antes: Edge Function (cron) envía recordatorio
 ```
 
-### Escenario 2: Pedido por QR
-
-```
-1. Cliente escanea QR de mesa
-2. Frontend carga carta digital del negocio
-   → URL pública con parámetro table_id
-   → supabase.from('products').select('*, category(*)') con RLS público
-3. Cliente navega, selecciona productos, personaliza variantes/extras
-4. Cliente confirma pedido
-5. Frontend: supabase.from('orders').insert({...})
-   → RLS permite inserción (política pública para pedidos)
-6. Pedido creado con estado 'pending'
-   → Realtime notifica al panel de empleados en tiempo real
-7. Empleado ve el pedido, cambia estado a 'preparing'
-   → Realtime actualiza la vista del cliente
-8. Empleado cambia a 'ready', luego 'delivered'
-   → Cada cambio se refleja en tiempo real en el frontend del cliente
-```
-
-### Escenario 3: CRM - Consulta de Cliente
+### Escenario 2: CRM - Consulta de Cliente
 
 ```
 1. Empleado busca cliente por nombre
 2. Frontend: supabase.from('customers').select('*').ilike('name', '%text%')
    → RLS filtra automáticamente por tenant_id
 3. Empleado selecciona cliente, ve perfil completo
-4. Frontend carga perfil: datos + historial de citas + historial de pedidos + notas
-   → Tres queries paralelas filtradas por tenant_id y customer_id
+4. Frontend carga perfil: datos + historial de citas + notas
+   → Dos queries paralelas filtradas por tenant_id y customer_id
 5. Empleado agrega nota privada
 6. Frontend: supabase.from('customer_notes').insert({...})
    → RLS verifica tenant_id y que el usuario es employee o admin
@@ -402,8 +378,6 @@ El tenant actual y el usuario autenticado se proveen desde el nivel raíz de la 
 | `ui`                    | Estado de UI global (sidebar, tema, idioma) | Global  |
 | `appointments/bookings` | Citas del módulo                            | Módulo  |
 | `appointments/services` | Servicios del módulo                        | Módulo  |
-| `digital-menu/products` | Productos del módulo                        | Módulo  |
-| `digital-menu/orders`   | Pedidos del módulo                          | Módulo  |
 | `crm/customers`         | Clientes del módulo                         | Módulo  |
 
 Las stores globales (`auth`, `tenant`, `ui`) se definen en `shared/stores/`. Las stores de módulo se definen dentro de cada módulo.
@@ -414,7 +388,7 @@ Las stores globales (`auth`, `tenant`, `ui`) se definen en `shared/stores/`. Las
 
 Los módulos **no se importan directamente entre sí**. La comunicación entre módulos ocurre de las siguientes formas:
 
-1. **A través de la base de datos**: El módulo CRM lee citas y pedidos de las tablas compartidas en la base de datos.
+1. **A través de la base de datos**: El módulo CRM lee citas de las tablas compartidas en la base de datos.
 2. **A través de stores globales**: Un módulo puede leer el estado de `auth` o `tenant` para condicionar su comportamiento.
 3. **A través de eventos**: Para comunicación en tiempo real entre módulos, se usa el sistema de eventos de Vue (emits) o un bus de eventos simple.
 
@@ -428,7 +402,7 @@ Los módulos **no se importan directamente entre sí**. La comunicación entre m
 | ------- | ----------------------------------------- | ---------------------------------------------- | ----------------------- |
 | HTTP    | Assets estáticos (JS, CSS, imágenes)      | 1 año con hash en nombre                       | Vercel CDN              |
 | HTTP    | API responses                             | 5 minutos (endpoints públicos)                 | Cache-Control headers   |
-| Cliente | Datos de catálogos (servicios, productos) | Sesión                                         | Pinia                   |
+| Cliente | Datos de catálogos (servicios)            | Sesión                                         | Pinia                   |
 | Cliente | Datos de disponibilidad                   | Bajo demanda (se recarga al cambiar selección) | Pinia                   |
 | Cliente | Perfil de usuario y tenant                | Sesión                                         | Pinia + localStorage    |
 | Cliente | Traducciones                              | 1 hora                                         | vue-i18n + localStorage |
@@ -487,7 +461,7 @@ Los módulos **no se importan directamente entre sí**. La comunicación entre m
 
 - Menor tiempo de desarrollo inicial.
 - Despliegue simple en Vercel (static export).
-- El SEO de las páginas públicas (carta digital) se maneja con meta tags dinámicos y prerendering de Vite.
+- El SEO de las páginas públicas (portal de reservas) se maneja con meta tags dinámicos y prerendering de Vite.
 - Si en el futuro se necesita SSR, migrar a Nuxt 3 es factible.
 
 ### ADR-005: Repositorios como abstracción de datos

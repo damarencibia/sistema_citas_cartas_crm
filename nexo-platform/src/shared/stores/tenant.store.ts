@@ -4,7 +4,7 @@ import { applyTenantTheme } from '@/app/plugins/vuetify';
 import type { Database } from '@/shared/types/supabase.gen';
 
 type Tenant = Omit<Database['public']['Tables']['tenants']['Row'], 'modules' | 'config'> & {
-  modules: { appointments: boolean; digital_menu: boolean; crm: boolean; events: boolean };
+  modules: { appointments: boolean; crm: boolean; events: boolean };
   config: Record<string, unknown>;
 };
 
@@ -24,7 +24,6 @@ export const useTenantStore = defineStore('tenant', {
       const t: any = state.tenant;
       return {
         appointments: !!t?.modules?.appointments,
-        digital_menu: !!t?.modules?.digital_menu,
         crm: !!t?.modules?.crm,
         events: !!t?.modules?.events,
       };

@@ -227,7 +227,6 @@ const modules = computed(() => {
   const m = tenantStore.activeModules;
   return [
     { key: 'appointments', name: 'Reservas', icon: 'mdi-calendar-clock', active: m.appointments },
-    { key: 'digital_menu', name: 'Carta Digital', icon: 'mdi-menu', active: m.digital_menu },
     { key: 'crm', name: 'Portal del Cliente', icon: 'mdi-account-group', active: m.crm },
   ];
 });

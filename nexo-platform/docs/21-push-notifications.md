@@ -79,6 +79,8 @@ curl -X POST https://yrtzumwegcbjnaxdncps.functions.supabase.co/send-push \
 # 200 → {"sent":0,"deleted":0,"skipped":0} = secreto correcto; 401 = alinear secret
 ```
 
+> **Nota:** los envíos incluyen la cabecera `Urgency: high` (RFC 8030) para que Android/FCM despierte el navegador inmediatamente en lugar de agrupar los mensajes durante Doze. Ver `docs/22-notificaciones-garantizadas.md`.
+
 ### Despliegue de la función
 
 ```bash

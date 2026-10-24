@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Definir en detalle el Módulo de CRM: componentes, stores, repositorios, flujos de trabajo, reglas de negocio, programa de fidelización, integración con los módulos de Citas y Carta Digital, y consideraciones de implementación.
+Definir en detalle el Módulo de CRM: componentes, stores, repositorios, flujos de trabajo, reglas de negocio, programa de fidelización, integración con el módulo de Citas, y consideraciones de implementación.
 
 ---
 
@@ -25,7 +25,7 @@ Cubre todos los aspectos del módulo de CRM: gestión de clientes, registro auto
 
 ## Vista General del Módulo
 
-El módulo CRM centraliza toda la información de los clientes del negocio. Se alimenta automáticamente de las interacciones en los módulos de Citas y Carta Digital. Proporciona herramientas para segmentar clientes (etiquetas), registrar información contextual (notas), y fidelizar (programa de puntos).
+El módulo CRM centraliza toda la información de los clientes del negocio. Se alimenta automáticamente de las interacciones en el módulo de Citas. Proporciona herramientas para segmentar clientes (etiquetas), registrar información contextual (notas), y fidelizar (programa de puntos).
 
 ---
 
@@ -46,12 +46,12 @@ src/modules/crm/
 │   ├── CustomerTable.vue           # Tabla de clientes con columnas configurables
 │   ├── CustomerSearch.vue          # Búsqueda avanzada de clientes
 │   ├── CustomerInfo.vue            # Sección de información del cliente
-│   ├── CustomerHistoryTabs.vue     # Pestañas con historial (citas, pedidos, notas)
+│   ├── CustomerHistoryTabs.vue     # Pestañas con historial (citas, notas)
 │   ├── NoteList.vue                # Lista cronológica de notas
 │   ├── NoteForm.vue                # Formulario para agregar nota
 │   ├── TagBadge.vue                # Badge de etiqueta con color
 │   ├── TagSelector.vue             # Selector de etiquetas (autocomplete + crear)
-│   ├── VisitHistory.vue            # Historial de visitas (citas + pedidos)
+│   ├── VisitHistory.vue            # Historial de visitas (citas)
 │   ├── LoyaltyCard.vue             # Tarjeta de fidelización del cliente
 │   ├── PointsDisplay.vue           # Display de puntos ganados/canjeados
 │   └── CustomerStats.vue           # Widgets de estadísticas
@@ -101,18 +101,9 @@ Trigger en bookings (AFTER INSERT):
     ↓
 El cliente aparece automáticamente en el CRM
 
-Evento: Cliente hace un pedido por QR
+Evento: Cita completada
     ↓
-Trigger en orders (AFTER INSERT):
-  1. Si el cliente proporcionó email:
-     - Buscar o crear en customers (misma lógica)
-  2. Si el cliente no dio email:
-     - Se crea un registro con solo el nombre
-     - Queda como "cliente pendiente de identificar"
-
-Evento: Cita completada o pedido entregado
-    ↓
-Trigger en bookings/orders (AFTER UPDATE status):
+Trigger en bookings (AFTER UPDATE status):
   1. Actualizar total_visits, total_spent, last_visit_at
   2. Si aplica: acreditar puntos de fidelización automáticamente
 ```
@@ -134,7 +125,7 @@ Trigger en bookings/orders (AFTER UPDATE status):
 
 4. Empleado hace clic en un cliente → CustomerDetailView
    - Pestaña "Información": datos personales, etiquetas, resumen
-   - Pestaña "Historial": timeline de citas y pedidos
+   - Pestaña "Historial": timeline de citas
    - Pestaña "Notas": notas privadas del personal
    - Pestaña "Fidelización": puntos, canjes, niveles
 
@@ -142,7 +133,7 @@ Trigger en bookings/orders (AFTER UPDATE status):
    - Editar datos del cliente
    - Agregar/quitar etiquetas
    - Agregar nota
-   - Ver detalle de cita/pedido específico (link al módulo correspondiente)
+   - Ver detalle de cita específico (link al módulo de Citas)
 ```
 
 ### Flujo 3: Gestión de Etiquetas
@@ -206,10 +197,10 @@ Configuración (LoyaltyConfigView):
   4. Guardar configuración
 
 Acumulación de puntos:
-  - Automática: al completar una cita o entregar un pedido
+  - Automática: al completar una cita
   - El trigger process-loyalty-points calcula:
     → Puntos por visita + (total_gastado / currency_unit * points_per_currency)
-  - Se registra en loyalty_points con reason = 'visit' o 'purchase'
+  - Se registra en loyalty_points con reason = 'visit'
 
 Consulta de puntos:
   - El empleado ve los puntos en CustomerDetailView
@@ -220,7 +211,7 @@ Canje de puntos:
   1. Cliente solicita canje (o empleado lo sugiere)
   2. Empleado inicia canje desde CustomerDetailView
   3. Sistema calcula descuento máximo basado en puntos disponibles
-  4. Empleado aplica descuento en el servicio/producto
+  4. Empleado aplica descuento en el servicio
   5. Puntos deducidos con reason = 'redeem'
   (En v1 el canje es manual; en futura versión se integra con el checkout)
 ```
@@ -258,7 +249,7 @@ Tabs que muestran el historial completo del cliente:
 
 ```
 ┌─────────────────────────────────────────┐
-│ [📅 Citas] [🧾 Pedidos] [📝 Notas]    │
+│ [📅 Citas] [📝 Notas]                 │
 │─────────────────────────────────────────│
 │                                         │
 │ (Contenido de la pestaña activa)        │
@@ -266,10 +257,6 @@ Tabs que muestran el historial completo del cliente:
 │ Si es "Citas": timeline de citas        │
 │   → Fecha, servicio, empleado, estado   │
 │   → Link a detalle de cita              │
-│                                         │
-│ Si es "Pedidos": timeline de pedidos    │
-│   → Fecha, productos, total, estado     │
-│   → Link a detalle de pedido            │
 │                                         │
 │ Si es "Notas": lista de notas           │
 │   → Fecha, autor, contenido             │
@@ -380,34 +367,30 @@ export const useCustomerStore = defineStore('crm/customers', () => {
 
 ---
 
-## Integración con Módulos de Citas y Carta Digital
+## Integración con el Módulo de Citas
 
 ### Dependencias de datos
 
-El CRM depende de los módulos de Citas y Carta Digital para poblar sus datos:
+El CRM depende del módulo de Citas para poblar sus datos:
 
 ```
 CRM
   ├── Lee de bookings → historial de citas del cliente
-  ├── Lee de orders → historial de pedidos del cliente
-  ├── Reacciona a triggers en bookings/orders → actualiza estadísticas
-  └── NO escribe en bookings/orders → solo consulta
+  ├── Reacciona a triggers en bookings → actualiza estadísticas
+  └── NO escribe en bookings → solo consulta
 ```
 
 ### Eventos que originan acciones en CRM
 
-| Módulo        | Evento                              | Acción en CRM                   |
-| ------------- | ----------------------------------- | ------------------------------- |
-| Citas         | Booking INSERT                      | Crear o actualizar customer     |
-| Citas         | Booking UPDATE status → 'completed' | +1 visita, +puntos fidelización |
-| Citas         | Booking UPDATE status → 'cancelled' | Nota opcional en customer       |
-| Carta Digital | Order INSERT (con email)            | Crear o actualizar customer     |
-| Carta Digital | Order UPDATE status → 'delivered'   | +1 visita, +$ gastado, +puntos  |
-| Carta Digital | Order canjea puntos                 | -puntos fidelización            |
+| Módulo | Evento                              | Acción en CRM                   |
+| ------ | ----------------------------------- | ------------------------------- |
+| Citas  | Booking INSERT                      | Crear o actualizar customer     |
+| Citas  | Booking UPDATE status → 'completed' | +1 visita, +puntos fidelización |
+| Citas  | Booking UPDATE status → 'cancelled' | Nota opcional en customer       |
 
 ### Visualización de datos cruzados
 
-En `CustomerDetailView`, las pestañas "Citas" y "Pedidos" son ejemplos de lectura cruzada de módulos. El repositorio de CRM consulta las tablas de otros módulos pero nunca las modifica.
+En `CustomerDetailView`, la pestaña "Citas" es un ejemplo de lectura cruzada de módulos. El repositorio de CRM consulta las tablas de otros módulos pero nunca las modifica.
 
 ```typescript
 // repositories/customer.repository.ts
@@ -434,7 +417,7 @@ El portal del cliente permite a los clientes con cuenta gestionar su informació
 | Ruta              | Funcionalidad                                    |
 | ----------------- | ------------------------------------------------ |
 | `/client/profile` | Ver y editar nombre, email, teléfono, contraseña |
-| `/client/history` | Historial de citas y pedidos                     |
+| `/client/history` | Historial de citas                               |
 | `/client/loyalty` | Puntos acumulados, historial de puntos, canje    |
 
 ### Consideraciones del Portal
@@ -451,7 +434,7 @@ El portal del cliente permite a los clientes con cuenta gestionar su informació
 
 | Función                  | Disparador                                    | Propósito                                               |
 | ------------------------ | --------------------------------------------- | ------------------------------------------------------- |
-| `process-loyalty-points` | AFTER UPDATE status → 'completed'/'delivered' | Calcular y acreditar puntos                             |
+| `process-loyalty-points` | AFTER UPDATE status → 'completed'             | Calcular y acreditar puntos                             |
 | `expire-loyalty-points`  | Cron (diario)                                 | Marcar puntos vencidos                                  |
 | `auto-tag-inactive`      | Cron (semanal)                                | Asignar tag "Inactivo" a clientes sin visita en 90 días |
 | `auto-tag-frequent`      | Cron (semanal)                                | Asignar tag "Frecuente" a clientes con 5+ visitas       |
@@ -533,7 +516,7 @@ WHERE tenant_id = $1 AND deleted_at IS NULL;
 - **Encuestas de satisfacción**: Email post-visita con encuesta NPS.
 - **Importación/exportación de clientes**: CSV con mapeo de columnas.
 - **Integración con WhatsApp**: Comunicación directa con el cliente desde el CRM.
-- **Historial de precios**: Registrar cambios de precios de servicios/productos que afectaron al cliente.
+- **Historial de precios**: Registrar cambios de precios de servicios que afectaron al cliente.
 - **Notificaciones automáticas**: Saludar al cliente en su cumpleaños, ofrecer descuento por aniversario.
 - **Chat interno**: Comunicación entre empleados sobre un cliente específico.
 - **Documentos adjuntos**: Subir fotos, autorizaciones, recetas al perfil del cliente.

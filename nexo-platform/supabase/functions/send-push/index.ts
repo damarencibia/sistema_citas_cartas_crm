@@ -275,6 +275,7 @@ serve(async (req: Request) => {
           method: 'POST',
           headers: {
             'TTL': '86400',
+            'Urgency': 'high',
             'Content-Encoding': 'aes128gcm',
             'Content-Type': 'application/octet-stream',
             'Authorization': `vapid t=${token}, k=${VAPID_PUBLIC}`,

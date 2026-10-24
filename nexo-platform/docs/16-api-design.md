@@ -147,10 +147,9 @@ supabase.from('bookings').select('*').gte('date', dateFrom).lte('date', dateTo);
 
 // Filtros por múltiples condiciones
 supabase
-  .from('products')
+  .from('services')
   .select('*')
   .eq('category_id', categoryId)
-  .eq('is_available', true)
   .is('deleted_at', null);
 ```
 
@@ -163,11 +162,9 @@ supabase
 | Endpoint                                  | Método      | Propósito                            | Autenticación              |
 | ----------------------------------------- | ----------- | ------------------------------------ | -------------------------- |
 | `/functions/v1/send-booking-confirmation` | POST        | Enviar email de confirmación de cita | Service Role Key (trigger) |
-| `/functions/v1/send-order-notification`   | POST        | Notificar nuevo pedido al negocio    | Service Role Key (trigger) |
 | `/functions/v1/invite-employee`           | POST        | Invitar empleado por email           | JWT (owner/admin)          |
 | `/functions/v1/process-loyalty-points`    | POST        | Calcular y acreditar puntos          | Service Role Key (trigger) |
 | `/functions/v1/export-csv`                | POST        | Exportar datos a CSV                 | JWT (owner/admin)          |
-| `/functions/v1/generate-qr-pdf`           | POST        | Generar PDF con QRs de mesas         | JWT (owner/admin)          |
 | `/functions/v1/expire-loyalty-points`     | POST (cron) | Marcar puntos vencidos               | Service Role Key (cron)    |
 | `/functions/v1/auto-tag-customers`        | POST (cron) | Asignar tags automáticas             | Service Role Key (cron)    |
 
@@ -306,20 +303,6 @@ La API de Supabase expone automáticamente todas las tablas como endpoints REST.
 | `/rest/v1/holiday_exceptions` | Tenant            | Admin/Owner     | Admin/Owner    | Admin/Owner |
 | `/rest/v1/bookings`           | Tenant + cliente  | Público + admin | Empleado/Admin | Soft delete |
 
-### Tablas de Carta Digital
-
-| Tabla                       | SELECT           | INSERT          | UPDATE      | DELETE      | Notas |
-| --------------------------- | ---------------- | --------------- | ----------- | ----------- | ----- |
-| `/rest/v1/menus`            | Tenant           | Admin/Owner     | Admin/Owner | Soft delete |
-| `/rest/v1/categories`       | Tenant + público | Admin/Owner     | Admin/Owner | Soft delete |
-| `/rest/v1/products`         | Tenant + público | Admin/Owner     | Admin/Owner | Soft delete |
-| `/rest/v1/product_variants` | Tenant + público | Admin/Owner     | Admin/Owner | Admin/Owner |
-| `/rest/v1/extra_groups`     | Tenant + público | Admin/Owner     | Admin/Owner | Admin/Owner |
-| `/rest/v1/extras`           | Tenant + público | Admin/Owner     | Admin/Owner | Admin/Owner |
-| `/rest/v1/tables`           | Tenant + público | Admin/Owner     | Admin/Owner | Soft delete |
-| `/rest/v1/orders`           | Tenant           | Público (crear) | Empleado    | Nunca       |
-| `/rest/v1/order_items`      | Tenant           | Público (crear) | Empleado    | Nunca       |
-
 ### Tablas de CRM
 
 | Tabla                     | SELECT           | INSERT             | UPDATE           | DELETE             | Notas |
@@ -392,9 +375,7 @@ Las imágenes y archivos se gestionan mediante Supabase Storage con RLS.
 | Bucket             | Visibilidad      | Propósito             |
 | ------------------ | ---------------- | --------------------- |
 | `tenant-logos`     | Público          | Logos de negocios     |
-| `product-images`   | Público          | Imágenes de productos |
 | `employee-avatars` | Privado (tenant) | Avatares de empleados |
-| `qr-codes`         | Público          | Imágenes QR generadas |
 
 ### Políticas de Storage
 
@@ -404,7 +385,7 @@ CREATE POLICY "public_read"
 ON storage.objects
 FOR SELECT
 TO public
-USING (bucket_id IN ('tenant-logos', 'product-images', 'qr-codes'));
+USING (bucket_id IN ('tenant-logos'));
 
 -- Bucket privado: solo usuarios del tenant pueden leer
 CREATE POLICY "tenant_read_avatars"
@@ -422,7 +403,7 @@ ON storage.objects
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  bucket_id IN ('tenant-logos', 'product-images', 'qr-codes')
+  bucket_id IN ('tenant-logos', 'employee-avatars')
   AND (auth.jwt() ->> 'role') IN ('owner', 'admin')
 );
 ```
@@ -430,11 +411,11 @@ WITH CHECK (
 ### Subida de archivos desde el frontend
 
 ```typescript
-async function uploadProductImage(file: File, productId: string): Promise<string> {
+async function uploadTenantLogo(file: File): Promise<string> {
   const tenantId = useAuthStore().tenantId;
-  const filePath = `${tenantId}/products/${productId}/${file.name}`;
+  const filePath = `${tenantId}/logos/${tenantId}/${file.name}`;
 
-  const { data, error } = await supabase.storage.from('product-images').upload(filePath, file, {
+  const { data, error } = await supabase.storage.from('tenant-logos').upload(filePath, file, {
     cacheControl: '3600',
     upsert: false,
     contentType: file.type,
@@ -445,7 +426,7 @@ async function uploadProductImage(file: File, productId: string): Promise<string
   // Obtener URL pública
   const {
     data: { publicUrl },
-  } = supabase.storage.from('product-images').getPublicUrl(filePath);
+  } = supabase.storage.from('tenant-logos').getPublicUrl(filePath);
 
   return publicUrl;
 }
@@ -457,13 +438,13 @@ async function uploadProductImage(file: File, productId: string): Promise<string
 
 | Elemento            | Convención                                | Ejemplo                                   |
 | ------------------- | ----------------------------------------- | ----------------------------------------- |
-| Tablas              | snake_case, plural                        | `bookings`, `order_items`                 |
+| Tablas              | snake_case, plural                        | `bookings`, `customer_notes`              |
 | Columnas            | snake_case                                | `tenant_id`, `first_name`                 |
 | Funciones RPC       | snake_case, prefijo `get_` o `calculate_` | `get_available_slots`                     |
 | Endpoints EF        | kebab-case                                | `/functions/v1/send-booking-confirmation` |
 | Parámetros RPC      | prefijo `p_`                              | `p_tenant_id`, `p_date`                   |
 | Parámetros EF       | camelCase en body                         | `{ firstName, email }`                    |
-| Archivos de storage | `{tenant_id}/{entity}/{id}/{file}`        | `tenant-abc/products/123/foto.jpg`        |
+| Archivos de storage | `{tenant_id}/{entity}/{id}/{file}`        | `tenant-abc/tenants/123/logo.jpg`         |
 
 ---
 
@@ -488,7 +469,7 @@ Supabase aplica rate limiting a nivel de proyecto. Configuración recomendada:
 | Datos públicos (menú)       | `public, max-age=300`      | CDN de Supabase               |
 | Datos del tenant            | `private, max-age=60`      | Cliente supabase-js           |
 | Sesión JWT                  | No cache                   | Cliente supabase-js           |
-| Imágenes (logos, productos) | `public, max-age=31536000` | CDN de Supabase + hash en URL |
+| Imágenes (logos)           | `public, max-age=31536000` | CDN de Supabase + hash en URL |
 
 ---
 
@@ -507,7 +488,7 @@ Supabase aplica rate limiting a nivel de proyecto. Configuración recomendada:
 ## Posibles Mejoras Futuras
 
 - **API Key pública**: Para que terceros puedan integrarse con la plataforma (si se abre la API).
-- **Webhooks**: Notificar a sistemas externos cuando ocurren eventos (nueva cita, nuevo pedido, nuevo cliente).
+- **Webhooks**: Notificar a sistemas externos cuando ocurren eventos (nueva reserva, nuevo cliente).
 - **GraphQL**: Usar Hasura o Graphile para consultas más flexibles y eficientes.
 - **Documentación OpenAPI/Swagger**: Para la API pública de Edge Functions.
 - **Versionado de API**: Prefijo `/v1/` en Edge Functions para permitir cambios sin breaking changes.

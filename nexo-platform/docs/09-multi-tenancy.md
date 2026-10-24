@@ -113,7 +113,7 @@ WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 Estas tablas solo son accesibles por usuarios autenticados del tenant:
 
-`bookings`, `services`, `employees`, `schedules`, `holiday_exceptions`, `customers`, `customer_notes`, `tags`, `customer_tags`, `loyalty_points`, `loyalty_config`, `orders`, `order_items`, `categories`, `products`, `product_variants`, `extra_groups`, `extras`, `tables`, `menus`
+`bookings`, `services`, `employees`, `schedules`, `holiday_exceptions`, `customers`, `customer_notes`, `tags`, `customer_tags`, `loyalty_points`, `loyalty_config`
 
 **Política estándar**:
 
@@ -155,21 +155,15 @@ WITH CHECK (
 ### Tablas públicas (sin autenticación)
 
 `tenants`: lectura pública del perfil del negocio.
-`products`, `categories`, `menus`: lectura pública (solo items activos).
-`tables`: lectura pública (solo número y QR).
 `bookings`: INSERT público con validaciones.
 
 ```sql
--- Productos visibles al público
-CREATE POLICY "public_products_select"
-ON products
-FOR SELECT
+-- Reservas creadas por el público (sin autenticación)
+CREATE POLICY "public_bookings_insert"
+ON bookings
+FOR INSERT
 TO anon
-USING (
-  tenant_id = (SELECT id FROM tenants WHERE slug = current_setting('app.current_slug', true))
-  AND is_available = true
-  AND deleted_at IS NULL
-);
+WITH CHECK (true);
 ```
 
 ---
@@ -189,8 +183,7 @@ Cada tenant tiene un `slug` único que se usa para las URLs públicas.
 
 ```
 Portal de reservas:    https://nexo.app/public/{slug}/booking
-Carta digital:         https://nexo.app/public/{slug}/menu
-Seguimiento de pedido: https://nexo.app/public/{slug}/order/{order_id}
+Eventos públicos:      https://nexo.app/public/{slug}/events
 ```
 
 ### Resolución del Slug
@@ -225,7 +218,7 @@ Todos los índices compuestos tienen `tenant_id` como primera columna para garan
 ```sql
 -- Buenos: tenant_id primero
 CREATE INDEX idx_bookings_tenant_date ON bookings(tenant_id, date);
-CREATE INDEX idx_products_tenant_category ON products(tenant_id, category_id);
+CREATE INDEX idx_bookings_tenant_date ON bookings(tenant_id, date);
 CREATE INDEX idx_customers_tenant ON customers(tenant_id, created_at DESC);
 
 -- Malo: tenant_id no está primero (no se beneficiaría del particionamiento lógico)

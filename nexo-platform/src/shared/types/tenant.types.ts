@@ -27,8 +27,8 @@ export interface Tenant {
   status: 'trial' | 'active' | 'suspended' | 'cancelled';
   modules: {
     appointments: boolean;
-    digital_menu: boolean;
     crm: boolean;
+    events: boolean;
   };
   timezone: string;
   locale: string;

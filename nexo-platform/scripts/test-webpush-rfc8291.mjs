@@ -47,11 +47,6 @@ async function hkdfExpand(prk, info, length) {
   return out;
 }
 
-async function hkdf(ikm, salt, info, length) {
-  const prk = await hkdfExtract(salt, ikm);
-  return hkdfExpand(prk, info, length);
-}
-
 let failures = 0;
 function check(label, got, expected) {
   const ok = bytesToB64url(got) === bytesToB64url(expected);

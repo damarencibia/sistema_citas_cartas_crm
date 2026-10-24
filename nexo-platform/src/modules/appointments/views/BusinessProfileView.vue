@@ -82,16 +82,6 @@
                 Reservar Cita
               </v-btn>
               <v-btn
-                v-if="tenant?.modules?.digital_menu"
-                variant="tonal"
-                size="x-large"
-                rounded="lg"
-                :to="`/${slug}/menu`"
-              >
-                <v-icon start>mdi-menu</v-icon>
-                Ver Menú
-              </v-btn>
-              <v-btn
                 v-if="tenant?.modules?.crm"
                 variant="outlined"
                 size="x-large"

@@ -55,20 +55,20 @@ Cubre atributos de calidad para todos los módulos y la plataforma base. Incluye
 | --------------- | -------------------------------------------------------------------------------------------------------------- |
 | **ID**          | NFR-004                                                                                                        |
 | **Título**      | Tiempo de respuesta de Realtime                                                                                |
-| **Descripción** | Las actualizaciones en tiempo real (nuevos pedidos, cambios de estado) deben reflejarse en menos de 1 segundo. |
+| **Descripción** | Las actualizaciones en tiempo real (cambios de estado de citas) deben reflejarse en menos de 1 segundo. |
 | **Métrica**     | Latencia de extremo a extremo (end-to-end)                                                                     |
 | **Prioridad**   | Alta                                                                                                           |
-| **Afecta**      | Citas, Carta Digital                                                                                           |
+| **Afecta**      | Citas                                                                                                          |
 | **Estrategia**  | Usar Supabase Realtime con suscripciones canalizadas por tenant, evitar suscripciones globales.                |
 
 | Campo           | Valor                                                                                                                               |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **ID**          | NFR-005                                                                                                                             |
 | **Título**      | Tiempo de carga de imágenes                                                                                                         |
-| **Descripción** | Las imágenes (logos, productos) deben cargar en menos de 1 segundo en conexiones 4G.                                                |
+| **Descripción** | Las imágenes (logos, servicios) deben cargar en menos de 1 segundo en conexiones 4G.                                                |
 | **Métrica**     | Tiempo de carga por imagen                                                                                                          |
 | **Prioridad**   | Media                                                                                                                               |
-| **Afecta**      | Perfil de negocio, Carta Digital                                                                                                    |
+| **Afecta**      | Perfil de negocio                                                                                                                   |
 | **Estrategia**  | Optimización automática al subir (WebP con compresión progresiva), lazy loading con Intersection Observer, CDN de Supabase Storage. |
 
 ---
@@ -215,7 +215,7 @@ Cubre atributos de calidad para todos los módulos y la plataforma base. Incluye
 | **Métrica**     | Cobertura de código                                                                                                                                                                                                        |
 | **Prioridad**   | Alta                                                                                                                                                                                                                       |
 | **Afecta**      | Todos los módulos                                                                                                                                                                                                          |
-| **Estrategia**  | Tests unitarios con Vitest (> 90% cobertura en lógica de negocio). Tests de componentes con Vue Test Utils (> 80%). Tests de integración de RLS policies. Tests e2e con Playwright para flujos críticos (reserva, pedido). |
+| **Estrategia**  | Tests unitarios con Vitest (> 90% cobertura en lógica de negocio). Tests de componentes con Vue Test Utils (> 80%). Tests de integración de RLS policies. Tests e2e con Playwright para flujos críticos (reserva). |
 
 | Campo           | Valor                                                                                                                                                                                                            |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -265,7 +265,7 @@ Cubre atributos de calidad para todos los módulos y la plataforma base. Incluye
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | **ID**          | NFR-023                                                                                                                       |
 | **Título**      | Tiempo de incorporación (onboarding)                                                                                          |
-| **Descripción** | Un nuevo propietario debe poder configurar su negocio y tener su primera cita/pedido en menos de 5 minutos desde el registro. |
+| **Descripción** | Un nuevo propietario debe poder configurar su negocio y tener su primera cita en menos de 5 minutos desde el registro.        |
 | **Métrica**     | Tiempo desde registro hasta primera funcionalidad                                                                             |
 | **Prioridad**   | Alta                                                                                                                          |
 | **Afecta**      | Plataforma base                                                                                                               |
@@ -323,10 +323,10 @@ Cubre atributos de calidad para todos los módulos y la plataforma base. Incluye
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **ID**          | NFR-028                                                                                                                                                        |
 | **Título**      | Consistencia de datos                                                                                                                                          |
-| **Descripción** | Las operaciones críticas (reservas, pedidos) deben ser atómicas y consistentes.                                                                                |
+| **Descripción** | Las operaciones críticas (reservas) deben ser atómicas y consistentes.                                                                                         |
 | **Métrica**     | % de operaciones con consistencia verificada                                                                                                                   |
 | **Prioridad**   | Crítica                                                                                                                                                        |
-| **Afecta**      | Citas, Carta Digital                                                                                                                                           |
+| **Afecta**      | Citas                                                                                                                                                          |
 | **Estrategia**  | Uso de transacciones de PostgreSQL. Validación de disponibilidad en el momento de la escritura (no solo en la lectura). Bloqueo optimista con versión de fila. |
 
 | Campo           | Valor                                                                                                                                                                                       |

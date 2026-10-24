@@ -8,7 +8,7 @@ Definir el diseño completo de la base de datos PostgreSQL: esquemas, tablas, re
 
 ## Alcance
 
-Cubre todas las tablas de los módulos iniciales (Base, Citas, Carta Digital, CRM) y las tablas transversales (tenants, usuarios, roles). Incluye diseño lógico y físico.
+Cubre todas las tablas de los módulos iniciales (Base, Citas, CRM) y las tablas transversales (tenants, usuarios, roles). Incluye diseño lógico y físico.
 
 ---
 
@@ -76,24 +76,6 @@ Cubre todas las tablas de los módulos iniciales (Base, Citas, Carta Digital, CR
        │                     └──────────────┘
        │
        │  ┌──────────────┐    ┌──────────────┐
-       │  │  categories  │────│  products    │
-       │  └──────────────┘    └──────┬───────┘
-       │                             │
-       │                    ┌────────┴────────┐
-       │                    │                 │
-       │             ┌──────┴──────┐  ┌───────┴───────┐
-       │             │  variants   │  │  product_extras│
-       │             └─────────────┘  └───────────────┘
-       │
-       │  ┌──────────────┐    ┌──────────────┐
-       │  │    tables    │    │    orders    │
-       │  └──────────────┘    └──────┬───────┘
-       │                             │
-       │                     ┌───────┴───────┐
-       │                     │  order_items  │
-       │                     └───────────────┘
-       │
-       │  ┌──────────────┐    ┌──────────────┐
        │  │  customers   │────│  customer_   │
        │  └──────────────┘    │  tags         │
        │       │             └──────────────┘
@@ -103,8 +85,7 @@ Cubre todas las tablas de los módulos iniciales (Base, Citas, Carta Digital, CR
        │       │             └──────────────┘
        │       │
        │       ├── ── customer_notes
-       │       ├── ── customer_bookings (view)
-       │       ├── ── customer_orders (view)
+       │       └── ── customer_bookings (view)
        │
        │  ┌──────────────────┐
        │  │  loyalty_points   │
@@ -144,7 +125,7 @@ Cubre todas las tablas de los módulos iniciales (Base, Citas, Carta Digital, CR
 | `secondary_color`      | `VARCHAR(7)`   | `DEFAULT '#424242'`                                                                        | Color secundario del tema                |
 | `plan_id`              | `VARCHAR(50)`  | `NOT NULL DEFAULT 'free'`                                                                  | Plan de suscripción                      |
 | `status`               | `VARCHAR(20)`  | `NOT NULL DEFAULT 'trial' CHECK (status IN ('trial', 'active', 'suspended', 'cancelled'))` | Estado del tenant                        |
-| `modules`              | `JSONB`        | `NOT NULL DEFAULT '{"appointments": true, "digital_menu": false, "crm": false}'`           | Módulos activos                          |
+| `modules`              | `JSONB`        | `NOT NULL DEFAULT '{"appointments": true, "crm": false, "events": false}'`                 | Módulos activos                          |
 | `trial_ends_at`        | `TIMESTAMPTZ`  |                                                                                            | Fecha de fin del período de prueba       |
 | `subscription_ends_at` | `TIMESTAMPTZ`  |                                                                                            | Fecha de fin de suscripción              |
 | `timezone`             | `VARCHAR(50)`  | `DEFAULT 'America/Mexico_City'`                                                            | Zona horaria del negocio                 |
@@ -385,203 +366,6 @@ Cubre todas las tablas de los módulos iniciales (Base, Citas, Carta Digital, CR
 
 ---
 
-### Tablas del Módulo de Carta Digital
-
-#### `categories`
-
-| Columna       | Tipo           | Restricciones                       | Descripción                                     |
-| ------------- | -------------- | ----------------------------------- | ----------------------------------------------- |
-| `id`          | `UUID`         | `PK DEFAULT gen_random_uuid()`      |                                                 |
-| `tenant_id`   | `UUID`         | `FK -> tenants(id) NOT NULL`        |                                                 |
-| `menu_id`     | `UUID`         | `FK -> menus(id) ON DELETE CASCADE` | Menú al que pertenece (NULL = menú por defecto) |
-| `name`        | `VARCHAR(255)` | `NOT NULL`                          | Nombre de la categoría                          |
-| `description` | `TEXT`         |                                     | Descripción                                     |
-| `icon`        | `VARCHAR(50)`  |                                     | Icono (Material Design Icons)                   |
-| `sort_order`  | `INTEGER`      | `NOT NULL DEFAULT 0`                | Orden de visualización                          |
-| `is_active`   | `BOOLEAN`      | `NOT NULL DEFAULT true`             |                                                 |
-| `created_at`  | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`            |                                                 |
-| `updated_at`  | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`            |                                                 |
-| `deleted_at`  | `TIMESTAMPTZ`  |                                     |                                                 |
-
-**Índices**:
-
-- `INDEX idx_categories_tenant ON categories(tenant_id)`
-- `INDEX idx_categories_menu ON categories(menu_id)`
-
----
-
-#### `menus`
-
-| Columna        | Tipo           | Restricciones                  | Descripción                     |
-| -------------- | -------------- | ------------------------------ | ------------------------------- |
-| `id`           | `UUID`         | `PK DEFAULT gen_random_uuid()` |                                 |
-| `tenant_id`    | `UUID`         | `FK -> tenants(id) NOT NULL`   |                                 |
-| `name`         | `VARCHAR(255)` | `NOT NULL`                     | Nombre del menú                 |
-| `description`  | `TEXT`         |                                |                                 |
-| `is_default`   | `BOOLEAN`      | `NOT NULL DEFAULT false`       | Menú por defecto                |
-| `start_time`   | `TIME`         |                                | Hora de inicio de vigencia      |
-| `end_time`     | `TIME`         |                                | Hora de fin de vigencia         |
-| `days_of_week` | `SMALLINT[]`   | `DEFAULT '{}'`                 | Días de la semana en que aplica |
-| `is_active`    | `BOOLEAN`      | `NOT NULL DEFAULT true`        |                                 |
-| `created_at`   | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`       |                                 |
-| `updated_at`   | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`       |                                 |
-| `deleted_at`   | `TIMESTAMPTZ`  |                                |                                 |
-
-**Índices**:
-
-- `INDEX idx_menus_tenant ON menus(tenant_id)`
-
----
-
-#### `products`
-
-| Columna        | Tipo           | Restricciones                   | Descripción             |
-| -------------- | -------------- | ------------------------------- | ----------------------- |
-| `id`           | `UUID`         | `PK DEFAULT gen_random_uuid()`  |                         |
-| `tenant_id`    | `UUID`         | `FK -> tenants(id) NOT NULL`    |                         |
-| `category_id`  | `UUID`         | `FK -> categories(id) NOT NULL` |                         |
-| `name`         | `VARCHAR(255)` | `NOT NULL`                      |                         |
-| `description`  | `TEXT`         |                                 |                         |
-| `price`        | `INTEGER`      | `NOT NULL CHECK (price >= 0)`   | Precio base en centavos |
-| `images`       | `TEXT[]`       | `DEFAULT '{}'`                  | URLs de imágenes        |
-| `is_available` | `BOOLEAN`      | `NOT NULL DEFAULT true`         | Disponible para pedido  |
-| `is_featured`  | `BOOLEAN`      | `NOT NULL DEFAULT false`        | Destacado               |
-| `has_variants` | `BOOLEAN`      | `NOT NULL DEFAULT false`        | Tiene variantes         |
-| `has_extras`   | `BOOLEAN`      | `NOT NULL DEFAULT false`        | Tiene extras            |
-| `sort_order`   | `INTEGER`      | `NOT NULL DEFAULT 0`            |                         |
-| `created_at`   | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`        |                         |
-| `updated_at`   | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`        |                         |
-| `deleted_at`   | `TIMESTAMPTZ`  |                                 |                         |
-
-**Índices**:
-
-- `INDEX idx_products_tenant_category ON products(tenant_id, category_id)`
-- `INDEX idx_products_available ON products(tenant_id, is_available) WHERE deleted_at IS NULL`
-
----
-
-#### `product_variants`
-
-| Columna      | Tipo           | Restricciones                                   | Descripción                                  |
-| ------------ | -------------- | ----------------------------------------------- | -------------------------------------------- |
-| `id`         | `UUID`         | `PK DEFAULT gen_random_uuid()`                  |                                              |
-| `product_id` | `UUID`         | `FK -> products(id) NOT NULL ON DELETE CASCADE` |                                              |
-| `name`       | `VARCHAR(255)` | `NOT NULL`                                      | Nombre de la variante                        |
-| `price`      | `INTEGER`      |                                                 | Precio adicional (NULL = usa el precio base) |
-| `sort_order` | `INTEGER`      | `DEFAULT 0`                                     |                                              |
-| `created_at` | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`                        |                                              |
-
-**Índices**:
-
-- `INDEX idx_product_variants_product ON product_variants(product_id)`
-
----
-
-#### `extra_groups`
-
-| Columna          | Tipo           | Restricciones                                   | Descripción                                 |
-| ---------------- | -------------- | ----------------------------------------------- | ------------------------------------------- |
-| `id`             | `UUID`         | `PK DEFAULT gen_random_uuid()`                  |                                             |
-| `product_id`     | `UUID`         | `FK -> products(id) NOT NULL ON DELETE CASCADE` |                                             |
-| `name`           | `VARCHAR(255)` | `NOT NULL`                                      | Nombre del grupo (ej: "Ingredientes extra") |
-| `max_selectable` | `SMALLINT`     | `DEFAULT 0`                                     | 0 = sin límite                              |
-| `is_multiple`    | `BOOLEAN`      | `NOT NULL DEFAULT true`                         | Selección múltiple o única                  |
-| `sort_order`     | `INTEGER`      | `DEFAULT 0`                                     |                                             |
-| `created_at`     | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`                        |                                             |
-
-**Índices**:
-
-- `INDEX idx_extra_groups_product ON extra_groups(product_id)`
-
----
-
-#### `extras`
-
-| Columna      | Tipo           | Restricciones                                       | Descripción              |
-| ------------ | -------------- | --------------------------------------------------- | ------------------------ |
-| `id`         | `UUID`         | `PK DEFAULT gen_random_uuid()`                      |                          |
-| `group_id`   | `UUID`         | `FK -> extra_groups(id) NOT NULL ON DELETE CASCADE` |                          |
-| `name`       | `VARCHAR(255)` | `NOT NULL`                                          |                          |
-| `price`      | `INTEGER`      | `NOT NULL DEFAULT 0 CHECK (price >= 0)`             | Precio adicional         |
-| `is_default` | `BOOLEAN`      | `NOT NULL DEFAULT false`                            | Seleccionado por defecto |
-| `sort_order` | `INTEGER`      | `DEFAULT 0`                                         |                          |
-| `created_at` | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`                            |                          |
-
-**Índices**:
-
-- `INDEX idx_extras_group ON extras(group_id)`
-
----
-
-#### `tables`
-
-| Columna       | Tipo           | Restricciones                  | Descripción                          |
-| ------------- | -------------- | ------------------------------ | ------------------------------------ |
-| `id`          | `UUID`         | `PK DEFAULT gen_random_uuid()` |                                      |
-| `tenant_id`   | `UUID`         | `FK -> tenants(id) NOT NULL`   |                                      |
-| `number`      | `VARCHAR(10)`  | `NOT NULL`                     | Número o nombre de la mesa           |
-| `capacity`    | `SMALLINT`     | `DEFAULT 4`                    | Capacidad de personas                |
-| `location`    | `VARCHAR(100)` |                                | Ubicación (interior, terraza, barra) |
-| `qr_code_url` | `TEXT`         |                                | URL del QR generado                  |
-| `is_active`   | `BOOLEAN`      | `NOT NULL DEFAULT true`        |                                      |
-| `created_at`  | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`       |                                      |
-| `updated_at`  | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`       |                                      |
-| `deleted_at`  | `TIMESTAMPTZ`  |                                |                                      |
-
-**Índices**:
-
-- `UNIQUE INDEX idx_tables_number ON tables(tenant_id, number) WHERE deleted_at IS NULL`
-- `INDEX idx_tables_tenant ON tables(tenant_id)`
-
----
-
-#### `orders`
-
-| Columna          | Tipo           | Restricciones                                                                                              | Descripción                                       |
-| ---------------- | -------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `id`             | `UUID`         | `PK DEFAULT gen_random_uuid()`                                                                             |                                                   |
-| `tenant_id`      | `UUID`         | `FK -> tenants(id) NOT NULL`                                                                               |                                                   |
-| `table_id`       | `UUID`         | `FK -> tables(id)`                                                                                         | Mesa asociada (nullable para pedidos para llevar) |
-| `customer_id`    | `UUID`         | `FK -> customers(id)`                                                                                      | Cliente (nullable para pedidos sin cuenta)        |
-| `customer_name`  | `VARCHAR(200)` |                                                                                                            | Nombre del cliente                                |
-| `customer_email` | `VARCHAR(255)` |                                                                                                            |                                                   |
-| `customer_phone` | `VARCHAR(20)`  |                                                                                                            |                                                   |
-| `status`         | `VARCHAR(20)`  | `NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'preparing', 'ready', 'delivered', 'cancelled'))` | Estado del pedido                                 |
-| `notes`          | `TEXT`         |                                                                                                            | Notas generales del pedido                        |
-| `total_amount`   | `INTEGER`      | `NOT NULL CHECK (total_amount >= 0)`                                                                       | Total en centavos                                 |
-| `created_at`     | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`                                                                                   |                                                   |
-| `updated_at`     | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`                                                                                   |                                                   |
-
-**Índices**:
-
-- `INDEX idx_orders_tenant_status ON orders(tenant_id, status)`
-- `INDEX idx_orders_table ON orders(table_id)`
-- `INDEX idx_orders_created_at ON orders(tenant_id, created_at DESC)`
-
----
-
-#### `order_items`
-
-| Columna        | Tipo           | Restricciones                                 | Descripción                               |
-| -------------- | -------------- | --------------------------------------------- | ----------------------------------------- |
-| `id`           | `UUID`         | `PK DEFAULT gen_random_uuid()`                |                                           |
-| `order_id`     | `UUID`         | `FK -> orders(id) NOT NULL ON DELETE CASCADE` |                                           |
-| `product_id`   | `UUID`         | `FK -> products(id)`                          |                                           |
-| `product_name` | `VARCHAR(255)` | `NOT NULL`                                    | Snapshot del nombre al momento del pedido |
-| `variant_name` | `VARCHAR(255)` |                                               | Variante seleccionada                     |
-| `extras`       | `JSONB`        | `DEFAULT '[]'`                                | Extras seleccionados [{name, price}]      |
-| `quantity`     | `SMALLINT`     | `NOT NULL CHECK (quantity > 0)`               |                                           |
-| `unit_price`   | `INTEGER`      | `NOT NULL CHECK (unit_price >= 0)`            | Precio unitario en centavos               |
-| `subtotal`     | `INTEGER`      | `NOT NULL CHECK (subtotal >= 0)`              | unit_price * quantity                     |
-| `notes`        | `TEXT`         |                                               | Notas del item                            |
-| `created_at`   | `TIMESTAMPTZ`  | `NOT NULL DEFAULT now()`                      |                                           |
-
-**Índices**:
-
-- `INDEX idx_order_items_order ON order_items(order_id)`
-
----
-
 ### Tablas del Módulo de CRM
 
 #### `customers`
@@ -671,7 +455,7 @@ Cubre todas las tablas de los módulos iniciales (Base, Citas, Carta Digital, CR
 | `customer_id`    | `UUID`        | `FK -> customers(id) NOT NULL`                                                                   |                                                     |
 | `points`         | `INTEGER`     | `NOT NULL`                                                                                       | Puntos (positivos = ganados, negativos = canjeados) |
 | `reason`         | `VARCHAR(50)` | `NOT NULL CHECK (reason IN ('visit', 'purchase', 'welcome', 'redeem', 'expired', 'adjustment'))` | Motivo                                              |
-| `reference_type` | `VARCHAR(20)` |                                                                                                  | Tipo de referencia (booking, order)                 |
+| `reference_type` | `VARCHAR(20)` |                                                                                                  | Tipo de referencia (booking, ajuste)                |
 | `reference_id`   | `UUID`        |                                                                                                  | ID de la referencia                                 |
 | `expires_at`     | `TIMESTAMPTZ` |                                                                                                  | Fecha de expiración                                 |
 | `created_at`     | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()`                                                                         |                                                     |
@@ -711,7 +495,7 @@ Cubre todas las tablas de los módulos iniciales (Base, Citas, Carta Digital, CR
 2. **Política por defecto**: `FOR ALL USING (false)` — denegado por defecto.
 3. **Cada política verifica**: `tenant_id = auth.jwt() ->> 'tenant_id'`.
 4. **Usuarios `super_admin`** tienen policy que permite acceso a todas las filas (verificando rol en JWT).
-5. **Público**: Tablas de consulta pública (productos, categorías de un menú) tienen policies `USING (true)` solo para SELECT en endpoints públicos.
+5. **Público**: Tablas con lectura pública (perfil del negocio) tienen policies `USING (true)` solo para SELECT en endpoints públicos.
 
 ### Ejemplos de Policies
 
@@ -746,16 +530,15 @@ WITH CHECK (
 );
 ```
 
-#### `products` — Política de SELECT público
+#### `tenants` — Política de SELECT público
 
 ```sql
-CREATE POLICY "public_select_products"
-ON products
+CREATE POLICY "public_read_tenants"
+ON tenants
 FOR SELECT
 TO anon
 USING (
-  tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
-  AND is_available = true
+  status IN ('trial', 'active')
   AND deleted_at IS NULL
 );
 ```
@@ -847,10 +630,6 @@ BEGIN
     UPDATE customers
     SET
       total_visits = total_visits + 1,
-      total_spent = total_spent + COALESCE(
-        (SELECT SUM(total_amount) FROM orders WHERE customer_id = NEW.customer_id AND status = 'delivered'),
-        0
-      ),
       last_visit_at = NOW(),
       updated_at = NOW()
     WHERE id = NEW.customer_id
@@ -869,7 +648,6 @@ $$;
 | --------------------------- | ---------- | ---------------------- | ----------------------------- | ---------------------------------------- |
 | `trg_booking_audit`         | `bookings` | AFTER INSERT OR UPDATE | `log_audit_entry`             | Registrar cambios en citas               |
 | `trg_customer_visit`        | `bookings` | AFTER UPDATE OF status | `update_customer_visit_stats` | Actualizar estadísticas del cliente      |
-| `trg_order_audit`           | `orders`   | AFTER INSERT OR UPDATE | `log_audit_entry`             | Registrar cambios en pedidos             |
 | `trg_update_updated_at`     | Todas      | BEFORE UPDATE          | `set_updated_at`              | Actualizar `updated_at` automáticamente  |
 | `trg_customer_from_booking` | `bookings` | AFTER INSERT           | `create_or_update_customer`   | Crear/actualizar cliente automáticamente |
 
@@ -904,7 +682,6 @@ SELECT
   c.last_visit_at,
   c.created_at,
   COUNT(DISTINCT b.id) AS total_bookings,
-  COUNT(DISTINCT o.id) AS total_orders,
   COALESCE(SUM(lp.points) FILTER (WHERE lp.points > 0), 0) AS total_points_earned,
   COALESCE(SUM(lp.points) FILTER (WHERE lp.points < 0), 0) AS total_points_redeemed,
   COALESCE((SELECT json_agg(t.*) FROM tags t
@@ -912,7 +689,6 @@ SELECT
     WHERE ct.customer_id = c.id), '[]'::json) AS tags
 FROM customers c
 LEFT JOIN bookings b ON b.customer_id = c.id AND b.deleted_at IS NULL
-LEFT JOIN orders o ON o.customer_id = c.id
 LEFT JOIN loyalty_points lp ON lp.customer_id = c.id
 GROUP BY c.id;
 ```
@@ -931,18 +707,14 @@ GROUP BY c.id;
 | 6   | `20260101000006_create_employees.sql`    | Tablas `employees`, `employee_services`                         |
 | 7   | `20260101000007_create_schedules.sql`    | Tablas `schedules`, `schedule_breaks`, `holiday_exceptions`     |
 | 8   | `20260101000008_create_bookings.sql`     | Tabla `bookings`, índices, función `get_available_slots`        |
-| 9   | `20260101000009_create_menus.sql`        | Tabla `menus`                                                   |
-| 10  | `20260101000010_create_categories.sql`   | Tabla `categories`                                              |
-| 11  | `20260101000011_create_products.sql`     | Tablas `products`, `product_variants`, `extra_groups`, `extras` |
-| 12  | `20260101000012_create_tables.sql`       | Tabla `tables`                                                  |
-| 13  | `20260101000013_create_orders.sql`       | Tablas `orders`, `order_items`                                  |
-| 14  | `20260101000014_create_customers.sql`    | Tablas `customers`, `customer_notes`                            |
-| 15  | `20260101000015_create_tags.sql`         | Tablas `tags`, `customer_tags`                                  |
-| 16  | `20260101000016_create_loyalty.sql`      | Tablas `loyalty_points`, `loyalty_config`                       |
-| 17  | `20260101000017_create_views.sql`        | Vista `v_customer_summary`                                      |
-| 18  | `20260101000018_enable_rls.sql`          | Habilitar RLS en todas las tablas                               |
-| 19  | `20260101000019_create_rls_policies.sql` | Todas las policies RLS                                          |
-| 20  | `20260101000020_create_triggers.sql`     | Todos los triggers                                              |
+| 9   | `20260101000014_create_customers.sql`    | Tablas `customers`, `customer_notes`                            |
+| 10  | `20260101000015_create_tags.sql`         | Tablas `tags`, `customer_tags`                                  |
+| 11  | `20260101000016_create_loyalty.sql`      | Tablas `loyalty_points`, `loyalty_config`                       |
+| 12  | `20260101000017_create_views.sql`        | Vista `v_customer_summary`                                      |
+| 13  | `20260101000018_enable_rls.sql`          | Habilitar RLS en todas las tablas                               |
+| 14  | `20260101000019_create_rls_policies.sql` | Todas las policies RLS                                          |
+| 15  | `20260101000020_create_triggers.sql`     | Todos los triggers                                              |
+| 16  | `20261023120000_drop_digital_menu_tables.sql` | Elimina las tablas del módulo Carta Digital (módulo retirado del producto) |
 
 ---
 
@@ -955,17 +727,16 @@ GROUP BY c.id;
 | VARCHAR con CHECK en lugar de ENUM                    | `status VARCHAR(20) CHECK (...)` | ENUM de PostgreSQL       | Los ENUMs requieren migration para añadir valores. VARCHAR + CHECK es más flexible.        |
 | JSONB para datos flexibles                            | `config`, `modules`, `details`   | Columnas individuales    | Para datos cuya estructura puede variar sin schema rígido.                                 |
 | UUID como PK                                          | `gen_random_uuid()`              | Serial, ULID             | No secuencial (seguridad), único globalmente, soporte nativo en PostgreSQL.                |
-| Snapshot de nombre en `order_items`                   | `product_name`, `variant_name`   | Solo FK a products       | Si el producto se modifica o elimina, el pedido histórico conserva los datos reales.       |
 | `total_visits` y `total_spent` como columna calculada | Columna física + trigger         | Cálculo en cada consulta | Rendimiento: actualizar en cada visita es más rápido que sumar histórico en cada consulta. |
 
 ---
 
 ## Posibles Mejoras Futuras
 
-- **Particionamiento** de tablas grandes (bookings, orders, audit_logs) por rango de fechas.
+- **Particionamiento** de tablas grandes (bookings, audit_logs) por rango de fechas.
 - **Vistas materializadas** para reportes pesados que no necesitan datos en tiempo real.
 - **Extensión `pg_cron`** para tareas programadas (expirar puntos de fidelización, enviar recordatorios).
-- **Full-text search** con índices GIN en lugar de `ilike` para búsqueda de clientes y productos.
+- **Full-text search** con índices GIN en lugar de `ilike` para búsqueda de clientes.
 - **Auditoría con `pgaudit`** si se requiere cumplimiento regulatorio.
 - **Citas recurrentes**: tabla `recurring_bookings` para patrones semanales/mensuales.
 - **Historial de cambios con temporal tables** (extensiones `temporal_tables` o `postgresql_unit`).

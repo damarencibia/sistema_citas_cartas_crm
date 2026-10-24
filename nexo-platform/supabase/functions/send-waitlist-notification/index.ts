@@ -149,7 +149,7 @@ serve(async (req: Request) => {
 
     if (resendApiKey) {
       const emailPayload = {
-        from: `${businessName} <noreply@${slug}.nexoplatform.app>`,
+        from: `${businessName} <noreply@nexoplatform.app>`,
         to: [entry.customer_email],
         subject: `Tienes un espacio disponible para ${serviceName} — ${minutesLeft} min para confirmar`,
         html,
