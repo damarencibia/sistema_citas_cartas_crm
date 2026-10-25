@@ -1,2168 +1,2514 @@
-﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.5';
-  };
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       audit_logs: {
         Row: {
-          action: string;
-          created_at: string;
-          details: Json | null;
-          entity_id: string | null;
-          entity_type: string;
-          id: string;
-          ip_address: unknown;
-          tenant_id: string | null;
-          user_id: string | null;
-        };
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: unknown
+          tenant_id: string | null
+          user_id: string | null
+        }
         Insert: {
-          action: string;
-          created_at?: string;
-          details?: Json | null;
-          entity_id?: string | null;
-          entity_type: string;
-          id?: string;
-          ip_address?: unknown;
-          tenant_id?: string | null;
-          user_id?: string | null;
-        };
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: unknown
+          tenant_id?: string | null
+          user_id?: string | null
+        }
         Update: {
-          action?: string;
-          created_at?: string;
-          details?: Json | null;
-          entity_id?: string | null;
-          entity_type?: string;
-          id?: string;
-          ip_address?: unknown;
-          tenant_id?: string | null;
-          user_id?: string | null;
-        };
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: unknown
+          tenant_id?: string | null
+          user_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: 'audit_logs_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'audit_logs_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
+      blocked_slots: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          employee_id: string
+          end_time: string
+          id: string
+          reason: string | null
+          start_time: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date: string
+          employee_id: string
+          end_time: string
+          id?: string
+          reason?: string | null
+          start_time: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          employee_id?: string
+          end_time?: string
+          id?: string
+          reason?: string | null
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_slots_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_slots_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_slots_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_approvals: {
         Row: {
-          action: string;
-          approved_by: string | null;
-          booking_id: string;
-          created_at: string;
-          id: string;
-          reason: string | null;
-          tenant_id: string;
-        };
+          action: string
+          approved_by: string | null
+          booking_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          tenant_id: string
+        }
         Insert: {
-          action: string;
-          approved_by?: string | null;
-          booking_id: string;
-          created_at?: string;
-          id?: string;
-          reason?: string | null;
-          tenant_id: string;
-        };
+          action: string
+          approved_by?: string | null
+          booking_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          tenant_id: string
+        }
         Update: {
-          action?: string;
-          approved_by?: string | null;
-          booking_id?: string;
-          created_at?: string;
-          id?: string;
-          reason?: string | null;
-          tenant_id?: string;
-        };
+          action?: string
+          approved_by?: string | null
+          booking_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'booking_approvals_booking_id_fkey';
-            columns: ['booking_id'];
-            isOneToOne: false;
-            referencedRelation: 'bookings';
-            referencedColumns: ['id'];
+            foreignKeyName: "booking_approvals_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'booking_approvals_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "booking_approvals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       booking_status_log: {
         Row: {
-          booking_id: string;
-          changed_by: string;
-          changed_by_name: string | null;
-          created_at: string;
-          id: string;
-          new_status: string;
-          old_status: string | null;
-          reason: string | null;
-          tenant_id: string;
-        };
+          booking_id: string
+          changed_by: string
+          changed_by_name: string | null
+          created_at: string
+          id: string
+          new_status: string
+          old_status: string | null
+          reason: string | null
+          tenant_id: string
+        }
         Insert: {
-          booking_id: string;
-          changed_by: string;
-          changed_by_name?: string | null;
-          created_at?: string;
-          id?: string;
-          new_status: string;
-          old_status?: string | null;
-          reason?: string | null;
-          tenant_id: string;
-        };
+          booking_id: string
+          changed_by: string
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          new_status: string
+          old_status?: string | null
+          reason?: string | null
+          tenant_id: string
+        }
         Update: {
-          booking_id?: string;
-          changed_by?: string;
-          changed_by_name?: string | null;
-          created_at?: string;
-          id?: string;
-          new_status?: string;
-          old_status?: string | null;
-          reason?: string | null;
-          tenant_id?: string;
-        };
+          booking_id?: string
+          changed_by?: string
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string
+          old_status?: string | null
+          reason?: string | null
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'booking_status_log_booking_id_fkey';
-            columns: ['booking_id'];
-            isOneToOne: false;
-            referencedRelation: 'bookings';
-            referencedColumns: ['id'];
+            foreignKeyName: "booking_status_log_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'booking_status_log_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "booking_status_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       booking_windows: {
         Row: {
-          created_at: string;
-          employee_id: string | null;
-          end_date: string;
-          end_time: string;
-          id: string;
-          is_active: boolean;
-          service_id: string | null;
-          slot_interval_minutes: number;
-          slot_mode: string;
-          start_date: string;
-          start_time: string;
-          tenant_id: string;
-          updated_at: string;
-        };
+          created_at: string
+          employee_id: string | null
+          end_date: string
+          end_time: string
+          id: string
+          is_active: boolean
+          service_id: string | null
+          slot_interval_minutes: number
+          slot_mode: string
+          start_date: string
+          start_time: string
+          tenant_id: string
+          updated_at: string
+        }
         Insert: {
-          created_at?: string;
-          employee_id?: string | null;
-          end_date: string;
-          end_time: string;
-          id?: string;
-          is_active?: boolean;
-          service_id?: string | null;
-          slot_interval_minutes?: number;
-          slot_mode?: string;
-          start_date: string;
-          start_time: string;
-          tenant_id: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          employee_id?: string | null
+          end_date: string
+          end_time: string
+          id?: string
+          is_active?: boolean
+          service_id?: string | null
+          slot_interval_minutes?: number
+          slot_mode?: string
+          start_date: string
+          start_time: string
+          tenant_id: string
+          updated_at?: string
+        }
         Update: {
-          created_at?: string;
-          employee_id?: string | null;
-          end_date?: string;
-          end_time?: string;
-          id?: string;
-          is_active?: boolean;
-          service_id?: string | null;
-          slot_interval_minutes?: number;
-          slot_mode?: string;
-          start_date?: string;
-          start_time?: string;
-          tenant_id?: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          employee_id?: string | null
+          end_date?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          service_id?: string | null
+          slot_interval_minutes?: number
+          slot_mode?: string
+          start_date?: string
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'booking_windows_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "booking_windows_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'booking_windows_service_id_fkey';
-            columns: ['service_id'];
-            isOneToOne: false;
-            referencedRelation: 'services';
-            referencedColumns: ['id'];
+            foreignKeyName: "booking_windows_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'booking_windows_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "booking_windows_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       bookings: {
         Row: {
-          cancellation_reason: string | null;
-          cancelled_at: string | null;
-          cancelled_by: string | null;
-          created_at: string;
-          custom_duration_minutes: number | null;
-          customer_email: string | null;
-          customer_id: string | null;
-          customer_name: string | null;
-          customer_phone: string | null;
-          date: string;
-          deleted_at: string | null;
-          employee_id: string | null;
-          end_time: string;
-          id: string;
-          late_minutes: number | null;
-          no_show_at: string | null;
-          notes: string | null;
-          participant_count: number;
-          requires_approval: boolean | null;
-          resource_id: string | null;
-          service_id: string;
-          source: string | null;
-          start_time: string;
-          status: string;
-          tenant_id: string;
-          updated_at: string;
-          whatsapp_consent: boolean;
-        };
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          custom_duration_minutes: number | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          date: string
+          deleted_at: string | null
+          employee_id: string
+          end_time: string
+          id: string
+          late_minutes: number | null
+          no_show_at: string | null
+          notes: string | null
+          participant_count: number
+          requires_approval: boolean | null
+          resource_id: string | null
+          service_id: string
+          source: string | null
+          start_time: string
+          status: string
+          tenant_id: string
+          updated_at: string
+          whatsapp_consent: boolean
+        }
         Insert: {
-          cancellation_reason?: string | null;
-          cancelled_at?: string | null;
-          cancelled_by?: string | null;
-          created_at?: string;
-          custom_duration_minutes?: number | null;
-          customer_email?: string | null;
-          customer_id?: string | null;
-          customer_name?: string | null;
-          customer_phone?: string | null;
-          date: string;
-          deleted_at?: string | null;
-          employee_id: string | null;
-          end_time: string;
-          id?: string;
-          late_minutes?: number | null;
-          no_show_at?: string | null;
-          notes?: string | null;
-          participant_count?: number;
-          requires_approval?: boolean | null;
-          resource_id?: string | null;
-          service_id: string;
-          source?: string | null;
-          start_time: string;
-          status?: string;
-          tenant_id: string;
-          updated_at?: string;
-          whatsapp_consent?: boolean;
-        };
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          custom_duration_minutes?: number | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          date: string
+          deleted_at?: string | null
+          employee_id: string
+          end_time: string
+          id?: string
+          late_minutes?: number | null
+          no_show_at?: string | null
+          notes?: string | null
+          participant_count?: number
+          requires_approval?: boolean | null
+          resource_id?: string | null
+          service_id: string
+          source?: string | null
+          start_time: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          whatsapp_consent?: boolean
+        }
         Update: {
-          cancellation_reason?: string | null;
-          cancelled_at?: string | null;
-          cancelled_by?: string | null;
-          created_at?: string;
-          custom_duration_minutes?: number | null;
-          customer_email?: string | null;
-          customer_id?: string | null;
-          customer_name?: string | null;
-          customer_phone?: string | null;
-          date?: string;
-          deleted_at?: string | null;
-          employee_id?: string | null;
-          end_time?: string;
-          id?: string;
-          late_minutes?: number | null;
-          no_show_at?: string | null;
-          notes?: string | null;
-          participant_count?: number;
-          requires_approval?: boolean | null;
-          resource_id?: string | null;
-          service_id?: string;
-          source?: string | null;
-          start_time?: string;
-          status?: string;
-          tenant_id?: string;
-          updated_at?: string;
-          whatsapp_consent?: boolean;
-        };
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          custom_duration_minutes?: number | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          date?: string
+          deleted_at?: string | null
+          employee_id?: string
+          end_time?: string
+          id?: string
+          late_minutes?: number | null
+          no_show_at?: string | null
+          notes?: string | null
+          participant_count?: number
+          requires_approval?: boolean | null
+          resource_id?: string | null
+          service_id?: string
+          source?: string | null
+          start_time?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          whatsapp_consent?: boolean
+        }
         Relationships: [
           {
-            foreignKeyName: 'bookings_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "bookings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'bookings_service_id_fkey';
-            columns: ['service_id'];
-            isOneToOne: false;
-            referencedRelation: 'services';
-            referencedColumns: ['id'];
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'bookings_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "bookings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'fk_bookings_customer';
-            columns: ['customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'customers';
-            referencedColumns: ['id'];
+            foreignKeyName: "fk_bookings_customer"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'fk_bookings_resource';
-            columns: ['resource_id'];
-            isOneToOne: false;
-            referencedRelation: 'resources';
-            referencedColumns: ['id'];
+            foreignKeyName: "fk_bookings_resource"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       client_blocks: {
         Row: {
-          blocked_until: string;
-          created_at: string;
-          customer_email: string;
-          id: string;
-          no_show_count: number;
-          reason: string | null;
-          tenant_id: string;
-        };
+          blocked_until: string
+          created_at: string
+          customer_email: string
+          id: string
+          no_show_count: number
+          reason: string | null
+          tenant_id: string
+        }
         Insert: {
-          blocked_until: string;
-          created_at?: string;
-          customer_email: string;
-          id?: string;
-          no_show_count?: number;
-          reason?: string | null;
-          tenant_id: string;
-        };
+          blocked_until: string
+          created_at?: string
+          customer_email: string
+          id?: string
+          no_show_count?: number
+          reason?: string | null
+          tenant_id: string
+        }
         Update: {
-          blocked_until?: string;
-          created_at?: string;
-          customer_email?: string;
-          id?: string;
-          no_show_count?: number;
-          reason?: string | null;
-          tenant_id?: string;
-        };
+          blocked_until?: string
+          created_at?: string
+          customer_email?: string
+          id?: string
+          no_show_count?: number
+          reason?: string | null
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'client_blocks_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "client_blocks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       customer_notes: {
         Row: {
-          author_id: string;
-          content: string;
-          created_at: string;
-          customer_id: string;
-          id: string;
-          tenant_id: string;
-          updated_at: string;
-        };
+          author_id: string
+          content: string
+          created_at: string
+          customer_id: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
         Insert: {
-          author_id: string;
-          content: string;
-          created_at?: string;
-          customer_id: string;
-          id?: string;
-          tenant_id: string;
-          updated_at?: string;
-        };
+          author_id: string
+          content: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
         Update: {
-          author_id?: string;
-          content?: string;
-          created_at?: string;
-          customer_id?: string;
-          id?: string;
-          tenant_id?: string;
-          updated_at?: string;
-        };
+          author_id?: string
+          content?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'customer_notes_author_id_fkey';
-            columns: ['author_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "customer_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'customer_notes_customer_id_fkey';
-            columns: ['customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'customers';
-            referencedColumns: ['id'];
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'customer_notes_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "customer_notes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       customer_tags: {
         Row: {
-          created_at: string;
-          customer_id: string;
-          tag_id: string;
-        };
+          created_at: string
+          customer_id: string
+          tag_id: string
+        }
         Insert: {
-          created_at?: string;
-          customer_id: string;
-          tag_id: string;
-        };
+          created_at?: string
+          customer_id: string
+          tag_id: string
+        }
         Update: {
-          created_at?: string;
-          customer_id?: string;
-          tag_id?: string;
-        };
+          created_at?: string
+          customer_id?: string
+          tag_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'customer_tags_customer_id_fkey';
-            columns: ['customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'customers';
-            referencedColumns: ['id'];
+            foreignKeyName: "customer_tags_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'customer_tags_tag_id_fkey';
-            columns: ['tag_id'];
-            isOneToOne: false;
-            referencedRelation: 'tags';
-            referencedColumns: ['id'];
+            foreignKeyName: "customer_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       customers: {
         Row: {
-          created_at: string;
-          deleted_at: string | null;
-          email: string | null;
-          first_name: string;
-          id: string;
-          last_name: string;
-          last_visit_at: string | null;
-          notes: string | null;
-          phone: string | null;
-          supabase_user_id: string | null;
-          tenant_id: string;
-          total_spent: number;
-          total_visits: number;
-          updated_at: string;
-        };
+          access_token: string | null
+          access_token_used_at: string | null
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          last_visit_at: string | null
+          notes: string | null
+          phone: string | null
+          supabase_user_id: string | null
+          tenant_id: string
+          total_spent: number
+          total_visits: number
+          updated_at: string
+        }
         Insert: {
-          created_at?: string;
-          deleted_at?: string | null;
-          email?: string | null;
-          first_name: string;
-          id?: string;
-          last_name: string;
-          last_visit_at?: string | null;
-          notes?: string | null;
-          phone?: string | null;
-          supabase_user_id?: string | null;
-          tenant_id: string;
-          total_spent?: number;
-          total_visits?: number;
-          updated_at?: string;
-        };
+          access_token?: string | null
+          access_token_used_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          last_visit_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          supabase_user_id?: string | null
+          tenant_id: string
+          total_spent?: number
+          total_visits?: number
+          updated_at?: string
+        }
         Update: {
-          created_at?: string;
-          deleted_at?: string | null;
-          email?: string | null;
-          first_name?: string;
-          id?: string;
-          last_name?: string;
-          last_visit_at?: string | null;
-          notes?: string | null;
-          phone?: string | null;
-          supabase_user_id?: string | null;
-          tenant_id?: string;
-          total_spent?: number;
-          total_visits?: number;
-          updated_at?: string;
-        };
+          access_token?: string | null
+          access_token_used_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          last_visit_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          supabase_user_id?: string | null
+          tenant_id?: string
+          total_spent?: number
+          total_visits?: number
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'customers_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       daily_closures: {
         Row: {
-          attended: number;
-          closed_at: string;
-          closed_by: string | null;
-          date: string;
-          employee_id: string;
-          extras: number;
-          id: string;
-          no_shows: number;
-          reopened_at: string | null;
-          tenant_id: string;
-          total_attended: number;
-          total_bookings: number;
-        };
+          attended: number
+          closed_at: string
+          closed_by: string | null
+          date: string
+          employee_id: string
+          extras: number
+          id: string
+          no_shows: number
+          reopened_at: string | null
+          tenant_id: string
+          total_attended: number
+          total_bookings: number
+        }
         Insert: {
-          attended?: number;
-          closed_at?: string;
-          closed_by?: string | null;
-          date: string;
-          employee_id: string;
-          extras?: number;
-          id?: string;
-          no_shows?: number;
-          reopened_at?: string | null;
-          tenant_id: string;
-          total_attended?: number;
-          total_bookings?: number;
-        };
+          attended?: number
+          closed_at?: string
+          closed_by?: string | null
+          date: string
+          employee_id: string
+          extras?: number
+          id?: string
+          no_shows?: number
+          reopened_at?: string | null
+          tenant_id: string
+          total_attended?: number
+          total_bookings?: number
+        }
         Update: {
-          attended?: number;
-          closed_at?: string;
-          closed_by?: string | null;
-          date?: string;
-          employee_id?: string;
-          extras?: number;
-          id?: string;
-          no_shows?: number;
-          reopened_at?: string | null;
-          tenant_id?: string;
-          total_attended?: number;
-          total_bookings?: number;
-        };
+          attended?: number
+          closed_at?: string
+          closed_by?: string | null
+          date?: string
+          employee_id?: string
+          extras?: number
+          id?: string
+          no_shows?: number
+          reopened_at?: string | null
+          tenant_id?: string
+          total_attended?: number
+          total_bookings?: number
+        }
         Relationships: [
           {
-            foreignKeyName: 'daily_closures_closed_by_fkey';
-            columns: ['closed_by'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "daily_closures_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'daily_closures_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "daily_closures_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'daily_closures_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "daily_closures_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       daily_extras: {
         Row: {
-          created_at: string;
-          customer_name: string;
-          date: string;
-          employee_id: string;
-          id: string;
-          notes: string | null;
-          service_id: string | null;
-          tenant_id: string;
-        };
+          created_at: string
+          customer_name: string
+          date: string
+          employee_id: string
+          id: string
+          notes: string | null
+          service_id: string | null
+          tenant_id: string
+        }
         Insert: {
-          created_at?: string;
-          customer_name: string;
-          date: string;
-          employee_id: string;
-          id?: string;
-          notes?: string | null;
-          service_id?: string | null;
-          tenant_id: string;
-        };
+          created_at?: string
+          customer_name: string
+          date: string
+          employee_id: string
+          id?: string
+          notes?: string | null
+          service_id?: string | null
+          tenant_id: string
+        }
         Update: {
-          created_at?: string;
-          customer_name?: string;
-          date?: string;
-          employee_id?: string;
-          id?: string;
-          notes?: string | null;
-          service_id?: string | null;
-          tenant_id?: string;
-        };
+          created_at?: string
+          customer_name?: string
+          date?: string
+          employee_id?: string
+          id?: string
+          notes?: string | null
+          service_id?: string | null
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'daily_extras_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "daily_extras_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'daily_extras_service_id_fkey';
-            columns: ['service_id'];
-            isOneToOne: false;
-            referencedRelation: 'services';
-            referencedColumns: ['id'];
+            foreignKeyName: "daily_extras_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'daily_extras_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "daily_extras_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
+      employee_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          deleted_at: string | null
+          employee_id: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          deleted_at?: string | null
+          employee_id: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          employee_id?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_categories_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_services: {
         Row: {
-          created_at: string;
-          employee_id: string;
-          id: string;
-          service_id: string;
-        };
+          created_at: string
+          employee_id: string
+          id: string
+          service_id: string
+        }
         Insert: {
-          created_at?: string;
-          employee_id: string;
-          id?: string;
-          service_id: string;
-        };
+          created_at?: string
+          employee_id: string
+          id?: string
+          service_id: string
+        }
         Update: {
-          created_at?: string;
-          employee_id?: string;
-          id?: string;
-          service_id?: string;
-        };
+          created_at?: string
+          employee_id?: string
+          id?: string
+          service_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'employee_services_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "employee_services_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'employee_services_service_id_fkey';
-            columns: ['service_id'];
-            isOneToOne: false;
-            referencedRelation: 'services';
-            referencedColumns: ['id'];
+            foreignKeyName: "employee_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       employees: {
         Row: {
-          color: string | null;
-          created_at: string;
-          deleted_at: string | null;
-          email: string | null;
-          first_name: string;
-          id: string;
-          is_active: boolean;
-          last_name: string;
-          phone: string | null;
-          tenant_id: string;
-          updated_at: string;
-          user_id: string | null;
-        };
+          color: string | null
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          first_name: string
+          id: string
+          is_active: boolean
+          last_name: string
+          phone: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string | null
+        }
         Insert: {
-          color?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          email?: string | null;
-          first_name: string;
-          id?: string;
-          is_active?: boolean;
-          last_name: string;
-          phone?: string | null;
-          tenant_id: string;
-          updated_at?: string;
-          user_id?: string | null;
-        };
+          color?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          is_active?: boolean
+          last_name: string
+          phone?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
         Update: {
-          color?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          email?: string | null;
-          first_name?: string;
-          id?: string;
-          is_active?: boolean;
-          last_name?: string;
-          phone?: string | null;
-          tenant_id?: string;
-          updated_at?: string;
-          user_id?: string | null;
-        };
+          color?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_active?: boolean
+          last_name?: string
+          phone?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: 'employees_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "employees_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'employees_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: true;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "employees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       event_registrations: {
         Row: {
-          access_token: string | null;
-          created_at: string;
-          customer_email: string | null;
-          customer_name: string | null;
-          customer_phone: string | null;
-          deleted_at: string | null;
-          event_id: string;
-          id: string;
-          notes: string | null;
-          participant_count: number;
-          status: string;
-          tenant_id: string;
-          updated_at: string;
-          whatsapp_consent: boolean;
-        };
+          access_token: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          deleted_at: string | null
+          event_id: string
+          id: string
+          notes: string | null
+          participant_count: number
+          status: string
+          tenant_id: string
+          updated_at: string
+          whatsapp_consent: boolean
+        }
         Insert: {
-          access_token?: string | null;
-          created_at?: string;
-          customer_email?: string | null;
-          customer_name?: string | null;
-          customer_phone?: string | null;
-          deleted_at?: string | null;
-          event_id: string;
-          id?: string;
-          notes?: string | null;
-          participant_count?: number;
-          status?: string;
-          tenant_id: string;
-          updated_at?: string;
-          whatsapp_consent?: boolean;
-        };
+          access_token?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          deleted_at?: string | null
+          event_id: string
+          id?: string
+          notes?: string | null
+          participant_count?: number
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          whatsapp_consent?: boolean
+        }
         Update: {
-          access_token?: string | null;
-          created_at?: string;
-          customer_email?: string | null;
-          customer_name?: string | null;
-          customer_phone?: string | null;
-          deleted_at?: string | null;
-          event_id?: string;
-          id?: string;
-          notes?: string | null;
-          participant_count?: number;
-          status?: string;
-          tenant_id?: string;
-          updated_at?: string;
-          whatsapp_consent?: boolean;
-        };
+          access_token?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          deleted_at?: string | null
+          event_id?: string
+          id?: string
+          notes?: string | null
+          participant_count?: number
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          whatsapp_consent?: boolean
+        }
         Relationships: [
           {
-            foreignKeyName: 'event_registrations_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'event_registrations_event_id_fkey';
-            columns: ['event_id'];
-            isOneToOne: false;
-            referencedRelation: 'events';
-            referencedColumns: ['id'];
+            foreignKeyName: "event_registrations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       events: {
         Row: {
-          category_id: string | null;
-          created_at: string;
-          deleted_at: string | null;
-          description: string | null;
-          end_time: string;
-          event_date: string;
-          id: string;
-          is_active: boolean;
-          max_participants: number | null;
-          name: string;
-          reservation_close_offset_minutes: number | null;
-          reservation_open_date: string | null;
-          start_time: string;
-          tenant_id: string;
-          updated_at: string;
-        };
+          category_id: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          end_time: string
+          event_date: string
+          id: string
+          is_active: boolean
+          max_participants: number | null
+          name: string
+          reservation_close_offset_minutes: number | null
+          reservation_open_date: string | null
+          start_time: string
+          tenant_id: string
+          updated_at: string
+        }
         Insert: {
-          category_id?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          description?: string | null;
-          end_time: string;
-          event_date: string;
-          id?: string;
-          is_active?: boolean;
-          max_participants?: number | null;
-          name: string;
-          reservation_close_offset_minutes?: number | null;
-          reservation_open_date?: string | null;
-          start_time: string;
-          tenant_id: string;
-          updated_at?: string;
-        };
+          category_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          end_time: string
+          event_date: string
+          id?: string
+          is_active?: boolean
+          max_participants?: number | null
+          name: string
+          reservation_close_offset_minutes?: number | null
+          reservation_open_date?: string | null
+          start_time: string
+          tenant_id: string
+          updated_at?: string
+        }
         Update: {
-          category_id?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          description?: string | null;
-          end_time?: string;
-          event_date?: string;
-          id?: string;
-          is_active?: boolean;
-          max_participants?: number | null;
-          name?: string;
-          reservation_close_offset_minutes?: number | null;
-          reservation_open_date?: string | null;
-          start_time?: string;
-          tenant_id?: string;
-          updated_at?: string;
-        };
+          category_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          end_time?: string
+          event_date?: string
+          id?: string
+          is_active?: boolean
+          max_participants?: number | null
+          name?: string
+          reservation_close_offset_minutes?: number | null
+          reservation_open_date?: string | null
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'events_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "events_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'events_category_id_fkey';
-            columns: ['category_id'];
-            isOneToOne: false;
-            referencedRelation: 'service_categories';
-            referencedColumns: ['id'];
+            foreignKeyName: "events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       fixed_slot_definitions: {
         Row: {
-          created_at: string;
-          day_of_week: number;
-          employee_id: string | null;
-          end_time: string;
-          id: string;
-          is_active: boolean;
-          start_time: string;
-          tenant_id: string;
-        };
+          created_at: string
+          day_of_week: number
+          employee_id: string | null
+          end_time: string
+          id: string
+          is_active: boolean
+          start_time: string
+          tenant_id: string
+        }
         Insert: {
-          created_at?: string;
-          day_of_week: number;
-          employee_id?: string | null;
-          end_time: string;
-          id?: string;
-          is_active?: boolean;
-          start_time: string;
-          tenant_id: string;
-        };
+          created_at?: string
+          day_of_week: number
+          employee_id?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean
+          start_time: string
+          tenant_id: string
+        }
         Update: {
-          created_at?: string;
-          day_of_week?: number;
-          employee_id?: string | null;
-          end_time?: string;
-          id?: string;
-          is_active?: boolean;
-          start_time?: string;
-          tenant_id?: string;
-        };
+          created_at?: string
+          day_of_week?: number
+          employee_id?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'fixed_slot_definitions_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "fixed_slot_definitions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'fixed_slot_definitions_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "fixed_slot_definitions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       holiday_exceptions: {
         Row: {
-          created_at: string;
-          date: string;
-          end_time: string | null;
-          id: string;
-          is_closed: boolean;
-          reason: string | null;
-          start_time: string | null;
-          tenant_id: string;
-        };
+          created_at: string
+          date: string
+          employee_id: string | null
+          end_time: string | null
+          id: string
+          is_closed: boolean
+          reason: string | null
+          start_time: string | null
+          tenant_id: string
+        }
         Insert: {
-          created_at?: string;
-          date: string;
-          end_time?: string | null;
-          id?: string;
-          is_closed?: boolean;
-          reason?: string | null;
-          start_time?: string | null;
-          tenant_id: string;
-        };
+          created_at?: string
+          date: string
+          employee_id?: string | null
+          end_time?: string | null
+          id?: string
+          is_closed?: boolean
+          reason?: string | null
+          start_time?: string | null
+          tenant_id: string
+        }
         Update: {
-          created_at?: string;
-          date?: string;
-          end_time?: string | null;
-          id?: string;
-          is_closed?: boolean;
-          reason?: string | null;
-          start_time?: string | null;
-          tenant_id?: string;
-        };
+          created_at?: string
+          date?: string
+          employee_id?: string | null
+          end_time?: string | null
+          id?: string
+          is_closed?: boolean
+          reason?: string | null
+          start_time?: string | null
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'holiday_exceptions_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "holiday_exceptions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+          {
+            foreignKeyName: "holiday_exceptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_config: {
         Row: {
-          created_at: string;
-          currency_unit: number;
-          expiry_months: number;
-          id: string;
-          is_active: boolean;
-          points_per_currency: number;
-          points_per_visit: number;
-          points_to_currency: number;
-          redemption_unit: number;
-          tenant_id: string;
-          updated_at: string;
-          welcome_points: number;
-        };
+          created_at: string
+          currency_unit: number
+          expiry_months: number
+          id: string
+          is_active: boolean
+          points_per_currency: number
+          points_per_visit: number
+          points_to_currency: number
+          redemption_unit: number
+          tenant_id: string
+          updated_at: string
+          welcome_points: number
+        }
         Insert: {
-          created_at?: string;
-          currency_unit?: number;
-          expiry_months?: number;
-          id?: string;
-          is_active?: boolean;
-          points_per_currency?: number;
-          points_per_visit?: number;
-          points_to_currency?: number;
-          redemption_unit?: number;
-          tenant_id: string;
-          updated_at?: string;
-          welcome_points?: number;
-        };
+          created_at?: string
+          currency_unit?: number
+          expiry_months?: number
+          id?: string
+          is_active?: boolean
+          points_per_currency?: number
+          points_per_visit?: number
+          points_to_currency?: number
+          redemption_unit?: number
+          tenant_id: string
+          updated_at?: string
+          welcome_points?: number
+        }
         Update: {
-          created_at?: string;
-          currency_unit?: number;
-          expiry_months?: number;
-          id?: string;
-          is_active?: boolean;
-          points_per_currency?: number;
-          points_per_visit?: number;
-          points_to_currency?: number;
-          redemption_unit?: number;
-          tenant_id?: string;
-          updated_at?: string;
-          welcome_points?: number;
-        };
+          created_at?: string
+          currency_unit?: number
+          expiry_months?: number
+          id?: string
+          is_active?: boolean
+          points_per_currency?: number
+          points_per_visit?: number
+          points_to_currency?: number
+          redemption_unit?: number
+          tenant_id?: string
+          updated_at?: string
+          welcome_points?: number
+        }
         Relationships: [
           {
-            foreignKeyName: 'loyalty_config_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: true;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "loyalty_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       loyalty_points: {
         Row: {
-          created_at: string;
-          customer_id: string;
-          expires_at: string | null;
-          id: string;
-          points: number;
-          reason: string;
-          reference_id: string | null;
-          reference_type: string | null;
-          tenant_id: string;
-        };
+          created_at: string
+          customer_id: string
+          expires_at: string | null
+          id: string
+          points: number
+          reason: string
+          reference_id: string | null
+          reference_type: string | null
+          tenant_id: string
+        }
         Insert: {
-          created_at?: string;
-          customer_id: string;
-          expires_at?: string | null;
-          id?: string;
-          points: number;
-          reason: string;
-          reference_id?: string | null;
-          reference_type?: string | null;
-          tenant_id: string;
-        };
+          created_at?: string
+          customer_id: string
+          expires_at?: string | null
+          id?: string
+          points: number
+          reason: string
+          reference_id?: string | null
+          reference_type?: string | null
+          tenant_id: string
+        }
         Update: {
-          created_at?: string;
-          customer_id?: string;
-          expires_at?: string | null;
-          id?: string;
-          points?: number;
-          reason?: string;
-          reference_id?: string | null;
-          reference_type?: string | null;
-          tenant_id?: string;
-        };
+          created_at?: string
+          customer_id?: string
+          expires_at?: string | null
+          id?: string
+          points?: number
+          reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'loyalty_points_customer_id_fkey';
-            columns: ['customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'customers';
-            referencedColumns: ['id'];
+            foreignKeyName: "loyalty_points_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'loyalty_points_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "loyalty_points_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       notifications: {
         Row: {
-          body: string;
-          created_at: string;
-          data: Json;
-          id: string;
-          is_read: boolean;
-          read_at: string | null;
-          recipient_user_id: string | null;
-          tenant_id: string;
-          title: string;
-          type: string;
-        };
+          body: string
+          created_at: string
+          data: Json
+          escalation_level: number
+          id: string
+          is_read: boolean
+          read_at: string | null
+          recipient_user_id: string | null
+          tenant_id: string
+          title: string
+          type: string
+        }
         Insert: {
-          body: string;
-          created_at?: string;
-          data?: Json;
-          id?: string;
-          is_read?: boolean;
-          read_at?: string | null;
-          recipient_user_id?: string | null;
-          tenant_id: string;
-          title: string;
-          type: string;
-        };
+          body: string
+          created_at?: string
+          data?: Json
+          escalation_level?: number
+          id?: string
+          is_read?: boolean
+          read_at?: string | null
+          recipient_user_id?: string | null
+          tenant_id: string
+          title: string
+          type: string
+        }
         Update: {
-          body?: string;
-          created_at?: string;
-          data?: Json;
-          id?: string;
-          is_read?: boolean;
-          read_at?: string | null;
-          recipient_user_id?: string | null;
-          tenant_id?: string;
-          title?: string;
-          type?: string;
-        };
+          body?: string
+          created_at?: string
+          data?: Json
+          escalation_level?: number
+          id?: string
+          is_read?: boolean
+          read_at?: string | null
+          recipient_user_id?: string | null
+          tenant_id?: string
+          title?: string
+          type?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'notifications_recipient_user_id_fkey';
-            columns: ['recipient_user_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "notifications_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'notifications_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
+      push_deliveries: {
+        Row: {
+          attempts: number
+          created_at: string
+          deleted_count: number
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          next_retry_at: string | null
+          notification_id: string | null
+          recipient_user_id: string
+          sent_count: number
+          skipped_count: number
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          deleted_count?: number
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          next_retry_at?: string | null
+          notification_id?: string | null
+          recipient_user_id: string
+          sent_count?: number
+          skipped_count?: number
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          deleted_count?: number
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          next_retry_at?: string | null
+          notification_id?: string | null
+          recipient_user_id?: string
+          sent_count?: number
+          skipped_count?: number
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_deliveries_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_deliveries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          tenant_id: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_booking_instances: {
         Row: {
-          booking_id: string | null;
-          created_at: string;
-          id: string;
-          pattern_id: string;
-          scheduled_date: string;
-          status: string;
-        };
+          booking_id: string | null
+          created_at: string
+          id: string
+          pattern_id: string
+          scheduled_date: string
+          status: string
+        }
         Insert: {
-          booking_id?: string | null;
-          created_at?: string;
-          id?: string;
-          pattern_id: string;
-          scheduled_date: string;
-          status?: string;
-        };
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          pattern_id: string
+          scheduled_date: string
+          status?: string
+        }
         Update: {
-          booking_id?: string | null;
-          created_at?: string;
-          id?: string;
-          pattern_id?: string;
-          scheduled_date?: string;
-          status?: string;
-        };
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          pattern_id?: string
+          scheduled_date?: string
+          status?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'recurring_booking_instances_booking_id_fkey';
-            columns: ['booking_id'];
-            isOneToOne: false;
-            referencedRelation: 'bookings';
-            referencedColumns: ['id'];
+            foreignKeyName: "recurring_booking_instances_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'recurring_booking_instances_pattern_id_fkey';
-            columns: ['pattern_id'];
-            isOneToOne: false;
-            referencedRelation: 'recurring_booking_patterns';
-            referencedColumns: ['id'];
+            foreignKeyName: "recurring_booking_instances_pattern_id_fkey"
+            columns: ["pattern_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_booking_patterns"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       recurring_booking_patterns: {
         Row: {
-          created_at: string;
-          customer_email: string | null;
-          customer_name: string | null;
-          customer_phone: string | null;
-          day_of_month: number | null;
-          day_of_week: number | null;
-          employee_id: string;
-          end_date: string;
-          frequency: string;
-          id: string;
-          notes: string | null;
-          preferred_time: string;
-          service_id: string;
-          start_date: string;
-          status: string;
-          tenant_id: string;
-          total_occurrences: number | null;
-          updated_at: string;
-        };
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          day_of_month: number | null
+          day_of_week: number | null
+          employee_id: string
+          end_date: string
+          frequency: string
+          id: string
+          notes: string | null
+          preferred_time: string
+          service_id: string
+          start_date: string
+          status: string
+          tenant_id: string
+          total_occurrences: number | null
+          updated_at: string
+        }
         Insert: {
-          created_at?: string;
-          customer_email?: string | null;
-          customer_name?: string | null;
-          customer_phone?: string | null;
-          day_of_month?: number | null;
-          day_of_week?: number | null;
-          employee_id: string;
-          end_date: string;
-          frequency: string;
-          id?: string;
-          notes?: string | null;
-          preferred_time: string;
-          service_id: string;
-          start_date: string;
-          status?: string;
-          tenant_id: string;
-          total_occurrences?: number | null;
-          updated_at?: string;
-        };
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          day_of_month?: number | null
+          day_of_week?: number | null
+          employee_id: string
+          end_date: string
+          frequency: string
+          id?: string
+          notes?: string | null
+          preferred_time: string
+          service_id: string
+          start_date: string
+          status?: string
+          tenant_id: string
+          total_occurrences?: number | null
+          updated_at?: string
+        }
         Update: {
-          created_at?: string;
-          customer_email?: string | null;
-          customer_name?: string | null;
-          customer_phone?: string | null;
-          day_of_month?: number | null;
-          day_of_week?: number | null;
-          employee_id?: string;
-          end_date?: string;
-          frequency?: string;
-          id?: string;
-          notes?: string | null;
-          preferred_time?: string;
-          service_id?: string;
-          start_date?: string;
-          status?: string;
-          tenant_id?: string;
-          total_occurrences?: number | null;
-          updated_at?: string;
-        };
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          day_of_month?: number | null
+          day_of_week?: number | null
+          employee_id?: string
+          end_date?: string
+          frequency?: string
+          id?: string
+          notes?: string | null
+          preferred_time?: string
+          service_id?: string
+          start_date?: string
+          status?: string
+          tenant_id?: string
+          total_occurrences?: number | null
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'recurring_booking_patterns_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "recurring_booking_patterns_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'recurring_booking_patterns_service_id_fkey';
-            columns: ['service_id'];
-            isOneToOne: false;
-            referencedRelation: 'services';
-            referencedColumns: ['id'];
+            foreignKeyName: "recurring_booking_patterns_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'recurring_booking_patterns_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "recurring_booking_patterns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       resources: {
         Row: {
-          capacity: number;
-          created_at: string;
-          description: string | null;
-          id: string;
-          is_active: boolean;
-          name: string;
-          tenant_id: string;
-          type: string;
-          updated_at: string;
-        };
+          capacity: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          tenant_id: string
+          type: string
+          updated_at: string
+        }
         Insert: {
-          capacity?: number;
-          created_at?: string;
-          description?: string | null;
-          id?: string;
-          is_active?: boolean;
-          name: string;
-          tenant_id: string;
-          type?: string;
-          updated_at?: string;
-        };
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          tenant_id: string
+          type?: string
+          updated_at?: string
+        }
         Update: {
-          capacity?: number;
-          created_at?: string;
-          description?: string | null;
-          id?: string;
-          is_active?: boolean;
-          name?: string;
-          tenant_id?: string;
-          type?: string;
-          updated_at?: string;
-        };
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          tenant_id?: string
+          type?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'resources_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "resources_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       schedules: {
         Row: {
-          advance_booking_days: number;
-          auto_confirm: boolean;
-          created_at: string;
-          day_of_week: number;
-          employee_id: string | null;
-          end_time: string;
-          id: string;
-          is_active: boolean;
-          min_advance_minutes: number;
-          slot_interval_minutes: number;
-          slot_mode: string;
-          start_time: string;
-          tenant_id: string;
-          updated_at: string;
-        };
+          advance_booking_days: number
+          auto_confirm: boolean
+          created_at: string
+          day_of_week: number
+          employee_id: string | null
+          end_time: string
+          id: string
+          is_active: boolean
+          min_advance_minutes: number
+          slot_interval_minutes: number
+          slot_mode: string
+          start_time: string
+          tenant_id: string
+          updated_at: string
+        }
         Insert: {
-          advance_booking_days?: number;
-          auto_confirm?: boolean;
-          created_at?: string;
-          day_of_week: number;
-          employee_id?: string | null;
-          end_time: string;
-          id?: string;
-          is_active?: boolean;
-          min_advance_minutes?: number;
-          slot_interval_minutes?: number;
-          slot_mode?: string;
-          start_time: string;
-          tenant_id: string;
-          updated_at?: string;
-        };
+          advance_booking_days?: number
+          auto_confirm?: boolean
+          created_at?: string
+          day_of_week: number
+          employee_id?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean
+          min_advance_minutes?: number
+          slot_interval_minutes?: number
+          slot_mode?: string
+          start_time: string
+          tenant_id: string
+          updated_at?: string
+        }
         Update: {
-          advance_booking_days?: number;
-          auto_confirm?: boolean;
-          created_at?: string;
-          day_of_week?: number;
-          employee_id?: string | null;
-          end_time?: string;
-          id?: string;
-          is_active?: boolean;
-          min_advance_minutes?: number;
-          slot_interval_minutes?: number;
-          slot_mode?: string;
-          start_time?: string;
-          tenant_id?: string;
-          updated_at?: string;
-        };
+          advance_booking_days?: number
+          auto_confirm?: boolean
+          created_at?: string
+          day_of_week?: number
+          employee_id?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          min_advance_minutes?: number
+          slot_interval_minutes?: number
+          slot_mode?: string
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'schedules_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "schedules_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'schedules_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "schedules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       service_categories: {
         Row: {
-          created_at: string;
-          deleted_at: string | null;
-          description: string | null;
-          icon: string | null;
-          id: string;
-          is_active: boolean;
-          name: string;
-          sort_order: number | null;
-          tenant_id: string;
-          updated_at: string;
-        };
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          tenant_id: string
+          updated_at: string
+        }
         Insert: {
-          created_at?: string;
-          deleted_at?: string | null;
-          description?: string | null;
-          icon?: string | null;
-          id?: string;
-          is_active?: boolean;
-          name: string;
-          sort_order?: number | null;
-          tenant_id: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
         Update: {
-          created_at?: string;
-          deleted_at?: string | null;
-          description?: string | null;
-          icon?: string | null;
-          id?: string;
-          is_active?: boolean;
-          name?: string;
-          sort_order?: number | null;
-          tenant_id?: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'service_categories_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "service_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       service_resources: {
         Row: {
-          created_at: string;
-          id: string;
-          quantity: number;
-          resource_id: string;
-          service_id: string;
-          tenant_id: string;
-        };
+          created_at: string
+          id: string
+          quantity: number
+          resource_id: string
+          service_id: string
+          tenant_id: string
+        }
         Insert: {
-          created_at?: string;
-          id?: string;
-          quantity?: number;
-          resource_id: string;
-          service_id: string;
-          tenant_id: string;
-        };
+          created_at?: string
+          id?: string
+          quantity?: number
+          resource_id: string
+          service_id: string
+          tenant_id: string
+        }
         Update: {
-          created_at?: string;
-          id?: string;
-          quantity?: number;
-          resource_id?: string;
-          service_id?: string;
-          tenant_id?: string;
-        };
+          created_at?: string
+          id?: string
+          quantity?: number
+          resource_id?: string
+          service_id?: string
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'service_resources_resource_id_fkey';
-            columns: ['resource_id'];
-            isOneToOne: false;
-            referencedRelation: 'resources';
-            referencedColumns: ['id'];
+            foreignKeyName: "service_resources_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'service_resources_service_id_fkey';
-            columns: ['service_id'];
-            isOneToOne: false;
-            referencedRelation: 'services';
-            referencedColumns: ['id'];
+            foreignKeyName: "service_resources_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'service_resources_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "service_resources_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       services: {
         Row: {
-          category_id: string | null;
-          color: string | null;
-          created_at: string;
-          deleted_at: string | null;
-          description: string | null;
-          duration_minutes: number;
-          employee_id: string | null;
-          id: string;
-          image_url: string | null;
-          is_active: boolean;
-          max_participants: number | null;
-          name: string;
-          price: number;
-          requires_approval: boolean | null;
-          sort_order: number | null;
-          tenant_id: string;
-          updated_at: string;
-        };
+          category_id: string | null
+          color: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          max_participants: number | null
+          name: string
+          price: number
+          requires_approval: boolean | null
+          sort_order: number | null
+          tenant_id: string
+          updated_at: string
+        }
         Insert: {
-          category_id?: string | null;
-          color?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          description?: string | null;
-          duration_minutes: number;
-          employee_id?: string | null;
-          id?: string;
-          image_url?: string | null;
-          is_active?: boolean;
-          max_participants?: number | null;
-          name: string;
-          price: number;
-          requires_approval?: boolean | null;
-          sort_order?: number | null;
-          tenant_id: string;
-          updated_at?: string;
-        };
+          category_id?: string | null
+          color?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          duration_minutes: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          max_participants?: number | null
+          name: string
+          price: number
+          requires_approval?: boolean | null
+          sort_order?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
         Update: {
-          category_id?: string | null;
-          color?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          description?: string | null;
-          duration_minutes?: number;
-          employee_id?: string | null;
-          id?: string;
-          image_url?: string | null;
-          is_active?: boolean;
-          max_participants?: number | null;
-          name?: string;
-          price?: number;
-          requires_approval?: boolean | null;
-          sort_order?: number | null;
-          tenant_id?: string;
-          updated_at?: string;
-        };
+          category_id?: string | null
+          color?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          max_participants?: number | null
+          name?: string
+          price?: number
+          requires_approval?: boolean | null
+          sort_order?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'services_category_id_fkey';
-            columns: ['category_id'];
-            isOneToOne: false;
-            referencedRelation: 'service_categories';
-            referencedColumns: ['id'];
+            foreignKeyName: "services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'services_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "services_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: 'services_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
+        ]
+      }
       tags: {
         Row: {
-          color: string | null;
-          created_at: string;
-          id: string;
-          is_system: boolean;
-          name: string;
-          tenant_id: string;
-        };
+          color: string | null
+          created_at: string
+          id: string
+          is_system: boolean
+          name: string
+          tenant_id: string
+        }
         Insert: {
-          color?: string | null;
-          created_at?: string;
-          id?: string;
-          is_system?: boolean;
-          name: string;
-          tenant_id: string;
-        };
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          name: string
+          tenant_id: string
+        }
         Update: {
-          color?: string | null;
-          created_at?: string;
-          id?: string;
-          is_system?: boolean;
-          name?: string;
-          tenant_id?: string;
-        };
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          name?: string
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'tags_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "tags_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       tenants: {
         Row: {
-          address: string | null;
-          config: Json | null;
-          created_at: string;
-          deleted_at: string | null;
-          description: string | null;
-          email: string;
-          id: string;
-          locale: string | null;
-          logo_url: string | null;
-          modules: Json;
-          name: string;
-          phone: string | null;
-          plan_id: string;
-          primary_color: string | null;
-          secondary_color: string | null;
-          slug: string;
-          status: string;
-          subscription_ends_at: string | null;
-          timezone: string | null;
-          trial_ends_at: string | null;
-          updated_at: string;
-        };
+          address: string | null
+          config: Json | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          email: string
+          id: string
+          locale: string | null
+          logo_url: string | null
+          modules: Json
+          name: string
+          phone: string | null
+          plan_id: string
+          primary_color: string | null
+          secondary_color: string | null
+          slug: string
+          status: string
+          subscription_ends_at: string | null
+          timezone: string | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
         Insert: {
-          address?: string | null;
-          config?: Json | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          description?: string | null;
-          email: string;
-          id?: string;
-          locale?: string | null;
-          logo_url?: string | null;
-          modules?: Json;
-          name: string;
-          phone?: string | null;
-          plan_id?: string;
-          primary_color?: string | null;
-          secondary_color?: string | null;
-          slug: string;
-          status?: string;
-          subscription_ends_at?: string | null;
-          timezone?: string | null;
-          trial_ends_at?: string | null;
-          updated_at?: string;
-        };
+          address?: string | null
+          config?: Json | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          email: string
+          id?: string
+          locale?: string | null
+          logo_url?: string | null
+          modules?: Json
+          name: string
+          phone?: string | null
+          plan_id?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug: string
+          status?: string
+          subscription_ends_at?: string | null
+          timezone?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
         Update: {
-          address?: string | null;
-          config?: Json | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          description?: string | null;
-          email?: string;
-          id?: string;
-          locale?: string | null;
-          logo_url?: string | null;
-          modules?: Json;
-          name?: string;
-          phone?: string | null;
-          plan_id?: string;
-          primary_color?: string | null;
-          secondary_color?: string | null;
-          slug?: string;
-          status?: string;
-          subscription_ends_at?: string | null;
-          timezone?: string | null;
-          trial_ends_at?: string | null;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          address?: string | null
+          config?: Json | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          email?: string
+          id?: string
+          locale?: string | null
+          logo_url?: string | null
+          modules?: Json
+          name?: string
+          phone?: string | null
+          plan_id?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug?: string
+          status?: string
+          subscription_ends_at?: string | null
+          timezone?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
-          avatar_url: string | null;
-          created_at: string;
-          deleted_at: string | null;
-          email: string;
-          first_name: string;
-          id: string;
-          is_active: boolean;
-          last_login_at: string | null;
-          last_name: string;
-          phone: string | null;
-          role: string;
-          supabase_user_id: string;
-          tenant_id: string | null;
-          updated_at: string;
-        };
+          avatar_url: string | null
+          created_at: string
+          deleted_at: string | null
+          email: string
+          first_name: string
+          id: string
+          initial_password_pending: boolean
+          is_active: boolean
+          last_login_at: string | null
+          last_name: string
+          phone: string | null
+          role: string
+          supabase_user_id: string
+          tenant_id: string | null
+          updated_at: string
+        }
         Insert: {
-          avatar_url?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          email: string;
-          first_name: string;
-          id?: string;
-          is_active?: boolean;
-          last_login_at?: string | null;
-          last_name: string;
-          phone?: string | null;
-          role?: string;
-          supabase_user_id: string;
-          tenant_id?: string | null;
-          updated_at?: string;
-        };
+          avatar_url?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          initial_password_pending?: boolean
+          is_active?: boolean
+          last_login_at?: string | null
+          last_name: string
+          phone?: string | null
+          role?: string
+          supabase_user_id: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
         Update: {
-          avatar_url?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-          email?: string;
-          first_name?: string;
-          id?: string;
-          is_active?: boolean;
-          last_login_at?: string | null;
-          last_name?: string;
-          phone?: string | null;
-          role?: string;
-          supabase_user_id?: string;
-          tenant_id?: string | null;
-          updated_at?: string;
-        };
+          avatar_url?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          initial_password_pending?: boolean
+          is_active?: boolean
+          last_login_at?: string | null
+          last_name?: string
+          phone?: string | null
+          role?: string
+          supabase_user_id?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'users_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       waitlist: {
         Row: {
-          created_at: string;
-          customer_email: string;
-          customer_name: string;
-          customer_phone: string | null;
-          employee_id: string | null;
-          entry_expires_at: string;
-          id: string;
-          notified_at: string | null;
-          offer_expires_at: string | null;
-          offer_token: string | null;
-          offered_slot_date: string | null;
-          offered_slot_time: string | null;
-          position: number;
-          preference: string;
-          preferred_date: string;
-          preferred_time_end: string | null;
-          preferred_time_start: string | null;
-          preferred_times: Json;
-          service_id: string;
-          status: string;
-          tenant_id: string;
-          updated_at: string;
-        };
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          employee_id: string | null
+          entry_expires_at: string
+          id: string
+          notified_at: string | null
+          offer_expires_at: string | null
+          offer_token: string | null
+          offered_slot_date: string | null
+          offered_slot_time: string | null
+          position: number
+          preference: string
+          preferred_date: string
+          preferred_time_end: string | null
+          preferred_time_start: string | null
+          preferred_times: Json
+          service_id: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
         Insert: {
-          created_at?: string;
-          customer_email: string;
-          customer_name: string;
-          customer_phone?: string | null;
-          employee_id?: string | null;
-          entry_expires_at?: string;
-          id?: string;
-          notified_at?: string | null;
-          offer_expires_at?: string | null;
-          offer_token?: string | null;
-          offered_slot_date?: string | null;
-          offered_slot_time?: string | null;
-          position?: number;
-          preference?: string;
-          preferred_date: string;
-          preferred_time_end?: string | null;
-          preferred_time_start?: string | null;
-          preferred_times?: Json;
-          service_id: string;
-          status?: string;
-          tenant_id: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          employee_id?: string | null
+          entry_expires_at?: string
+          id?: string
+          notified_at?: string | null
+          offer_expires_at?: string | null
+          offer_token?: string | null
+          offered_slot_date?: string | null
+          offered_slot_time?: string | null
+          position?: number
+          preference?: string
+          preferred_date: string
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          preferred_times?: Json
+          service_id: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
         Update: {
-          created_at?: string;
-          customer_email?: string;
-          customer_name?: string;
-          customer_phone?: string | null;
-          employee_id?: string | null;
-          entry_expires_at?: string;
-          id?: string;
-          notified_at?: string | null;
-          offer_expires_at?: string | null;
-          offer_token?: string | null;
-          offered_slot_date?: string | null;
-          offered_slot_time?: string | null;
-          position?: number;
-          preference?: string;
-          preferred_date?: string;
-          preferred_time_end?: string | null;
-          preferred_time_start?: string | null;
-          preferred_times?: Json;
-          service_id?: string;
-          status?: string;
-          tenant_id?: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          employee_id?: string | null
+          entry_expires_at?: string
+          id?: string
+          notified_at?: string | null
+          offer_expires_at?: string | null
+          offer_token?: string | null
+          offered_slot_date?: string | null
+          offered_slot_time?: string | null
+          position?: number
+          preference?: string
+          preferred_date?: string
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          preferred_times?: Json
+          service_id?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'waitlist_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "waitlist_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'waitlist_service_id_fkey';
-            columns: ['service_id'];
-            isOneToOne: false;
-            referencedRelation: 'services';
-            referencedColumns: ['id'];
+            foreignKeyName: "waitlist_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'waitlist_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "waitlist_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       walkin_queue: {
         Row: {
-          checked_in_at: string;
-          completed_at: string | null;
-          created_at: string;
-          customer_name: string;
-          customer_phone: string | null;
-          employee_id: string | null;
-          estimated_wait_minutes: number | null;
-          id: string;
-          position: number;
-          service_id: string | null;
-          started_serving_at: string | null;
-          status: string;
-          tenant_id: string;
-        };
+          checked_in_at: string
+          completed_at: string | null
+          created_at: string
+          customer_name: string
+          customer_phone: string | null
+          employee_id: string | null
+          estimated_wait_minutes: number | null
+          id: string
+          position: number
+          service_id: string | null
+          started_serving_at: string | null
+          status: string
+          tenant_id: string
+        }
         Insert: {
-          checked_in_at?: string;
-          completed_at?: string | null;
-          created_at?: string;
-          customer_name: string;
-          customer_phone?: string | null;
-          employee_id?: string | null;
-          estimated_wait_minutes?: number | null;
-          id?: string;
-          position?: number;
-          service_id?: string | null;
-          started_serving_at?: string | null;
-          status?: string;
-          tenant_id: string;
-        };
+          checked_in_at?: string
+          completed_at?: string | null
+          created_at?: string
+          customer_name: string
+          customer_phone?: string | null
+          employee_id?: string | null
+          estimated_wait_minutes?: number | null
+          id?: string
+          position?: number
+          service_id?: string | null
+          started_serving_at?: string | null
+          status?: string
+          tenant_id: string
+        }
         Update: {
-          checked_in_at?: string;
-          completed_at?: string | null;
-          created_at?: string;
-          customer_name?: string;
-          customer_phone?: string | null;
-          employee_id?: string | null;
-          estimated_wait_minutes?: number | null;
-          id?: string;
-          position?: number;
-          service_id?: string | null;
-          started_serving_at?: string | null;
-          status?: string;
-          tenant_id?: string;
-        };
+          checked_in_at?: string
+          completed_at?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string | null
+          employee_id?: string | null
+          estimated_wait_minutes?: number | null
+          id?: string
+          position?: number
+          service_id?: string | null
+          started_serving_at?: string | null
+          status?: string
+          tenant_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: 'walkin_queue_employee_id_fkey';
-            columns: ['employee_id'];
-            isOneToOne: false;
-            referencedRelation: 'employees';
-            referencedColumns: ['id'];
+            foreignKeyName: "walkin_queue_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'walkin_queue_service_id_fkey';
-            columns: ['service_id'];
-            isOneToOne: false;
-            referencedRelation: 'services';
-            referencedColumns: ['id'];
+            foreignKeyName: "walkin_queue_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'walkin_queue_tenant_id_fkey';
-            columns: ['tenant_id'];
-            isOneToOne: false;
-            referencedRelation: 'tenants';
-            referencedColumns: ['id'];
+            foreignKeyName: "walkin_queue_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
-        ];
-      };
-    };
+        ]
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
       accept_waitlist_offer: {
-        Args: { p_token: string };
+        Args: { p_token: string }
         Returns: {
-          booking_id: string;
-          error: string;
-        }[];
-      };
-      auto_start_appointments: { Args: never; Returns: undefined };
+          booking_id: string
+          error: string
+        }[]
+      }
+      auto_start_appointments: { Args: never; Returns: undefined }
+      cleanup_old_notifications: { Args: never; Returns: undefined }
+      cleanup_stale_push_subscriptions: { Args: never; Returns: number }
+      confirm_booking_attendance: {
+        Args: { p_attends: boolean; p_booking_id: string; p_token: string }
+        Returns: string
+      }
       count_recent_no_shows: {
-        Args: { p_customer_email: string; p_days?: number; p_tenant_id: string };
-        Returns: number;
-      };
+        Args: { p_customer_email: string; p_days?: number; p_tenant_id: string }
+        Returns: number
+      }
       create_notification: {
         Args: {
-          p_body: string;
-          p_data?: Json;
-          p_recipient_user_id: string;
-          p_tenant_id: string;
-          p_title: string;
-          p_type: string;
-        };
-        Returns: string;
-      };
+          p_body: string
+          p_data?: Json
+          p_recipient_user_id: string
+          p_tenant_id: string
+          p_title: string
+          p_type: string
+        }
+        Returns: string
+      }
       decline_waitlist_offer: {
-        Args: { p_token: string };
+        Args: { p_token: string }
         Returns: {
-          error: string;
-          success: boolean;
-        }[];
-      };
-      detect_no_shows: { Args: never; Returns: undefined };
-      expire_waitlist_offers: { Args: never; Returns: undefined };
+          error: string
+          success: boolean
+        }[]
+      }
+      delete_push_subscription: {
+        Args: { p_endpoint: string }
+        Returns: undefined
+      }
+      detect_no_shows: { Args: never; Returns: undefined }
+      escalate_notifications: { Args: never; Returns: number }
+      expire_waitlist_offers: { Args: never; Returns: undefined }
       generate_recurring_instances: {
-        Args: { p_pattern_id: string };
-        Returns: number;
-      };
+        Args: { p_pattern_id: string }
+        Returns: number
+      }
       get_available_slots: {
         Args: {
-          p_date: string;
-          p_employee_id: string;
-          p_service_duration: number;
-          p_service_id?: string;
-          p_tenant_id: string;
-        };
+          p_date: string
+          p_employee_id: string
+          p_service_duration: number
+          p_service_id?: string
+          p_tenant_id: string
+        }
         Returns: {
-          capacity_remaining: number;
-          end_time: string;
-          slot_type: string;
-          start_time: string;
-        }[];
-      };
+          capacity_remaining: number
+          end_time: string
+          slot_type: string
+          start_time: string
+        }[]
+      }
+      get_customer_bookings_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          booking_id: string
+          cancelled_at: string
+          date: string
+          employee_name: string
+          end_time: string
+          service_name: string
+          start_time: string
+          status: string
+          tenant_id: string
+        }[]
+      }
       get_full_slot_grid: {
         Args: {
-          p_date: string;
-          p_employee_id: string;
-          p_service_duration: number;
-          p_service_id?: string;
-          p_tenant_id: string;
-        };
+          p_date: string
+          p_employee_id: string
+          p_service_duration: number
+          p_service_id?: string
+          p_tenant_id: string
+        }
         Returns: {
-          capacity_remaining: number;
-          end_time: string;
-          slot_type: string;
-          start_time: string;
-          status: string;
-          waitlist_count: number;
-        }[];
-      };
-      get_customer_bookings_by_token: {
-        Args: { p_token: string };
+          capacity_remaining: number
+          end_time: string
+          slot_type: string
+          start_time: string
+          status: string
+          waitlist_count: number
+        }[]
+      }
+      get_my_push_subscriptions: {
+        Args: never
         Returns: {
-          booking_id: string;
-          cancelled_at: string | null;
-          date: string;
-          employee_name: string;
-          end_time: string;
-          service_name: string;
-          start_time: string;
-          status: string;
-          tenant_id: string;
-        }[];
-      };
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          tenant_id: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "push_subscriptions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_waitlist_count: {
         Args: {
-          p_date: string;
-          p_employee_id: string;
-          p_service_id: string;
-          p_tenant_id: string;
-        };
-        Returns: number;
-      };
+          p_date: string
+          p_employee_id: string
+          p_service_id: string
+          p_tenant_id: string
+        }
+        Returns: number
+      }
       is_client_blocked: {
-        Args: { p_customer_email: string; p_tenant_id: string };
+        Args: { p_customer_email: string; p_tenant_id: string }
         Returns: {
-          blocked_until: string;
-          is_blocked: boolean;
-          no_show_count: number;
-        }[];
-      };
+          blocked_until: string
+          is_blocked: boolean
+          no_show_count: number
+        }[]
+      }
+      mark_waitlist_converted: {
+        Args: { p_waitlist_id: string }
+        Returns: undefined
+      }
+      normalize_phone: { Args: { p_phone: string }; Returns: string }
       promote_from_waitlist: {
         Args: {
-          p_date: string;
-          p_employee_id: string;
-          p_service_id: string;
-          p_slot_end: string;
-          p_slot_start: string;
-          p_tenant_id: string;
-        };
+          p_date: string
+          p_employee_id: string
+          p_service_id: string
+          p_slot_end: string
+          p_slot_start: string
+          p_tenant_id: string
+        }
         Returns: {
-          customer_email: string;
-          customer_name: string;
-          customer_phone: string;
-          id: string;
-          offer_expires_at: string;
-          offer_token: string;
-          offered_slot_date: string;
-          offered_slot_time: string;
-          preference: string;
-        }[];
-      };
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          offer_expires_at: string
+          offer_token: string
+          offered_slot_date: string
+          offered_slot_time: string
+          preference: string
+        }[]
+      }
+      purge_stale_customer_tokens: { Args: never; Returns: undefined }
+      replace_schedules: {
+        Args: { p_employee_id: string; p_schedules: Json }
+        Returns: Json
+      }
+      retry_push_deliveries: { Args: never; Returns: number }
+      send_push_notification: {
+        Args: {
+          p_body: string
+          p_data?: Json
+          p_notification_id?: string
+          p_recipient_user_id: string
+          p_tenant_id: string
+          p_title: string
+        }
+        Returns: undefined
+      }
+      transfer_booking_to_waitlist: {
+        Args: { p_booking_id: string; p_waitlist_id: string }
+        Returns: {
+          customer_access_token: string
+          new_booking_id: string
+        }[]
+      }
       upsert_booking_customer: {
         Args: {
-          p_customer_email: string;
-          p_customer_name: string;
-          p_customer_phone: string;
-          p_tenant_id: string;
-        };
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_tenant_id: string
+        }
         Returns: {
-          access_token: string;
-          id: string;
-        }[];
-      };
-    };
+          access_token: string
+          id: string
+        }[]
+      }
+      upsert_push_subscription: {
+        Args: {
+          p_auth: string
+          p_endpoint: string
+          p_p256dh: string
+          p_user_agent?: string
+        }
+        Returns: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          tenant_id: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "push_subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
-      Row: infer R;
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
-    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R;
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
       }
       ? R
       : never
-    : never;
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
-      Insert: infer I;
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I;
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
       }
       ? I
       : never
-    : never;
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
-      Update: infer U;
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U;
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
       }
       ? U
       : never
-    : never;
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
-    : never;
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    keyof DefaultSchema['CompositeTypes'] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
-    : never;
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   graphql_public: {
@@ -2171,4 +2517,4 @@ export const Constants = {
   public: {
     Enums: {},
   },
-} as const;
+} as const

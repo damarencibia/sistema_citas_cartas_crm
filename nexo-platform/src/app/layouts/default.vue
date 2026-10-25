@@ -7,6 +7,18 @@
     <PwaInstallBanner />
     <v-main :style="mainStyle" class="app-main">
       <div class="main-content pa-4 pa-md-6">
+        <v-alert
+          v-if="authStore.user?.initial_password_pending"
+          type="info"
+          variant="tonal"
+          density="comfortable"
+          class="mb-4"
+          closable
+        >
+          Tu contraseña actual fue asignada por el administrador de tu negocio.
+          Por seguridad, cámbiala en
+          <RouterLink to="/settings/account" class="font-weight-medium">Mi Cuenta</RouterLink>.
+        </v-alert>
         <router-view v-slot="{ Component }">
           <transition name="page" mode="out-in">
             <component :is="Component" />
@@ -35,8 +47,10 @@ import PwaInstallBanner from '@/shared/components/PwaInstallBanner.vue';
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useUiStore } from '@/shared/stores/ui.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 const { smAndDown } = useDisplay();
 
 const isDesktop = computed(() => !smAndDown.value);

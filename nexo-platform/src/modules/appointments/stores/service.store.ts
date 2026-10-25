@@ -18,10 +18,6 @@ export const useServiceStore = defineStore('appointments/services', {
 
   getters: {
     activeServices: (state) => state.services.filter((s) => s.is_active),
-    servicesByEmployee:
-      (state) =>
-      (employeeId: string) =>
-        state.services.filter((s) => s.employee_id === employeeId),
     servicesByCategory:
       (state) =>
       (categoryId: string) =>

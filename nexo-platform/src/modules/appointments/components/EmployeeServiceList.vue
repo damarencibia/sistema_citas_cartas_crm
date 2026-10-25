@@ -77,7 +77,8 @@ onMounted(async () => {
   await Promise.all([
     categoryStore.fetchCategories(),
     serviceStore.fetchServices(),
-    employeeStore.fetchEmployees(),
+    // getAllWithRoles trae categories + enabled_service_ids (nuevo modelo)
+    employeeStore.fetchEmployeesWithRoles(),
   ]);
   employees.value = employeeStore.employees;
   categories.value = categoryStore.categories;
@@ -85,22 +86,19 @@ onMounted(async () => {
 });
 
 function servicesByEmployee(employeeId: string) {
-  return serviceStore.services.filter((s) => s.employee_id === employeeId);
+  const emp = employees.value.find((e) => e.id === employeeId);
+  const ids = new Set(emp?.enabled_service_ids ?? []);
+  return serviceStore.services.filter((s) => ids.has(s.id));
 }
 
 function categoriesWithServices(employeeId: string) {
-  const catIds = new Set(
-    serviceStore.services
-      .filter((s) => s.employee_id === employeeId)
-      .map((s) => s.category_id),
-  );
-  return categories.value.filter((c) => catIds.has(c.id));
+  // Categorías asignadas al empleado por el admin (nuevo modelo)
+  const emp = employees.value.find((e) => e.id === employeeId);
+  return emp?.categories ?? [];
 }
 
 function servicesForCategory(employeeId: string, categoryId: string) {
-  return serviceStore.services.filter(
-    (s) => s.employee_id === employeeId && s.category_id === categoryId,
-  );
+  return servicesByEmployee(employeeId).filter((s) => s.category_id === categoryId);
 }
 
 function formatPrice(centavos: number): string {

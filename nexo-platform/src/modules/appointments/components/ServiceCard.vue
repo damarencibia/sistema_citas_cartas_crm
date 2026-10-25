@@ -8,10 +8,6 @@
           {{ service.duration_minutes }} min
           <template v-if="service.category_name"> &middot; {{ service.category_name }} </template>
         </div>
-        <div v-if="service.employee_name" class="text-caption text-primary">
-          <v-icon size="12" start>mdi-account</v-icon>
-          {{ service.employee_name }}
-        </div>
       </div>
       <div class="text-subtitle-2">
         {{ formatPrice(service.price) }}

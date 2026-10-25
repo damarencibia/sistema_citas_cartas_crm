@@ -44,7 +44,7 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { email, password, first_name, last_name, role, phone, color, service_ids } = body;
+    const { email, password, first_name, last_name, role, phone, color, category_ids } = body;
 
     if (!email || !password || !first_name || !last_name) {
       return new Response(
@@ -60,20 +60,15 @@ serve(async (req: Request) => {
       );
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return new Response(
-        JSON.stringify({ error: 'Password must be at least 6 characters' }),
+        JSON.stringify({ error: 'Password must be at least 8 characters' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
-    const existingUsers = await supabase.auth.admin.listUsers();
-    if (existingUsers.data?.users?.some((u) => u.email === email)) {
-      return new Response(
-        JSON.stringify({ error: 'A user with this email already exists' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
+    // Sin pre-check de email duplicado: auth.admin.createUser ya devuelve
+    // un error claro y el listUsers global es O(n) + race condition.
 
     const { data: authUser, error: createError } = await supabase.auth.admin.createUser({
       email,
@@ -126,18 +121,54 @@ serve(async (req: Request) => {
       } else {
         employeeId = emp.id;
 
-        if (service_ids && Array.isArray(service_ids) && service_ids.length > 0) {
-          const serviceLinks = service_ids.map((sid: string) => ({
+        // Vincula el empleado a CATEGORÍAS (nuevo modelo): el admin ya
+        // no asigna servicios individuales; el empleado los elige luego
+        // en "Mis Servicios". Autohabilitamos los servicios de sus
+        // categorías como estado inicial razonable.
+        if (category_ids && Array.isArray(category_ids) && category_ids.length > 0) {
+          const categoryLinks = category_ids.map((cid: string) => ({
+            tenant_id: callerTenantId,
             employee_id: employeeId,
-            service_id: sid,
+            category_id: cid,
           }));
-          const { error: linkError } = await supabase
-            .from('employee_services')
-            .insert(serviceLinks);
-          if (linkError) {
-            console.error('Service link error:', linkError);
+          const { error: catError } = await supabase
+            .from('employee_categories')
+            .insert(categoryLinks);
+          if (catError) {
+            console.error('Category link error:', catError);
+          }
+
+          const { data: catServices, error: catServicesError } = await supabase
+            .from('services')
+            .select('id')
+            .in('category_id', category_ids)
+            .is('deleted_at', null);
+
+          if (catServicesError) {
+            console.error('Category services fetch error:', catServicesError);
+          } else if (catServices && catServices.length > 0) {
+            const serviceLinks = catServices.map((s) => ({
+              employee_id: employeeId,
+              service_id: s.id,
+            }));
+            const { error: seedError } = await supabase
+              .from('employee_services')
+              .upsert(serviceLinks, { ignoreDuplicates: true });
+            if (seedError) {
+              console.error('Service seed error:', seedError);
+            }
           }
         }
+
+        // Auditoría de creación de credenciales (la contraseña no se guarda)
+        await supabase.from('audit_logs').insert({
+          tenant_id: callerTenantId,
+          user_id: userProfile.id,
+          action: 'team_member_created',
+          entity_type: 'employee',
+          entity_id: employeeId,
+          details: { role, created_by: caller.id },
+        });
       }
     }
 

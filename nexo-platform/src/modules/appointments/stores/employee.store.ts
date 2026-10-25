@@ -56,8 +56,26 @@ export const useEmployeeStore = defineStore('appointments/employees', {
       this.employeeServices = await employeeRepository.getServicesByEmployee(employeeId);
     },
 
-    async getEmployeesByServiceName(serviceName: string): Promise<Employee[]> {
-      return employeeRepository.getEmployeesByServiceName(serviceName);
+    async refreshEmployeeServices(employeeId: string) {
+      const enabled = await employeeRepository.getServicesByEmployee(employeeId);
+      this.employeeServices = enabled;
+    },
+
+    async getEmployeesByService(serviceId: string): Promise<Employee[]> {
+      return employeeRepository.getEmployeesByService(serviceId);
+    },
+
+    async setServiceEnabled(employeeId: string, serviceId: string, enabled: boolean): Promise<void> {
+      await employeeRepository.setServiceEnabled(employeeId, serviceId, enabled);
+      if (this.currentEmployee?.id === employeeId) {
+        this.refreshEmployeeServices(employeeId);
+      }
+    },
+
+    async updateEmployeeCategories(employeeId: string, categoryIds: string[]): Promise<void> {
+      await employeeRepository.updateCategories(employeeId, categoryIds);
+      // Recarga la lista para reflejar categorías y servicios sincronizados
+      this.employees = await employeeRepository.getAllWithRoles();
     },
 
     async createEmployee(dto: CreateEmployeeDTO): Promise<Employee> {

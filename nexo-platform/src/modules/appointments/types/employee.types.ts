@@ -11,6 +11,13 @@ export interface Employee extends BaseEntity {
   is_active: boolean;
   role?: string;
   supabase_user_id?: string | null;
+  /** true mientras la contraseña inicial compartida por el admin sigue vigente */
+  initial_password_pending?: boolean;
+  /** Categorías asignadas por el admin (nuevo modelo) */
+  categories?: { id: string; name: string; icon?: string | null }[];
+  category_ids?: string[];
+  /** Servicios que el empleado ofrece (elige en Mis Servicios) */
+  enabled_service_ids?: string[];
 }
 
 export interface CreateEmployeeDTO {

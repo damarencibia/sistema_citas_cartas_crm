@@ -14,6 +14,14 @@
     >
       {{ authError }}
     </v-alert>
+    <v-alert
+      v-if="successMessage"
+      type="success"
+      variant="tonal"
+      class="mb-4"
+    >
+      {{ successMessage }}
+    </v-alert>
 
     <v-form @submit.prevent="handleRegister">
       <v-text-field
@@ -39,15 +47,38 @@
         label="Correo electrónico"
         prepend-inner-icon="mdi-email"
         type="email"
-        :rules="[required]"
+        :rules="[required, validEmail]"
         autocomplete="email"
       />
+      <v-text-field
+        v-model="form.phone"
+        label="Número de teléfono"
+        hint="Solo el número. El prefijo de Cuba (+53) está fijo."
+        persistent-hint
+        maxlength="8"
+        :rules="[required, validPhone]"
+        autocomplete="tel-national"
+      >
+        <template #prepend-inner>
+          <v-icon icon="mdi-phone" size="20" class="mr-1 opacity-60" />
+          <span class="phone-prefix">+53</span>
+          <v-divider vertical class="ml-2 mr-3" />
+        </template>
+      </v-text-field>
       <v-text-field
         v-model="form.password"
         label="Contraseña"
         prepend-inner-icon="mdi-lock"
         type="password"
         :rules="[required, minLength]"
+        autocomplete="new-password"
+      />
+      <v-text-field
+        v-model="form.confirmPassword"
+        label="Confirmar contraseña"
+        prepend-inner-icon="mdi-lock-check"
+        type="password"
+        :rules="[required, matchesPassword]"
         autocomplete="new-password"
       />
 
@@ -84,13 +115,19 @@ const router = useRouter();
 const authStore = useAuthStore();
 const loading = ref(false);
 const authError = ref<string | null>(null);
+const successMessage = ref<string | null>(null);
+
+// Prefijo de Cuba, fijo y no editable
+const PHONE_PREFIX = '+53';
 
 const form = reactive({
   businessName: '',
   firstName: '',
   lastName: '',
   email: '',
+  phone: '',
   password: '',
+  confirmPassword: '',
 });
 
 function required(value: string) {
@@ -99,10 +136,21 @@ function required(value: string) {
 function minLength(value: string) {
   return value.length >= 8 || 'Mínimo 8 caracteres';
 }
+function validEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || 'Correo electrónico no válido';
+}
+function validPhone(value: string) {
+  return /^\d{8}$/.test(value) || 'Debe ser un número de 8 dígitos';
+}
+function matchesPassword(value: string) {
+  return value === form.password || 'Las contraseñas no coinciden';
+}
 
 async function handleRegister() {
+  if (form.password !== form.confirmPassword) return;
   loading.value = true;
   authError.value = null;
+  successMessage.value = null;
   try {
     await authStore.register(
       form.email,
@@ -110,8 +158,17 @@ async function handleRegister() {
       form.firstName,
       form.lastName,
       form.businessName,
+      `${PHONE_PREFIX}${form.phone}`,
     );
-    router.push('/auth/login');
+    // Con el autoconfirm activo, signUp devuelve sesión y podemos
+    // avanzar directo al dashboard. Si Supabase devolviera un estado
+    // sin sesión (confirmación requerida), ir al login con aviso.
+    if (authStore.session) {
+      router.push('/');
+    } else {
+      successMessage.value = 'Cuenta creada. Inicia sesión para continuar.';
+      router.push('/auth/login');
+    }
   } catch (e: any) {
     authError.value = e.message || 'Error al registrarse';
   } finally {
@@ -119,3 +176,12 @@ async function handleRegister() {
   }
 }
 </script>
+
+<style scoped>
+.phone-prefix {
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 500;
+  line-height: 1.2;
+}
+</style>
+

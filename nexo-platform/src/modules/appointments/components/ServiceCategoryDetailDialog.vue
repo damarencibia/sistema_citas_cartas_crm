@@ -53,6 +53,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { supabase } from '@/shared/api/supabase.client';
 import { serviceRepository } from '../repositories/service.repository';
 import type { ServiceCategory } from '../types/service-category.types';
 import type { Service } from '../types/service.types';
@@ -68,6 +69,7 @@ const emit = defineEmits<{
 }>();
 
 const services = ref<Service[]>([]);
+const links = ref<{ employee: Employee; service_id: string }[]>([]);
 
 interface EmployeeGroup {
   employee: Employee;
@@ -75,21 +77,18 @@ interface EmployeeGroup {
 }
 
 const groupedEmployees = computed(() => {
+  const serviceById = new Map(services.value.map((s) => [s.id, s]));
   const map = new Map<string, EmployeeGroup>();
-  for (const s of services.value) {
-    if (!s.employee_id) continue;
-    if (!map.has(s.employee_id)) {
-      map.set(s.employee_id, {
-        employee: {
-          id: s.employee_id,
-          first_name: s.employee_name?.split(' ')[0] ?? '',
-          last_name: s.employee_name?.split(' ').slice(1).join(' ') ?? '',
-          color: '#1976D2',
-        } as Employee,
+  for (const link of links.value) {
+    const service = serviceById.get(link.service_id);
+    if (!service) continue;
+    if (!map.has(link.employee.id)) {
+      map.set(link.employee.id, {
+        employee: link.employee,
         services: [],
       });
     }
-    map.get(s.employee_id)!.services.push(s);
+    map.get(link.employee.id)!.services.push(service);
   }
   return Array.from(map.values());
 });
@@ -99,6 +98,29 @@ watch(
   async (v) => {
     if (v) {
       services.value = await serviceRepository.getByCategory(props.category.id);
+      // Quién ofrece esos servicios: vinculación employee → servicios
+      const serviceIds = services.value.map((s) => s.id);
+      if (serviceIds.length) {
+        const { data, error } = await (supabase as any)
+          .from('employee_services')
+          .select('employee:employee_id(*), service_id')
+          .in('service_id', serviceIds);
+        if (error) throw error;
+        links.value = (data ?? [])
+          .map((row: any) => ({
+            employee: row.employee as Employee,
+            service_id: row.service_id as string,
+          }))
+          .filter(
+            (l: { employee: Employee; service_id: string }) =>
+              l.employee && !l.employee.deleted_at && l.employee.is_active,
+          );
+      } else {
+        links.value = [];
+      }
+    } else {
+      services.value = [];
+      links.value = [];
     }
   },
   { immediate: true },

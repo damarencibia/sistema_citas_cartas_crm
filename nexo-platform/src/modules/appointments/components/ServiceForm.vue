@@ -37,15 +37,6 @@
             label="Categoría"
             :rules="[(v) => !!v || 'Requerido']"
           />
-          <v-select
-            v-if="showEmployeeSelect"
-            v-model="localForm.employee_id"
-            :items="employeeOptions"
-            item-title="text"
-            item-value="value"
-            label="Empleado"
-            :rules="[(v) => !!v || 'Requerido']"
-          />
           <v-row>
             <v-col cols="12" sm="6">
               <v-text-field
@@ -86,14 +77,13 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useServiceCategoryStore } from '../stores/service-category.store';
-import { useEmployeeStore } from '../stores/employee.store';
-import { useAuthStore } from '@/shared/stores/auth.store';
 import type { Service, CreateServiceDTO } from '../types/service.types';
 
 const props = defineProps<{
   visible: boolean;
   service?: Service | null;
-  preselectedEmployeeId?: string;
+  /** Si se pasa, solo esas categorías son seleccionables (p.ej. las del empleado) */
+  allowedCategoryIds?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -102,14 +92,10 @@ const emit = defineEmits<{
 }>();
 
 const categoryStore = useServiceCategoryStore();
-const employeeStore = useEmployeeStore();
-const authStore = useAuthStore();
 
 const editing = ref(false);
 const submitting = ref(false);
 const formRef = ref();
-
-const showEmployeeSelect = computed(() => authStore.isAdmin);
 
 const localForm = reactive<CreateServiceDTO>({
   name: '',
@@ -118,22 +104,16 @@ const localForm = reactive<CreateServiceDTO>({
   price: 0,
   color: '#1976D2',
   category_id: '',
-  employee_id: '',
   max_participants: 1,
 });
 
 const categoryOptions = computed(() =>
-  categoryStore.activeCategories.map((c) => ({
-    value: c.id,
-    text: c.name,
-  })),
-);
-
-const employeeOptions = computed(() =>
-  employeeStore.activeEmployees.map((e) => ({
-    value: e.id,
-    text: `${e.first_name} ${e.last_name}`,
-  })),
+  categoryStore.activeCategories
+    .filter((c) => !props.allowedCategoryIds?.length || props.allowedCategoryIds.includes(c.id))
+    .map((c) => ({
+      value: c.id,
+      text: c.name,
+    })),
 );
 
 watch(
@@ -147,7 +127,6 @@ watch(
       localForm.price = s.price;
       localForm.color = s.color;
       localForm.category_id = s.category_id;
-      localForm.employee_id = s.employee_id ?? '';
       localForm.max_participants = s.max_participants;
     } else {
       editing.value = false;
@@ -157,7 +136,6 @@ watch(
       localForm.price = 0;
       localForm.color = '#1976D2';
       localForm.category_id = '';
-      localForm.employee_id = props.preselectedEmployeeId ?? '';
       localForm.max_participants = 1;
     }
   },
@@ -166,7 +144,6 @@ watch(
 
 onMounted(() => {
   if (!categoryStore.categories.length) categoryStore.fetchCategories();
-  if (!employeeStore.employees.length) employeeStore.fetchEmployees();
 });
 
 async function onSubmit() {

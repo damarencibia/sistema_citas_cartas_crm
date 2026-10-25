@@ -849,8 +849,7 @@ async function selectService(service: Service) {
   selectedEmployee.value = null;
   selectedTime.value = '';
   waitlistTimes.value = [];
-  const name = service.name;
-  employeesForService.value = await employeeStore.getEmployeesByServiceName(name);
+  employeesForService.value = await employeeStore.getEmployeesByService(service.id);
   if (pendingEmployeeId.value) {
     const pending = employeesForService.value.find((e) => e.id === pendingEmployeeId.value);
     pendingEmployeeId.value = null;

@@ -26,14 +26,21 @@ export function useAuth() {
     loading.value = true;
     error.value = null;
     try {
-      await authStore.register(
+      const { session } = await authStore.register(
         payload.email,
         payload.password,
         payload.firstName,
         payload.lastName,
         payload.businessName,
+        payload.phone,
       );
-      router.push('/auth/login');
+      // Con la confirmación de email desactivada, signUp devuelve sesión:
+      // entrar directo al dashboard (evita el paso de login redundante).
+      if (session) {
+        router.push('/');
+      } else {
+        router.push('/auth/login');
+      }
     } catch (e: any) {
       error.value = e.message || 'Error al registrarse';
     } finally {

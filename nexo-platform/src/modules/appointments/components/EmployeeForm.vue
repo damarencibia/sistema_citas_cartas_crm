@@ -58,16 +58,18 @@
             class="mb-1"
           />
           <v-select
-            v-model="localForm.service_ids"
-            :items="serviceOptions"
+            v-model="localForm.category_ids"
+            :items="categoryOptions"
             item-title="text"
             item-value="value"
-            label="Servicios que realiza"
+            label="Categorías que atiende"
             multiple
             chips
             closable-chips
             density="comfortable"
             class="mb-1"
+            hint="El empleado elige qué servicios de esas categorías ofrece"
+            persistent-hint
           />
           <v-switch
             v-model="localForm.is_active"
@@ -105,14 +107,14 @@ export interface EmployeeFormData {
   email: string;
   phone: string;
   color: string;
-  service_ids: string[];
+  category_ids: string[];
   is_active: boolean;
 }
 
 const props = defineProps<{
   visible: boolean;
   employee?: Employee | null;
-  serviceOptions: { value: string; text: string }[];
+  categoryOptions: { value: string; text: string }[];
 }>();
 
 const emit = defineEmits<{
@@ -130,7 +132,7 @@ const localForm = reactive<EmployeeFormData>({
   email: '',
   phone: '',
   color: '#1976D2',
-  service_ids: [],
+  category_ids: [],
   is_active: true,
 });
 
@@ -144,6 +146,7 @@ watch(
       localForm.email = e.email ?? '';
       localForm.phone = e.phone ?? '';
       localForm.color = e.color;
+      localForm.category_ids = [...(e.category_ids ?? [])];
       localForm.is_active = e.is_active;
     } else {
       isEditing.value = false;
@@ -152,7 +155,7 @@ watch(
       localForm.email = '';
       localForm.phone = '';
       localForm.color = '#1976D2';
-      localForm.service_ids = [];
+      localForm.category_ids = [];
       localForm.is_active = true;
     }
   },

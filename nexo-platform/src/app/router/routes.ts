@@ -119,6 +119,12 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: 'Mi Negocio' },
           },
           {
+            path: 'account',
+            name: 'account',
+            component: () => import('@/modules/admin/views/AccountView.vue'),
+            meta: { title: 'Mi Cuenta' },
+          },
+          {
             path: 'modules',
             name: 'modules-config',
             component: () => import('@/modules/admin/views/ModulesConfigView.vue'),

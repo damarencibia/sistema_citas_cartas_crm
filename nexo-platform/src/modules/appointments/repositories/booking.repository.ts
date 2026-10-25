@@ -181,6 +181,10 @@ export const bookingRepository = {
       accessToken = upsertedToken;
     }
 
+    if (!dto.employee_id) {
+      throw new Error('La cita requiere un empleado asignado');
+    }
+
     const insertPayload: BookingInsert = {
       tenant_id: tenantId,
       service_id: dto.service_id,

@@ -59,8 +59,15 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async login(email: string, password: string) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      // Cargar el perfil inmediatamente: la navegación por rol puede
+      // leer authStore.user antes de que onAuthStateChange dispare.
+      this.session = data.session;
+      if (data.user) {
+        await this.fetchProfile(data.user.id);
+      }
+      return data;
     },
 
     async register(
@@ -69,15 +76,25 @@ export const useAuthStore = defineStore('auth', {
       firstName: string,
       lastName: string,
       businessName: string,
+      phone: string,
     ) {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { first_name: firstName, last_name: lastName, business_name: businessName },
+          data: { first_name: firstName, last_name: lastName, business_name: businessName, phone },
         },
       });
       if (authError) throw authError;
+      // Con autoconfirm, signUp devuelve sesión: fijarla ya para que
+      // la UI (y la redirección) dependan del estado real, no del
+      // listener en onAuthStateChange que puede llegar desfasado.
+      if (authData.session) {
+        this.session = authData.session;
+        if (authData.session.user) {
+          await this.fetchProfile(authData.session.user.id);
+        }
+      }
       return authData;
     },
 

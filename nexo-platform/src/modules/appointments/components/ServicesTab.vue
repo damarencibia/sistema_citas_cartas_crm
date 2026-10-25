@@ -19,20 +19,7 @@
 
     <template v-else>
       <v-row class="mb-4">
-        <v-col cols="12" sm="4">
-          <v-select
-            v-model="filterEmployee"
-            :items="employeeOptions"
-            item-title="text"
-            item-value="value"
-            label="Filtrar por empleado"
-            clearable
-            density="compact"
-            variant="outlined"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12" sm="4">
+        <v-col cols="12" sm="8">
           <v-select
             v-model="filterCategory"
             :items="categoryOptions"
@@ -79,40 +66,27 @@ import { ref, computed, onMounted } from 'vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useServiceStore } from '../stores/service.store';
-import { useEmployeeStore } from '../stores/employee.store';
 import { useServiceCategoryStore } from '../stores/service-category.store';
 import ServiceCard from '../components/ServiceCard.vue';
 import ServiceForm from '../components/ServiceForm.vue';
 import type { Service, CreateServiceDTO } from '../types/service.types';
 
 const serviceStore = useServiceStore();
-const employeeStore = useEmployeeStore();
 const categoryStore = useServiceCategoryStore();
 const notification = useNotification();
 const { confirm } = useConfirm();
 
 const showForm = ref(false);
 const editingService = ref<Service | null>(null);
-const filterEmployee = ref<string | null>(null);
 const filterCategory = ref<string | null>(null);
 
 const filteredServices = computed(() => {
   let result = serviceStore.services;
-  if (filterEmployee.value) {
-    result = result.filter((s) => s.employee_id === filterEmployee.value);
-  }
   if (filterCategory.value) {
     result = result.filter((s) => s.category_id === filterCategory.value);
   }
   return result;
 });
-
-const employeeOptions = computed(() =>
-  employeeStore.activeEmployees.map((e) => ({
-    value: e.id,
-    text: `${e.first_name} ${e.last_name}`,
-  })),
-);
 
 const categoryOptions = computed(() =>
   categoryStore.activeCategories.map((c) => ({
@@ -124,7 +98,6 @@ const categoryOptions = computed(() =>
 onMounted(() => {
   Promise.all([
     serviceStore.fetchServices(),
-    employeeStore.fetchEmployees(),
     categoryStore.fetchCategories(),
   ]);
 });

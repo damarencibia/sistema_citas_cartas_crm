@@ -41,10 +41,6 @@
                 <v-icon size="12">mdi-tag-outline</v-icon>
                 {{ svc.category_name }}
               </div>
-              <div v-if="svc.employee_name">
-                <v-icon size="12">mdi-account</v-icon>
-                {{ svc.employee_name }}
-              </div>
             </div>
           </v-card-text>
         </v-card>
@@ -73,8 +69,7 @@ const filteredServices = computed(() => {
   return services.value.filter(
     (s) =>
       s.name.toLowerCase().includes(q) ||
-      (s.category_name && s.category_name.toLowerCase().includes(q)) ||
-      (s.employee_name && s.employee_name.toLowerCase().includes(q)),
+      (s.category_name && s.category_name.toLowerCase().includes(q)),
   );
 });
 

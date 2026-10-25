@@ -265,6 +265,29 @@ Cubre todas las tablas de los módulos iniciales (Base, Citas, CRM) y las tablas
 - `UNIQUE INDEX idx_employee_services_unique ON employee_services(employee_id, service_id)`
 - `INDEX idx_employee_services_service ON employee_services(service_id)`
 
+> **Modelo vigente (migración 000088, 25/10/2026):** `employee_services` es la
+> **única** fuente de disponibilidad: registra los servicios que el empleado
+> **ofrece** (lo gestiona el propio empleado en "Mis Servicios"). La columna
+> `services.employee_id` fue **eliminada**. El admin ya no asigna servicios
+> individuales: vincula empleados a **categorías** vía la tabla nueva
+> `employee_categories`, que autohabilita los servicios de esas categorías
+> como estado inicial (`accept_waitlist_offer` y el flujo público de reservas
+> resuelven empleados por este join).
+
+#### `employee_categories`
+
+| Columna       | Tipo          | Restricciones                                        | Descripción |
+| ------------- | ------------- | ---------------------------------------------------- | ----------- |
+| `id`          | `UUID`        | `PK DEFAULT gen_random_uuid()`                       |             |
+| `tenant_id`   | `UUID`        | `FK -> tenants(id) NOT NULL`                          |             |
+| `employee_id` | `UUID`        | `FK -> employees(id) NOT NULL ON DELETE CASCADE`     |             |
+| `category_id` | `UUID`        | `FK -> service_categories(id) NOT NULL ON DELETE CASCADE` |         |
+| `created_at`  | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()`                              |             |
+| `deleted_at`  | `TIMESTAMPTZ` |                                                       |             |
+
+**Índices**: tenant, employee, category + `UNIQUE(employee_id, category_id)`.
+**RLS**: aislamiento por tenant (`app_metadata.tenant_id`) para todo.
+
 ---
 
 #### `schedules`

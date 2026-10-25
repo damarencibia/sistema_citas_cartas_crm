@@ -31,4 +31,5 @@ export interface RegisterPayload {
   firstName: string;
   lastName: string;
   businessName: string;
+  phone: string;
 }

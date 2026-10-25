@@ -135,7 +135,7 @@ $$;
 
 ```
 1. Usuario completa formulario de registro en /register
-   → email, contraseña, nombre del negocio
+   → email, contraseña, nombre del negocio, teléfono (+53 fijo)
 
 2. Frontend valida datos localmente (Zod)
 
@@ -162,6 +162,49 @@ $$;
     - Horarios por defecto
     - Tags predefinidas para CRM
 ```
+
+> **Decisión vigente (25/10/2026):** la verificación de email **no es requerida** —
+> `mailer_autoconfirm: true` → `signUp` devuelve sesión y el frontend entra
+> directo al dashboard (mantiene fallback a `/auth/login` si no hay sesión).
+> El trigger `handle_new_user` además: persiste el teléfono (+53) en
+> `users.phone`/`tenants.phone`, crea el tenant con `plan_id='trial'` y
+> `trial_ends_at = +14 días`, y crea la fila `employees` del owner (el negocio
+> se queda reservable desde el registro). Ver migración 000086.
+
+### Flujo 3: Alta de empleados con credenciales compartidas
+
+```
+1. Owner/admin crea empleado desde Configuración/Empleados:
+   datos + contraseña inicial ESCRITA por el admin (mín. 8) + teléfono (+53 fijo).
+
+2. Edge Function create-team-member crea el auth user (email_confirm: true,
+   sin verificación) → trigger handle_new_user nace con
+   users.initial_password_pending = true.
+
+3. UI muestra la TARJETA DE CREDENCIALES (una sola vez):
+   email + contraseña + Copiar + compartir por WhatsApp (wa.me).
+
+4. El empleado inicia sesión con esas credenciales (sin verificación de email).
+   Banner "cambia tu contraseña asignada" hasta que lo haga.
+
+5. El empleado cambia su contraseña en Mi Cuenta (/settings/account):
+   verificación de la actual con signInWithPassword + supabase.auth.updateUser.
+
+6. Trigger on_auth_password_updated (AFTER UPDATE OF encrypted_password
+   en auth.users) apaga users.initial_password_pending y escribe audit_logs
+   ('initial_password_cleared') → el admin pierde la visibilidad/estado
+   "pendiente" de esa cuenta.
+
+7. Reset administrativo (Edge Function reset-team-member-password):
+   genera o recibe nueva contraseña, la devuelve para compartirla una vez,
+   y vuelve a marcar initial_password_pending = true.
+```
+
+> **Seguridad:** nunca se guarda la contraseña en claro (Supabase solo
+> conserva bcrypt). "Visible" significa: se muestra en el momento de crear
+> o restablecer, sin persistencia reversible; el flag
+> `initial_password_pending` marca el estado de la credencial compartida.
+> Reset prohibido para la cuenta owner. Ver migración 000087.
 
 ### Flujo 2: Inicio de Sesión (Propietario/Admin/Empleado)
 

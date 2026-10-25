@@ -9,8 +9,7 @@ export const serviceRepository = {
       .from(TABLE)
       .select(`
         *,
-        category:category_id(name),
-        employee:employee_id(first_name, last_name)
+        category:category_id(name)
       `)
       .is('deleted_at', null)
       .order('sort_order');
@@ -23,8 +22,7 @@ export const serviceRepository = {
       .from(TABLE)
       .select(`
         *,
-        category:category_id(name),
-        employee:employee_id(first_name, last_name)
+        category:category_id(name)
       `)
       .eq('id', id)
       .single();
@@ -32,19 +30,23 @@ export const serviceRepository = {
     return data ? mapService(data) : null;
   },
 
+  // La disponibilidad vive en employee_services (el empleado elige
+  // qué servicios ofrece); aquí los resolvemos por el join.
   async getByEmployee(employeeId: string): Promise<Service[]> {
     const { data, error } = await (supabase as any)
-      .from(TABLE)
+      .from('employee_services')
       .select(`
-        *,
-        category:category_id(name),
-        employee:employee_id(first_name, last_name)
+        service:service_id(
+          *,
+          category:category_id(name)
+        )
       `)
-      .eq('employee_id', employeeId)
-      .is('deleted_at', null)
-      .order('sort_order');
+      .eq('employee_id', employeeId);
     if (error) throw error;
-    return (data ?? []).map(mapService);
+    return (data ?? [])
+      .map((row: any) => row.service)
+      .filter((s: any) => s && !s.deleted_at)
+      .map(mapService);
   },
 
   async getByCategory(categoryId: string): Promise<Service[]> {
@@ -52,8 +54,7 @@ export const serviceRepository = {
       .from(TABLE)
       .select(`
         *,
-        category:category_id(name),
-        employee:employee_id(first_name, last_name)
+        category:category_id(name)
       `)
       .eq('category_id', categoryId)
       .is('deleted_at', null)
@@ -73,15 +74,13 @@ export const serviceRepository = {
         price: dto.price,
         color: dto.color ?? '#1976D2',
         category_id: dto.category_id,
-        employee_id: dto.employee_id ?? null,
         image_url: dto.image_url ?? null,
         max_participants: dto.max_participants ?? 1,
         requires_approval: dto.requires_approval ?? false,
       })
       .select(`
         *,
-        category:category_id(name),
-        employee:employee_id(first_name, last_name)
+        category:category_id(name)
       `)
       .single();
     if (error) throw error;
@@ -93,14 +92,12 @@ export const serviceRepository = {
       .from(TABLE)
       .update({
         ...dto,
-        employee_id: dto.employee_id === undefined ? undefined : (dto.employee_id ?? null),
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
       .select(`
         *,
-        category:category_id(name),
-        employee:employee_id(first_name, last_name)
+        category:category_id(name)
       `)
       .single();
     if (error) throw error;
@@ -120,8 +117,5 @@ function mapService(raw: any): Service {
   return {
     ...raw,
     category_name: raw.category?.name ?? '',
-    employee_name: raw.employee
-      ? `${raw.employee.first_name} ${raw.employee.last_name}`
-      : '',
   };
 }

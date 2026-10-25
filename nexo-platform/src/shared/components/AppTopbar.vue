@@ -52,6 +52,13 @@
         </v-list-item>
         <v-divider class="my-1" />
         <v-list-item
+          prepend-icon="mdi-account-circle-outline"
+          title="Mi Cuenta"
+          subtitle="Cambiar contraseña"
+          to="/settings/account"
+          class="px-3"
+        />
+        <v-list-item
           prepend-icon="mdi-cog-outline"
           title="Configuración"
           to="/settings/business"

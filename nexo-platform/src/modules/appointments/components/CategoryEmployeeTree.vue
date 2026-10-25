@@ -81,29 +81,32 @@ const loading = ref(true);
 
 const categories = ref(categoryStore.categories);
 
+const employees = ref(employeeStore.employees);
+
 onMounted(async () => {
   loading.value = true;
   await Promise.all([
     categoryStore.fetchCategories(),
     serviceStore.fetchServices(),
-    employeeStore.fetchEmployees(),
+    // getAllWithRoles trae categories + enabled_service_ids (nuevo modelo)
+    employeeStore.fetchEmployeesWithRoles(),
   ]);
+  employees.value = employeeStore.employees;
   categories.value = categoryStore.categories;
   loading.value = false;
 });
 
 function getEmployeesForCategory(categoryId: string) {
-  const empIds = new Set(
-    serviceStore.services
-      .filter((s) => s.category_id === categoryId && s.employee_id)
-      .map((s) => s.employee_id),
-  );
-  return employeeStore.employees.filter((e) => empIds.has(e.id));
+  // Empleados vinculados a la categoría por el admin
+  return employees.value.filter((e) => (e.category_ids ?? []).includes(categoryId));
 }
 
 function getServicesForEmployeeAndCategory(employeeId: string, categoryId: string) {
+  // Servicios que el empleado ofrece dentro de esa categoría
+  const emp = employees.value.find((e) => e.id === employeeId);
+  const ids = new Set(emp?.enabled_service_ids ?? []);
   return serviceStore.services.filter(
-    (s) => s.employee_id === employeeId && s.category_id === categoryId,
+    (s) => ids.has(s.id) && s.category_id === categoryId,
   );
 }
 

@@ -23,33 +23,63 @@ export const employeeRepository = {
   },
 
   async getServicesByEmployee(employeeId: string): Promise<Service[]> {
+    // Disponibilidad real del empleado: vía employee_services
     const { data, error } = await (supabase as any)
-      .from('services')
+      .from('employee_services')
       .select(`
-        *,
-        category:category_id(name)
+        service:service_id(
+          *,
+          category:category_id(name)
+        )
       `)
-      .eq('employee_id', employeeId)
-      .is('deleted_at', null)
-      .order('sort_order');
+      .eq('employee_id', employeeId);
     if (error) throw error;
-    return (data ?? []).map((s: any) => ({
-      ...s,
-      category_name: s.category?.name ?? '',
-    })) as Service[];
+    return (data ?? [])
+      .map((row: any) => row.service)
+      .filter((s: any) => s && !s.deleted_at)
+      .map((s: any) => ({ ...s, category_name: s.category?.name ?? '' }));
   },
 
-  async getEmployeesByServiceName(serviceName: string): Promise<Employee[]> {
+  async getCategoriesByEmployee(employeeId: string): Promise<Employee['categories']> {
     const { data, error } = await (supabase as any)
-      .from('services')
-      .select('employee:employee_id(*)')
-      .eq('name', serviceName)
-      .is('deleted_at', null)
-      .not('employee_id', 'is', null);
+      .from('employee_categories')
+      .select(`category:category_id(id, name, icon)`)
+      .eq('employee_id', employeeId);
+    if (error) throw error;
+    return (data ?? [])
+      .map((row: any) => row.category)
+      .filter(Boolean);
+  },
+
+  async getEmployeesByService(serviceId: string): Promise<Employee[]> {
+    // Empleados que realizan un servicio (disponibilidad para reservar)
+    const { data, error } = await (supabase as any)
+      .from('employee_services')
+      .select(`employee:employee_id(*)`)
+      .eq('service_id', serviceId);
     if (error) throw error;
     return (data ?? [])
       .map((row: any) => row.employee)
-      .filter((e: any) => e && !e.deleted_at && e.is_active) as Employee[];
+      .filter((e: any) => e && !e.deleted_at && e.is_active);
+  },
+
+  async setServiceEnabled(employeeId: string, serviceId: string, enabled: boolean): Promise<void> {
+    if (enabled) {
+      const { error } = await (supabase as any)
+        .from('employee_services')
+        .upsert(
+          { employee_id: employeeId, service_id: serviceId },
+          { ignoreDuplicates: true },
+        );
+      if (error) throw error;
+    } else {
+      const { error } = await (supabase as any)
+        .from('employee_services')
+        .delete()
+        .eq('employee_id', employeeId)
+        .eq('service_id', serviceId);
+      if (error) throw error;
+    }
   },
 
   async create(dto: CreateEmployeeDTO, tenantId: string): Promise<Employee> {
@@ -83,7 +113,12 @@ export const employeeRepository = {
   async getAllWithRoles(): Promise<Employee[]> {
     const { data, error } = await (supabase as any)
       .from('employees')
-      .select('*, user:user_id(role, supabase_user_id)')
+      .select(`
+        *,
+        user:user_id(role, supabase_user_id, initial_password_pending),
+        employee_categories(category_id, category:category_id(id, name, icon)),
+        employee_services(service_id)
+      `)
       .is('deleted_at', null)
       .order('first_name');
     if (error) throw error;
@@ -91,21 +126,80 @@ export const employeeRepository = {
       ...e,
       role: e.user?.role ?? 'employee',
       supabase_user_id: e.user?.supabase_user_id ?? null,
+      initial_password_pending: e.user?.initial_password_pending ?? false,
+      categories: (e.employee_categories ?? [])
+        .map((c: any) => c.category)
+        .filter(Boolean),
+      category_ids: (e.employee_categories ?? []).map((c: any) => c.category_id),
+      enabled_service_ids: (e.employee_services ?? []).map((s: any) => s.service_id),
+      employee_categories: undefined,
+      employee_services: undefined,
       user: undefined,
     })) as Employee[];
   },
 
-  async updateServices(employeeId: string, serviceIds: string[]): Promise<void> {
+  /**
+   * Reconcilia el vínculo del empleado con categorías y sincroniza
+   * employee_services: autohabilita los servicios de las categorías
+   * nuevas y retira los vínculos de servicios fuera de ellas.
+   */
+  async updateCategories(employeeId: string, categoryIds: string[]): Promise<void> {
+    const unique = [...new Set(categoryIds)];
+
+    // 1. Reemplaza las categorías asignadas
     await (supabase as any)
-      .from('services')
-      .update({ employee_id: null, updated_at: new Date().toISOString() })
+      .from('employee_categories')
+      .delete()
       .eq('employee_id', employeeId);
-    if (serviceIds.length > 0) {
-      const { error } = await (supabase as any)
+    if (unique.length > 0) {
+      const { error: insertError } = await (supabase as any)
+        .from('employee_categories')
+        .insert(unique.map((cid) => ({ employee_id: employeeId, category_id: cid })));
+      if (insertError) throw insertError;
+    }
+
+    // 2. Sincroniza employee_services con las categorías vigentes
+    const { data: enabledRows, error: enabledError } = await (supabase as any)
+      .from('employee_services')
+      .select('service_id')
+      .eq('employee_id', employeeId);
+    if (enabledError) throw enabledError;
+    const enabledIds = new Set((enabledRows ?? []).map((r: any) => r.service_id));
+
+    // Servicios dentro de las categorías asignadas (no eliminados)
+    let assignableIds: string[] = [];
+    if (unique.length > 0) {
+      const { data: catServices, error: catServicesError } = await (supabase as any)
         .from('services')
-        .update({ employee_id: employeeId, updated_at: new Date().toISOString() })
-        .in('id', serviceIds);
-      if (error) throw error;
+        .select('id')
+        .in('category_id', unique)
+        .is('deleted_at', null);
+      if (catServicesError) throw catServicesError;
+      assignableIds = (catServices ?? []).map((s: any) => s.id);
+    }
+    const assignable = new Set(assignableIds);
+
+    // Retira vínculos fuera de sus categorías
+    const toRemove = ([...enabledIds] as string[]).filter((id) => !assignable.has(id));
+    if (toRemove.length > 0) {
+      const { error: removeError } = await (supabase as any)
+        .from('employee_services')
+        .delete()
+        .eq('employee_id', employeeId)
+        .in('service_id', toRemove);
+      if (removeError) throw removeError;
+    }
+
+    // Autohabilita los servicios nuevos de las categorías
+    const toAdd = assignableIds.filter((id) => !enabledIds.has(id));
+    if (toAdd.length > 0) {
+      const { error: addError } = await (supabase as any)
+        .from('employee_services')
+        .upsert(
+          toAdd.map((id) => ({ employee_id: employeeId, service_id: id })),
+          { ignoreDuplicates: true },
+        );
+      if (addError) throw addError;
     }
   },
 

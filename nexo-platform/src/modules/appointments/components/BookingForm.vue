@@ -178,12 +178,12 @@ import { ref, reactive, computed, watch } from 'vue';
 import { useServiceStore } from '../stores/service.store';
 import { useServiceCategoryStore } from '../stores/service-category.store';
 import { useBookingStore } from '../stores/booking.store';
+import { useEmployeeStore } from '../stores/employee.store';
 import { useResourceStore } from '../stores/resource.store';
 import { useAvailability } from '../composables/useAvailability';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useNotification } from '@/shared/composables/useNotification';
-import EmployeeSelect from './EmployeeSelect.vue';
-import TimeSlotPicker from './TimeSlotPicker.vue';
+import EmployeeSelect from './EmployeeSelect.vue';import TimeSlotPicker from './TimeSlotPicker.vue';
 import ResourceSelect from './ResourceSelect.vue';
 import type { Booking, BookingFormPrefill, CreateBookingDTO } from '../types/booking.types';
 
@@ -202,6 +202,7 @@ const serviceStore = useServiceStore();
 const categoryStore = useServiceCategoryStore();
 const bookingStore = useBookingStore();
 const resourceStore = useResourceStore();
+const employeeStore = useEmployeeStore();
 const availability = useAvailability();
 const authStore = useAuthStore();
 const notification = useNotification();
@@ -266,10 +267,18 @@ const emailRules = [
   (v: string) => !v || v.includes('@') || 'Email inválido',
 ];
 
-const serviceEmployeeIds = computed(() => {
-  if (!selectedService.value?.employee_id) return [];
-  return [selectedService.value.employee_id];
-});
+// Empleados que ofrecen el servicio seleccionado (via employee_services)
+const serviceEmployeeIds = ref<string[]>([]);
+
+watch(
+  () => form.service_id,
+  async (serviceId) => {
+    serviceEmployeeIds.value = [];
+    if (!serviceId) return;
+    const members = await employeeStore.getEmployeesByService(serviceId);
+    serviceEmployeeIds.value = members.map((e) => e.id);
+  },
+);
 
 function onCategoryChange() {
   form.service_id = '';
