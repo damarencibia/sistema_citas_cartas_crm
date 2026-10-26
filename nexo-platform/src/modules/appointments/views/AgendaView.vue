@@ -6,6 +6,7 @@
       <v-card-text class="pa-4">
         <div class="d-flex align-center justify-center ga-4 mb-4 flex-wrap">
           <v-select
+            v-if="!workspaceStore.isWorkMode"
             v-model="filters.employee_id"
             :items="employeeOptions"
             item-title="text"
@@ -16,6 +17,19 @@
             style="max-width: 240px;"
           />
           <v-btn-toggle
+            v-if="!workspaceStore.isWorkMode"
+            :model-value="teamView ? 'equipo' : 'individual'"
+            density="compact"
+            mandatory
+            rounded="lg"
+            color="primary"
+            @update:model-value="setLayoutMode($event as 'equipo' | 'individual')"
+          >
+            <v-btn value="equipo">Equipo</v-btn>
+            <v-btn value="individual">Individual</v-btn>
+          </v-btn-toggle>
+          <v-btn-toggle
+            v-if="!teamView"
             v-model="viewSegment"
             density="compact"
             mandatory
@@ -28,7 +42,17 @@
           </v-btn-toggle>
         </div>
 
-        <template v-if="viewSegment === 'semana'">
+        <template v-if="showTeamBoard">
+          <TeamScheduleBoard
+            :date="filters.date ?? ''"
+            :employees="employeeStore.activeEmployees"
+            @change-date="filters.date = $event"
+            @open-booking="openDetail"
+            @select-employee="onTeamSelectEmployee"
+          />
+        </template>
+
+        <template v-else-if="viewSegment === 'semana'">
           <WeekDayStrip
             :week-dates="weekDates"
             :counts="weekCounts"
@@ -360,8 +384,10 @@ import { blockedSlotsRepository } from '../repositories/blocked-slots.repository
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useUiStore } from '@/shared/stores/ui.store';
+import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import { formatDate } from '@/shared/utils/format';
 import type { Booking, BookingFormPrefill, CreateBookingDTO, WaitlistEntry, DailyExtra, BlockedSlot } from '../types/booking.types';
+import TeamScheduleBoard from '../components/TeamScheduleBoard.vue';
 
 const bookingStore = useBookingStore();
 const employeeStore = useEmployeeStore();
@@ -395,6 +421,23 @@ const waitlistPrefill = ref<BookingFormPrefill | null>(null);
 const waitlistConversionTarget = ref<WaitlistEntry | null>(null);
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
+const workspaceStore = useWorkspaceStore();
+const teamView = ref(route.query.vista === 'equipo');
+const showTeamBoard = computed(() => !workspaceStore.isWorkMode && teamView.value);
+
+function setLayoutMode(mode: 'equipo' | 'individual') {
+  router.replace({
+    query: {
+      tab: 'reservas',
+      ...(mode === 'equipo' ? { vista: 'equipo' } : {}),
+    },
+  });
+}
+
+function onTeamSelectEmployee(employeeId: string) {
+  filters.employee_id = employeeId;
+  setLayoutMode('individual');
+}
 
 const filters = reactive({
   date: new Date().toISOString().split('T')[0] as string | null,
@@ -409,7 +452,9 @@ const tabKey = computed<'reservas' | 'espera'>(() => {
 const submoduleTitle = computed(() => {
   switch (tabKey.value) {
     case 'espera': return 'Espera';
-    default: return 'Reservas';
+    default: return workspaceStore.isWorkMode
+      ? 'Mi Agenda'
+      : teamView.value ? 'Mi Día del Equipo' : 'Reservas';
   }
 });
 
@@ -684,7 +729,8 @@ watch(monthAnchor, () => {
 
 onMounted(async () => {
   await employeeStore.fetchEmployees();
-  if (isEmployeeView.value) {
+  // Modo trabajo: fijamos la agenda al perfil del propio usuario (cualquier rol)
+  if (workspaceStore.isWorkMode || isEmployeeView.value) {
     await employeeStore.fetchEmployeesWithRoles();
     const userId = authStore.user?.id;
     const match = employeeStore.employees.find(
@@ -698,7 +744,7 @@ onMounted(async () => {
   }
   await loadForTab(tabKey.value);
   await bookingStore.fetchWaitlist();
-  if (route.query.nueva === '1') {
+  if (route.query.nueva === '1' && !workspaceStore.isWorkMode) {
     openCreateForm();
     await router.replace({ query: { tab: tabKey.value } });
   }
@@ -708,8 +754,12 @@ watch(() => route.query.tab, (tab) => {
   loadForTab((tab as string) ?? 'reservas');
 });
 
+watch(() => route.query.vista, (vista) => {
+  teamView.value = vista === 'equipo';
+});
+
 watch(() => route.query.nueva, (nueva) => {
-  if (nueva === '1') {
+  if (nueva === '1' && !workspaceStore.isWorkMode) {
     openCreateForm();
     router.replace({ query: { tab: tabKey.value } });
   }

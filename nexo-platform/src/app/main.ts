@@ -25,6 +25,9 @@ async function bootstrap() {
     await tenantStore.fetchTenant(authStore.user.tenant_id);
   }
 
+  const { useWorkspaceStore } = await import('@/shared/stores/workspace.store');
+  useWorkspaceStore().initMode();
+
   app.mount('#app');
 }
 

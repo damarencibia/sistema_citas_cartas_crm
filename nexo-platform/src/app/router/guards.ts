@@ -35,3 +35,24 @@ export async function roleGuard(to: RouteLocationNormalized) {
     return { name: 'dashboard' };
   }
 }
+
+/**
+ * Separa los espacios de trabajo: si la vista exige un modo
+ * (meta.workspace = 'admin' | 'work') y no coincide con el modo activo,
+ * redirigimos al inicio de ese modo. Las rutas sin meta.workspace son
+ * compartidas por ambos espacios (agenda, Mi Cuenta).
+ */
+export async function workspaceGuard(to: RouteLocationNormalized) {
+  const required = to.meta.workspace as 'admin' | 'work' | undefined;
+  if (!required) return;
+
+  const { useWorkspaceStore } = await import('@/shared/stores/workspace.store');
+  const workspaceStore = useWorkspaceStore();
+
+  if (workspaceStore.mode === required) return;
+
+  if (required === 'work') {
+    return { path: '/appointments/agenda', query: { tab: 'reservas' } };
+  }
+  return { path: '/' };
+}

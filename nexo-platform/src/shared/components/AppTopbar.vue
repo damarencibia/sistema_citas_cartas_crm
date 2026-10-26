@@ -15,6 +15,26 @@
 
     <v-spacer />
 
+    <v-btn-toggle
+      v-if="workspaceStore.canSwitch"
+      :model-value="workspaceStore.mode"
+      mandatory
+      density="comfortable"
+      rounded="pill"
+      class="mr-2 workspace-toggle"
+      :color="workspaceStore.isWorkMode ? 'teal' : 'primary'"
+      @update:model-value="onModeChange"
+    >
+      <v-btn value="work" size="small" class="text-none">
+        <v-icon start size="14">mdi-account-hard-hat</v-icon>
+        <span class="d-none d-md-inline">Modo Trabajo</span>
+      </v-btn>
+      <v-btn value="admin" size="small" class="text-none">
+        <v-icon start size="14">mdi-shield-crown-outline</v-icon>
+        <span class="d-none d-md-inline">Modo Admin</span>
+      </v-btn>
+    </v-btn-toggle>
+
     <NotificationCenter class="mr-1" />
 
     <v-btn
@@ -59,6 +79,7 @@
           class="px-3"
         />
         <v-list-item
+          v-if="authStore.isAdmin"
           prepend-icon="mdi-cog-outline"
           title="Configuración"
           to="/settings/business"
@@ -88,17 +109,35 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useUiStore } from '@/shared/stores/ui.store';
+import { useWorkspaceStore } from '@/shared/stores/workspace.store';
+import type { WorkspaceMode } from '@/shared/stores/workspace.store';
 import NotificationCenter from '@/modules/notifications/components/NotificationCenter.vue';
 import AppBreadcrumbs from '@/shared/components/AppBreadcrumbs.vue';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const tenantStore = useTenantStore();
 const uiStore = useUiStore();
+const workspaceStore = useWorkspaceStore();
+
+/**
+ * Cambio de espacio de trabajo: si la vista actual pertenece al otro
+ * espacio (meta.workspace), redirigimos al inicio del nuevo modo.
+ * Las rutas compartidas (agenda, Mi Cuenta) no se mueven.
+ */
+function onModeChange(mode: WorkspaceMode) {
+  if (mode === workspaceStore.mode) return;
+  workspaceStore.setMode(mode);
+  const required = route.meta.workspace as string | undefined;
+  if (required && required !== mode) {
+    router.push(mode === 'work' ? { path: '/appointments/agenda', query: { tab: 'reservas' } } : { path: '/' });
+  }
+}
 
 const tenantInitial = computed(() => {
   const name = tenantStore.tenant?.name?.trim();

@@ -3,6 +3,7 @@ import type { ComputedRef } from 'vue';
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
+import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 
 export type AgendaTab = 'reservas' | 'espera';
 
@@ -11,6 +12,7 @@ export interface SidebarOption {
   icon: string;
   to: string;
   tab?: AgendaTab;
+  vista?: 'equipo';
   action?: 'new-booking';
 }
 
@@ -28,11 +30,17 @@ export interface BreadcrumbItem {
   isCurrent: boolean;
 }
 
-const AGENDA_OPTIONS: SidebarOption[] = [
+const AGENDA_ADMIN_OPTIONS: SidebarOption[] = [
   { title: 'Nueva Reserva', icon: 'mdi-calendar-plus', to: '/appointments/agenda?tab=reservas&nueva=1', action: 'new-booking' },
+  { title: 'Mi Día del Equipo', icon: 'mdi-view-column', to: '/appointments/agenda?tab=reservas&vista=equipo', tab: 'reservas', vista: 'equipo' },
   { title: 'Reservas', icon: 'mdi-clipboard-text-outline', to: '/appointments/agenda?tab=reservas', tab: 'reservas' },
   { title: 'Espera', icon: 'mdi-account-clock-outline', to: '/appointments/agenda?tab=espera', tab: 'espera' },
   { title: 'Horarios', icon: 'mdi-clock-outline', to: '/appointments/schedules' },
+];
+
+const AGENDA_WORK_OPTIONS: SidebarOption[] = [
+  { title: 'Reservas', icon: 'mdi-clipboard-text-outline', to: '/appointments/agenda?tab=reservas', tab: 'reservas' },
+  { title: 'Espera', icon: 'mdi-account-clock-outline', to: '/appointments/agenda?tab=espera', tab: 'espera' },
 ];
 
 const EVENTS_OPTIONS: SidebarOption[] = [
@@ -57,16 +65,34 @@ const CONFIG_OPTIONS: SidebarOption[] = [
 export function useSidebarModules() {
   const authStore = useAuthStore();
   const tenantStore = useTenantStore();
+  const workspaceStore = useWorkspaceStore();
 
   const modules: ComputedRef<SidebarModule[]> = computed(() => {
     const m = tenantStore.activeModules;
     const admin = authStore.isAdmin;
     const role = authStore.userRole;
-    const list: SidebarModule[] = [
-      { key: 'dashboard', title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/', options: [] },
-    ];
+    const workMode = workspaceStore.isWorkMode;
+    const list: SidebarModule[] = [];
 
-    if (m.events) {
+    // ── Espacio de trabajo (gestión individual) ────────────────────────
+    if (workMode) {
+      if (m.appointments) {
+        list.push({
+          key: 'my-agenda',
+          title: 'Mi Agenda',
+          icon: 'mdi-calendar-outline',
+          to: '/appointments/agenda?tab=reservas',
+          options: AGENDA_WORK_OPTIONS,
+        });
+        list.push({ key: 'my-services', title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services', options: [] });
+      }
+      return list;
+    }
+
+    // ── Espacio de administración (gestión del negocio) ────────────────
+    list.push({ key: 'dashboard', title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/', options: [] });
+
+    if (m.events && admin) {
       list.push({
         key: 'events',
         title: 'Eventos',
@@ -76,17 +102,14 @@ export function useSidebarModules() {
       });
     }
 
-    if (m.appointments) {
+    if (m.appointments && admin) {
       list.push({
         key: 'agenda',
-        title: 'Agenda',
+        title: 'Agendas del Equipo',
         icon: 'mdi-calendar-outline',
-        to: '/appointments/agenda?tab=reservas',
-        options: AGENDA_OPTIONS,
+        to: '/appointments/agenda?tab=reservas&vista=equipo',
+        options: AGENDA_ADMIN_OPTIONS,
       });
-      if (role === 'employee') {
-        list.push({ key: 'my-services', title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services', options: [] });
-      }
     }
 
     if (m.crm && admin) {
@@ -97,14 +120,20 @@ export function useSidebarModules() {
       list.push({ key: 'config', title: 'Configuración', icon: 'mdi-cog-outline', to: '/settings/business', options: CONFIG_OPTIONS });
     }
 
+    // empleados puros (único caso sin toggle): ven Mis Servicios en su menú propio
+    if (m.appointments && role === 'employee' && !admin) {
+      list.push({ key: 'my-services', title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services', options: [] });
+    }
+
     return list;
   });
 
   function routeToModuleKey(route: RouteLocationNormalizedLoaded): string {
     const { path } = route;
     if (path === '/') return 'dashboard';
-    if (path.startsWith('/appointments/agenda')) return 'agenda';
-    if (path === '/appointments/schedules') return 'agenda';
+    if (path.startsWith('/appointments/agenda') || path === '/appointments/schedules') {
+      return workspaceStore.isWorkMode ? 'my-agenda' : 'agenda';
+    }
     if (path === '/appointments/my-services') return 'my-services';
     if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/crm/')) return 'crm';
@@ -116,9 +145,14 @@ export function useSidebarModules() {
   function isOptionActive(route: RouteLocationNormalizedLoaded, opt: SidebarOption): boolean {
     if (opt.action) return false;
     if (route.path !== opt.to.split('?')[0]) return false;
+    if (opt.vista) {
+      return (route.query.vista as string | undefined) === opt.vista;
+    }
     if (opt.tab) {
       const tab = route.query.tab as string | undefined;
-      return (tab ?? 'reservas') === opt.tab;
+      if ((tab ?? 'reservas') !== opt.tab) return false;
+      // 'Reservas' solo cuando no estamos en la vista de equipo
+      return route.query.vista !== 'equipo';
     }
     return route.query.nueva !== '1';
   }

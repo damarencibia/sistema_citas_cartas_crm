@@ -10,7 +10,7 @@ export const routes: RouteRecordRaw[] = [
         path: '',
         name: 'dashboard',
         component: () => import('@/modules/admin/views/DashboardView.vue'),
-        meta: { title: 'Dashboard', icon: 'mdi-view-dashboard' },
+        meta: { title: 'Dashboard', icon: 'mdi-view-dashboard', workspace: 'admin' },
       },
       {
         path: 'appointments',
@@ -40,19 +40,19 @@ export const routes: RouteRecordRaw[] = [
             path: 'my-services',
             name: 'my-services',
             component: () => import('@/modules/appointments/views/MyServicesView.vue'),
-            meta: { title: 'Mis Servicios', role: 'employee' },
+            meta: { title: 'Mis Servicios', role: 'employee', workspace: 'work' },
           },
           {
             path: 'employees',
             name: 'employees',
             component: () => import('@/modules/appointments/views/EmployeesView.vue'),
-            meta: { title: 'Empleados', role: 'admin' },
+            meta: { title: 'Empleados', role: 'admin', workspace: 'admin' },
           },
           {
             path: 'schedules',
             name: 'schedules',
             component: () => import('@/modules/appointments/views/SchedulesView.vue'),
-            meta: { title: 'Horarios' },
+            meta: { title: 'Horarios', workspace: 'admin' },
           },
           {
             path: 'bookings',
@@ -62,13 +62,13 @@ export const routes: RouteRecordRaw[] = [
             path: 'history',
             name: 'booking-history',
             component: () => import('@/modules/appointments/views/BookingHistoryView.vue'),
-            meta: { title: 'Historial' },
+            meta: { title: 'Historial', workspace: 'admin' },
           },
         ],
       },
       {
         path: 'events',
-        meta: { title: 'Eventos', icon: 'mdi-calendar-star' },
+        meta: { title: 'Eventos', icon: 'mdi-calendar-star', workspace: 'admin' },
         children: [
           {
             path: '',
@@ -80,7 +80,7 @@ export const routes: RouteRecordRaw[] = [
       },
       {
         path: 'crm',
-        meta: { title: 'CRM', icon: 'mdi-account-group' },
+        meta: { title: 'CRM', icon: 'mdi-account-group', workspace: 'admin' },
         children: [
           {
             path: 'customers',
@@ -116,7 +116,7 @@ export const routes: RouteRecordRaw[] = [
             path: 'business',
             name: 'business-profile',
             component: () => import('@/modules/admin/views/BusinessProfileView.vue'),
-            meta: { title: 'Mi Negocio' },
+            meta: { title: 'Mi Negocio', workspace: 'admin' },
           },
           {
             path: 'account',
@@ -128,7 +128,7 @@ export const routes: RouteRecordRaw[] = [
             path: 'modules',
             name: 'modules-config',
             component: () => import('@/modules/admin/views/ModulesConfigView.vue'),
-            meta: { title: 'Módulos' },
+            meta: { title: 'Módulos', workspace: 'admin' },
           },
           {
             path: 'portal',
@@ -138,7 +138,7 @@ export const routes: RouteRecordRaw[] = [
             path: 'appointments-config',
             name: 'appointments-config',
             component: () => import('@/modules/admin/views/AppointmentSettingsView.vue'),
-            meta: { title: 'Config. Citas' },
+            meta: { title: 'Config. Citas', workspace: 'admin' },
           },
         ],
       },
