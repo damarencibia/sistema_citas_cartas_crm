@@ -84,6 +84,7 @@ export function useSidebarModules() {
           options: AGENDA_WORK_OPTIONS,
         });
         list.push({ key: 'my-services', title: 'Mis Servicios', icon: 'mdi-content-cut', to: '/appointments/my-services', options: [] });
+        list.push({ key: 'my-stats', title: 'Mis Estadísticas', icon: 'mdi-chart-box-outline', to: '/appointments/my-stats', options: [] });
       }
       return list;
     }
@@ -134,6 +135,7 @@ export function useSidebarModules() {
       return workspaceStore.isWorkMode ? 'my-agenda' : 'agenda';
     }
     if (path === '/appointments/my-services') return 'my-services';
+    if (path === '/appointments/my-stats') return 'my-stats';
     if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/crm/')) return 'crm';
     if (path.startsWith('/settings/') || path.startsWith('/appointments/')) return 'config';

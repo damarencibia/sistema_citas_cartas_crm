@@ -43,6 +43,12 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: 'Mis Servicios', role: 'employee', workspace: 'work' },
           },
           {
+            path: 'my-stats',
+            name: 'my-stats',
+            component: () => import('@/modules/appointments/views/MyStatsView.vue'),
+            meta: { title: 'Mis Estadísticas', role: 'employee', workspace: 'work' },
+          },
+          {
             path: 'employees',
             name: 'employees',
             component: () => import('@/modules/appointments/views/EmployeesView.vue'),
