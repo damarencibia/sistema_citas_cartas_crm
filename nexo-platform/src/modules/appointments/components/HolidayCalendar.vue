@@ -161,12 +161,14 @@ import { useScheduleStore } from '../stores/schedule.store';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import { DEFAULT_SCHEDULE_ID } from '../types/schedule.types';
 import type { HolidayException } from '../types/schedule.types';
 
 const scheduleStore = useScheduleStore();
 const notification = useNotification();
 const authStore = useAuthStore();
+const workspaceStore = useWorkspaceStore();
 const { confirm } = useConfirm();
 
 const showForm = ref(false);
@@ -174,7 +176,8 @@ const saving = ref(false);
 
 const activeEmployeeId = computed(() => scheduleStore.activeEmployeeId);
 const isDefaultMode = computed(() => activeEmployeeId.value === DEFAULT_SCHEDULE_ID);
-const isEmployeeView = computed(() => authStore.userRole === 'employee');
+// Vista "propia": Modo Trabajo o empleado puro — solo sus propias excepciones
+const isEmployeeView = computed(() => workspaceStore.isWorkMode || authStore.userRole === 'employee');
 const loading = computed(() => scheduleStore.loading);
 
 const form = reactive({

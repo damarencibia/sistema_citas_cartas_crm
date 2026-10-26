@@ -52,7 +52,7 @@ export const routes: RouteRecordRaw[] = [
             path: 'schedules',
             name: 'schedules',
             component: () => import('@/modules/appointments/views/SchedulesView.vue'),
-            meta: { title: 'Horarios', workspace: 'admin' },
+            meta: { title: 'Horarios' },
           },
           {
             path: 'bookings',

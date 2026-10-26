@@ -38,6 +38,7 @@ const AGENDA_ADMIN_OPTIONS: SidebarOption[] = [
 
 const AGENDA_WORK_OPTIONS: SidebarOption[] = [
   { title: 'Reservas', icon: 'mdi-clipboard-text-outline', to: '/appointments/agenda?tab=reservas', tab: 'reservas' },
+  { title: 'Mi Horario', icon: 'mdi-clock-outline', to: '/appointments/schedules' },
   { title: 'Espera', icon: 'mdi-account-clock-outline', to: '/appointments/agenda?tab=espera', tab: 'espera' },
 ];
 

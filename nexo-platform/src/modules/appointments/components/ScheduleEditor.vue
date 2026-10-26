@@ -196,6 +196,7 @@ import { useScheduleStore } from '../stores/schedule.store';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import { useEmployeeStore } from '../stores/employee.store';
 import EmployeeSelect from './EmployeeSelect.vue';
 import ShiftDialog from './ShiftDialog.vue';
@@ -207,6 +208,7 @@ const scheduleStore = useScheduleStore();
 const notification = useNotification();
 const authStore = useAuthStore();
 const employeeStore = useEmployeeStore();
+const workspaceStore = useWorkspaceStore();
 const { confirm } = useConfirm();
 
 const selectedEmployeeId = computed<string | null>({
@@ -219,7 +221,9 @@ const saving = ref(false);
 const dirty = ref(false);
 const suppressWatch = ref(false);
 
-const isEmployeeView = computed(() => authStore.userRole === 'employee');
+// Vista "propia": Modo Trabajo (cualquier rol con perfil de trabajador)
+// o un empleado puro — el selector queda fijado a su perfil.
+const isEmployeeView = computed(() => workspaceStore.isWorkMode || authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
 
 const allowedIds = computed(() =>
