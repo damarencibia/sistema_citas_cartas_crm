@@ -4,6 +4,64 @@
 
     <v-card v-if="tabKey === 'reservas'">
       <v-card-text class="pa-4">
+        <div
+          v-if="workSummary"
+          class="d-flex align-center justify-center ga-6 mb-4 flex-wrap"
+        >
+          <div class="d-flex align-center ga-2">
+            <v-avatar color="primary" variant="tonal" size="40">
+              <v-icon>mdi-calendar-check-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h6 font-weight-bold text-primary leading-none">{{ workSummary.total }}</div>
+              <div class="text-caption text-medium-emphasis">
+                citas {{ workSummary.isToday ? 'hoy' : 'ese día' }}
+              </div>
+            </div>
+          </div>
+
+          <div v-if="workSummary.pendings > 0" class="d-flex align-center ga-2">
+            <v-avatar color="warning" variant="tonal" size="40">
+              <v-icon>mdi-clock-alert-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h6 font-weight-bold text-warning leading-none">{{ workSummary.pendings }}</div>
+              <div class="text-caption text-medium-emphasis">por aprobar</div>
+            </div>
+          </div>
+
+          <div
+            v-if="workSummary.next"
+            class="d-flex align-center ga-2 next-booking"
+            :title="`Abrir detalle de la cita de ${workSummary.next.customer_name || 'cliente'}`"
+            @click="openDetail(workSummary.next)"
+          >
+            <v-avatar color="teal" variant="tonal" size="40">
+              <v-icon>mdi-clock-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-subtitle-1 font-weight-bold text-teal leading-none">
+                {{ workSummary.next.start_time?.slice(0, 5) }}
+              </div>
+              <div class="text-caption text-medium-emphasis text-truncate" style="max-width: 230px;">
+                {{ workSummary.nextLabel }}:
+                {{ workSummary.next.service?.name ?? 'Servicio' }}
+                · {{ workSummary.next.customer_name || 'Cliente' }}
+              </div>
+            </div>
+          </div>
+
+          <v-chip
+            v-else-if="workSummary.dayOver"
+            size="small"
+            variant="tonal"
+            color="success"
+            prepend-icon="mdi-check-circle-outline"
+          >
+            Sin más citas hoy
+          </v-chip>
+        </div>
+
         <div class="d-flex align-center justify-center ga-4 mb-4 flex-wrap">
           <v-select
             v-if="!workspaceStore.isWorkMode"
@@ -456,6 +514,44 @@ const submoduleTitle = computed(() => {
       ? 'Mi Agenda'
       : teamView.value ? 'Mi Día del Equipo' : 'Reservas';
   }
+});
+
+const todayIso = computed(() => new Date().toISOString().split('T')[0]);
+
+function timeToMinutes(t?: string | null): number {
+  if (!t) return Number.POSITIVE_INFINITY;
+  const [h, m] = t.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+/**
+ * Micro-dashboard del Modo Trabajo: citas del día seleccionado,
+ * pendientes por aprobar y la próxima cita (si es hoy).
+ */
+const workSummary = computed(() => {
+  if (!workspaceStore.isWorkMode) return null;
+  const list = bookingStore.bookings.filter(
+    (b) => b.status !== 'cancelled' && b.status !== 'no_show',
+  );
+  const sorted = [...list].sort((a, b) => (a.start_time ?? '').localeCompare(b.start_time ?? ''));
+  const isToday = filters.date === todayIso.value;
+  let next: Booking | null = null;
+  let nextLabel: 'Próxima' | 'Primera' = 'Primera';
+  if (isToday) {
+    const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+    next = sorted.find((b) => timeToMinutes(b.start_time) >= nowMin) ?? null;
+    nextLabel = 'Próxima';
+  } else {
+    next = sorted[0] ?? null;
+  }
+  return {
+    total: list.length,
+    pendings: list.filter((b) => b.status === 'pending_approval').length,
+    next,
+    nextLabel,
+    isToday,
+    dayOver: isToday && list.length > 0 && !next,
+  };
 });
 
 const tenantId = computed(() => tenantStore.tenant?.id ?? '');
@@ -1012,6 +1108,17 @@ async function onRemoveExtra(extra: DailyExtra) {
 <style scoped>
 .closure-dialog__body {
   min-height: 0;
+}
+
+.next-booking {
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 2px 10px;
+  transition: background-color 0.15s ease;
+}
+
+.next-booking:hover {
+  background-color: color-mix(in srgb, rgb(var(--v-theme-teal)) 10%, transparent);
 }
 </style>
 
