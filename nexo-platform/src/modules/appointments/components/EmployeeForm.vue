@@ -58,6 +58,22 @@
             class="mb-1"
           />
           <v-select
+            v-if="roleEditable"
+            v-model="localForm.role"
+            :items="[
+              { label: 'Empleado', value: 'employee' },
+              { label: 'Administrador', value: 'admin' },
+            ]"
+            item-title="label"
+            item-value="value"
+            label="Rol"
+            density="comfortable"
+            :disabled="!hasAccount"
+            class="mb-1"
+            :hint="hasAccount ? 'Si cambia el rol, el empleado debe iniciar sesión de nuevo para que sus permisos se actualicen' : 'Este empleado no tiene cuenta de acceso'"
+            persistent-hint
+          />
+          <v-select
             v-model="localForm.category_ids"
             :items="categoryOptions"
             item-title="text"
@@ -98,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import type { Employee } from '../types/employee.types';
 
 export interface EmployeeFormData {
@@ -107,6 +123,7 @@ export interface EmployeeFormData {
   email: string;
   phone: string;
   color: string;
+  role?: string;
   category_ids: string[];
   is_active: boolean;
 }
@@ -126,12 +143,19 @@ const isEditing = ref(false);
 const submitting = ref(false);
 const formRef = ref();
 
+// El rol solo se muestra/gestiona en edición: para el owner está
+// reservado y sin cuenta de acceso no hay claims que actualizar.
+const roleEditable = computed(() => isEditing.value);
+
+const hasAccount = computed(() => !!props.employee?.supabase_user_id && props.employee?.role !== 'owner');
+
 const localForm = reactive<EmployeeFormData>({
   first_name: '',
   last_name: '',
   email: '',
   phone: '',
   color: '#1976D2',
+  role: 'employee',
   category_ids: [],
   is_active: true,
 });
@@ -146,6 +170,8 @@ watch(
       localForm.email = e.email ?? '';
       localForm.phone = e.phone ?? '';
       localForm.color = e.color;
+      // Precarga del rol real (fix: antes no se cargaba)
+      localForm.role = e.role === 'owner' || e.role === 'admin' ? e.role : 'employee';
       localForm.category_ids = [...(e.category_ids ?? [])];
       localForm.is_active = e.is_active;
     } else {
@@ -155,6 +181,7 @@ watch(
       localForm.email = '';
       localForm.phone = '';
       localForm.color = '#1976D2';
+      localForm.role = 'employee';
       localForm.category_ids = [];
       localForm.is_active = true;
     }

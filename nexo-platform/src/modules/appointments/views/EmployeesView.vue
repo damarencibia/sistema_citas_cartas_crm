@@ -20,129 +20,207 @@
       {{ alertMessage }}
     </v-alert>
 
-    <v-card>
-      <DataTable
-        :items="employeeStore.employees"
-        :total="employeeStore.employees.length"
-        :loading="employeeStore.loading"
-        item-value="id"
-        show-expand
-        :headers="headers"
+    <!-- Lista de tarjetas del equipo -->
+    <v-row v-if="loading || employeeStore.loading">
+      <v-col
+        v-for="i in 6"
+        :key="i"
+        cols="12"
+        sm="6"
+        lg="4"
       >
-        <template #[`item.full_name`]="{ item }">
-          <div class="d-flex align-center ga-2">
-            <v-avatar :color="item.color || 'grey'" size="32">
-              <span class="text-white text-caption">
-                {{ (item.first_name || '')[0] }}{{ (item.last_name || '')[0] }}
+        <v-skeleton-loader type="article, actions" boilerplate />
+      </v-col>
+    </v-row>
+
+    <div
+      v-else-if="!employeeStore.employees.length"
+      class="text-center pa-10"
+    >
+      <v-icon size="56" color="grey-lighten-1">mdi-account-group-outline</v-icon>
+      <p class="text-h6 mt-4 mb-1">Aún no tienes miembros</p>
+      <p class="text-body-2 text-medium-emphasis mb-4">
+        Agrega tu primer empleado para que pueda atender servicios.
+      </p>
+      <v-btn color="primary" variant="flat" @click="openCreateDialog">
+        <v-icon start>mdi-account-plus</v-icon>
+        Agregar Empleado
+      </v-btn>
+    </div>
+
+    <v-row v-else>
+      <v-col
+        v-for="member in employeeStore.employees"
+        :key="member.id"
+        cols="12"
+        sm="6"
+        lg="4"
+      >
+        <v-card
+          flat
+          rounded="lg"
+          class="emp-card h-100"
+          :class="{ 'emp-card--inactive': !member.is_active }"
+          :style="{ borderInlineStart: `4px solid ${member.color || 'grey'}` }"
+        >
+          <!-- Identidad -->
+          <v-card-text class="d-flex align-center ga-3 pb-3">
+            <v-avatar :color="member.color || 'grey'" size="42">
+              <span class="text-white text-body-2">
+                {{ (member.first_name || '')[0] }}{{ (member.last_name || '')[0] }}
               </span>
             </v-avatar>
-            <div>
-              <div class="text-body-2 font-weight-medium">{{ item.first_name }} {{ item.last_name }}</div>
-              <div class="text-caption text-medium-emphasis">{{ item.email || 'Sin email' }}</div>
+            <div class="min-width-0 flex-grow-1">
+              <div class="text-subtitle-1 font-weight-medium text-truncate">
+                {{ member.first_name }} {{ member.last_name }}
+              </div>
+              <div class="text-caption text-medium-emphasis text-truncate">
+                {{ member.email || 'Sin email' }}
+              </div>
             </div>
-          </div>
-        </template>
-        <template #[`item.role`]="{ value }">
-          <v-chip :color="roleColor(value)" size="small" label>
-            {{ roleLabel(value) }}
-          </v-chip>
-        </template>
-        <template #[`item.services`]="{ item }">
-          <div v-if="item.categories?.length" class="d-flex flex-column align-start ga-1">
-            <v-chip-group>
-              <v-chip
-                v-for="c in item.categories"
-                :key="c.id"
-                size="x-small"
-                variant="tonal"
-                color="primary"
-              >
-                {{ c.icon || '' }} {{ c.name }}
-              </v-chip>
-            </v-chip-group>
-            <span class="text-caption text-medium-emphasis">
-              {{ item.enabled_service_ids?.length ?? 0 }} servicio(s) que ofrece
-            </span>
-          </div>
-          <span v-else class="text-caption text-medium-emphasis">Sin categorías</span>
-        </template>
-        <template #[`item.credential`]="{ item }">
-          <template v-if="item.supabase_user_id && item.role !== 'owner'">
             <v-chip
-              v-if="item.initial_password_pending"
-              color="amber"
-              size="x-small"
-              label
-            >
-              <v-icon start size="12">mdi-key-alert</v-icon>
-              Clave pendiente de cambio
-            </v-chip>
-            <v-chip
-              v-else
-              color="success"
-              size="x-small"
-              label
+              :color="roleColor(member.role)"
+              size="small"
               variant="tonal"
+              label
             >
-              Cambiada por el usuario
+              {{ roleLabel(member.role) }}
             </v-chip>
-          </template>
-          <span v-else class="text-caption text-medium-emphasis">—</span>
-        </template>
-        <template #[`item.is_active`]="{ value, item }">
-          <v-switch
-            :model-value="value"
-            density="compact"
-            hide-details
-            :disabled="item.role === 'owner'"
-            @update:model-value="toggleActive(item, $event)"
-          />
-        </template>
-        <template #[`item.actions`]="{ item }">
-          <v-btn
-            v-if="item.supabase_user_id && item.role !== 'owner'"
-            icon="mdi-lock-reset"
-            size="small"
-            variant="text"
-            title="Restablecer contraseña compartible"
-            @click="openResetDialog(item)"
-          />
-          <v-btn
-            icon="mdi-pencil"
-            size="small"
-            variant="text"
-            @click="openEditDialog(item)"
-          />
-          <v-btn
-            icon="mdi-delete"
-            size="small"
-            variant="text"
-            color="error"
-            :disabled="item.role === 'owner'"
-            @click="onDelete(item)"
-          />
-        </template>
-        <template #expanded-row="{ item }">
-          <div class="pa-4">
-            <div class="text-subtitle-2 mb-2">Servicios que ofrece</div>
-            <div v-if="!(item.enabled_service_ids || []).length" class="text-body-2 text-medium-emphasis">
-              Sin servicios habilitados (el empleado los elige en Mis Servicios)
-            </div>
-            <v-chip-group v-else>
-              <v-chip
-                v-for="s in enabledServices(item)"
-                :key="s.id"
-                variant="outlined"
-                :color="s.color || 'primary'"
-                class="mb-1"
+          </v-card-text>
+
+          <v-divider />
+
+          <!-- Categorías + servicios -->
+          <v-card-text class="py-3">
+            <div class="emp-card-label mb-2">Atiende</div>
+
+            <div
+              v-if="memberCategories(member).all.length"
+              class="d-flex align-center flex-wrap ga-2 text-body-2"
+            >
+              <span
+                v-for="c in memberCategories(member).shown"
+                :key="c.id"
+                class="d-inline-flex align-center ga-1 emp-category"
               >
+                <v-icon size="14" color="primary">{{ c.icon || 'mdi-tag-outline' }}</v-icon>
+                {{ c.name }}
+              </span>
+              <v-tooltip
+                v-if="memberCategories(member).extra"
+                location="top"
+                max-width="260"
+              >
+                <template #activator="{ props: tooltipProps }">
+                  <span
+                    v-bind="tooltipProps"
+                    class="text-caption text-medium-emphasis cursor-pointer"
+                  >
+                    (+{{ memberCategories(member).extra }} más)
+                  </span>
+                </template>
+                <div v-for="c in memberCategories(member).all" :key="c.id" class="mb-1">
+                  {{ c.icon || 'mdi-tag-outline' }} {{ c.name }}
+                </div>
+              </v-tooltip>
+            </div>
+            <div v-else class="text-body-2 text-disabled">
+              Sin categorías asignadas — edítalo para vincularlo
+            </div>
+
+            <div v-if="memberServices(member).list.length" class="d-flex align-center flex-wrap ga-2 mt-2 text-caption text-medium-emphasis">
+              <span
+                v-for="s in memberServices(member).shown"
+                :key="s.id"
+                class="d-inline-flex align-center ga-1"
+              >
+                <span
+                  class="emp-service-dot"
+                  :style="{ backgroundColor: s.color || 'primary' }"
+                />
                 {{ s.name }}
-              </v-chip>
-            </v-chip-group>
+              </span>
+              <v-tooltip
+                v-if="memberServices(member).extra"
+                location="top"
+                max-width="260"
+              >
+                <template #activator="{ props: tooltipProps }">
+                  <span v-bind="tooltipProps" class="cursor-pointer">
+                    +{{ memberServices(member).extra }} más
+                  </span>
+                </template>
+                <div v-for="s in memberServices(member).list" :key="s.id" class="mb-1">
+                  {{ s.name }}
+                </div>
+              </v-tooltip>
+            </div>
+            <div v-else-if="memberCategories(member).all.length" class="text-caption text-disabled mt-2">
+              Sin servicios habilitados — los elige en Mis Servicios
+            </div>
+
+            <!-- Estado de credencial -->
+            <div
+              v-if="member.supabase_user_id && member.role !== 'owner'"
+              class="d-inline-flex align-center ga-1 text-caption mt-3"
+              :class="member.initial_password_pending ? 'text-amber-darken-2' : 'text-success'"
+            >
+              <v-icon size="14">
+                {{ member.initial_password_pending ? 'mdi-key-alert' : 'mdi-check-circle' }}
+              </v-icon>
+              {{ member.initial_password_pending ? 'Contraseña: pendiente de cambio' : 'Contraseña: cambiada por el usuario' }}
+            </div>
+          </v-card-text>
+
+          <v-divider />
+
+          <!-- Pie: activo + acciones -->
+          <div class="d-flex align-center ga-1 px-4 py-2">
+            <v-switch
+              :model-value="member.is_active"
+              color="primary"
+              density="compact"
+              hide-details
+              :disabled="member.role === 'owner'"
+              @update:model-value="toggleActive(member, $event === true)"
+            />
+            <span
+              class="text-caption ml-3"
+              :class="member.is_active ? 'text-success' : 'text-disabled'"
+            >
+              {{ member.is_active ? 'Activo' : 'Inactivo' }}
+            </span>
+            <v-spacer />
+            <v-btn
+              v-if="member.supabase_user_id && member.role !== 'owner'"
+              icon="mdi-lock-reset"
+              size="small"
+              variant="text"
+              color="medium-emphasis"
+              title="Restablecer contraseña compartible"
+              @click="openResetDialog(member)"
+            />
+            <v-btn
+              icon="mdi-pencil"
+              size="small"
+              variant="text"
+              color="medium-emphasis"
+              title="Editar empleado"
+              @click="openEditDialog(member)"
+            />
+            <v-btn
+              icon="mdi-delete"
+              size="small"
+              variant="text"
+              color="error"
+              :disabled="member.role === 'owner'"
+              title="Eliminar empleado"
+              @click="onDelete(member)"
+            />
           </div>
-        </template>
-      </DataTable>
-    </v-card>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- Create Dialog -->
     <v-dialog
@@ -444,7 +522,6 @@ import { useEmployeeStore } from '../stores/employee.store';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import PageHeader from '@/shared/components/PageHeader.vue';
-import DataTable from '@/shared/components/DataTable.vue';
 import EmployeeForm from '../components/EmployeeForm.vue';
 import type { Employee } from '../types/employee.types';
 import type { EmployeeFormData } from '../components/EmployeeForm.vue';
@@ -458,14 +535,29 @@ const tenantStore = useTenantStore();
 const notification = useNotification();
 const { confirm } = useConfirm();
 
-const headers = [
-  { title: 'Miembro', key: 'full_name', sortable: false },
-  { title: 'Rol', key: 'role', sortable: true },
-  { title: 'Credencial', key: 'credential', sortable: false },
-  { title: 'Categorías', key: 'services', sortable: false },
-  { title: 'Activo', key: 'is_active', sortable: true },
-  { title: 'Acciones', key: 'actions', sortable: false },
-];
+const MAX_CATEGORY_ITEMS = 3;
+const MAX_SERVICE_ITEMS = 3;
+
+/** Categorías legibles para la tarjeta: máx 3 visibles + "(+N más)" */
+function memberCategories(employee: Employee) {
+  const all = employee.categories ?? [];
+  return {
+    all,
+    shown: all.slice(0, MAX_CATEGORY_ITEMS),
+    extra: Math.max(0, all.length - MAX_CATEGORY_ITEMS),
+  };
+}
+
+/** Servicios que ofrece: máx 3 visibles (con color) + "+N más" */
+function memberServices(employee: Employee) {
+  const ids = new Set(employee.enabled_service_ids ?? []);
+  const list = serviceStore.services.filter((s) => ids.has(s.id));
+  return {
+    list,
+    shown: list.slice(0, MAX_SERVICE_ITEMS),
+    extra: Math.max(0, list.length - MAX_SERVICE_ITEMS),
+  };
+}
 
 const loading = ref(true);
 const createDialog = ref(false);
@@ -548,21 +640,14 @@ const categoryOptions = computed(() =>
   })),
 );
 
-const enabledServices = computed(() => {
-  return (employee: Employee) => {
-    const ids = new Set(employee.enabled_service_ids ?? []);
-    return serviceStore.services.filter((s) => ids.has(s.id));
-  };
-});
-
-function roleColor(role: string): string {
+function roleColor(role?: string): string {
   const map: Record<string, string> = { owner: 'primary', admin: 'info', employee: 'grey' };
-  return map[role] ?? 'grey';
+  return map[role ?? 'employee'] ?? 'grey';
 }
 
-function roleLabel(role: string): string {
+function roleLabel(role?: string): string {
   const map: Record<string, string> = { owner: 'Propietario', admin: 'Admin', employee: 'Empleado' };
-  return map[role] ?? role;
+  return map[role ?? 'employee'] ?? role ?? 'Empleado';
 }
 
 onMounted(async () => {
@@ -712,6 +797,34 @@ function closeEditDialog() {
 async function onEditSave(data: EmployeeFormData) {
   if (!editingEmployee.value) return;
   try {
+    // Cambio de rol: requiere actualizar users.role Y los claims del JWT
+    // (service role) — se delega a la Edge Function ANTES del resto.
+    if (
+      data.role &&
+      editingEmployee.value.supabase_user_id &&
+      data.role !== editingEmployee.value.role
+    ) {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-team-member-role`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authStore.session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({
+          employee_id: editingEmployee.value.id,
+          role: data.role,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        notification.error(result.error || 'Error al cambiar el rol');
+        return;
+      }
+      notification.info(
+        `Rol actualizado a ${data.role === 'admin' ? 'Administrador' : 'Empleado'}. El empleado debe iniciar sesión de nuevo para recibir sus nuevos permisos.`,
+      );
+    }
+
     await employeeStore.updateEmployee(editingEmployee.value.id, {
       first_name: data.first_name,
       last_name: data.last_name,
@@ -722,7 +835,9 @@ async function onEditSave(data: EmployeeFormData) {
     });
     // Categorías asignadas + sincronización de los servicios que ofrece
     await employeeStore.updateEmployeeCategories(editingEmployee.value.id, data.category_ids);
-    notification.success('Empleado actualizado');
+    if (!data.role || data.role === editingEmployee.value.role) {
+      notification.success('Empleado actualizado');
+    }
     closeEditDialog();
   } catch {
     notification.error('Error al guardar empleado');
@@ -763,5 +878,42 @@ async function onDelete(member: Employee) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+/* ===== Tarjetas del equipo ===== */
+.emp-card {
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.emp-card:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.emp-card--inactive {
+  opacity: 0.55;
+}
+
+.emp-card-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.emp-category {
+  min-width: 0;
+}
+
+.emp-service-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

@@ -22,6 +22,15 @@
     >
       {{ successMessage }}
     </v-alert>
+    <v-alert
+      v-if="authStore.session"
+      type="info"
+      variant="tonal"
+      class="mb-4"
+    >
+      Tienes una sesión activa de otra cuenta. Al crear el nuevo negocio se
+      cerrará esa sesión y entrarás directamente al nuevo espacio.
+    </v-alert>
 
     <v-form @submit.prevent="handleRegister">
       <v-text-field
@@ -152,6 +161,12 @@ async function handleRegister() {
   authError.value = null;
   successMessage.value = null;
   try {
+    // El registro debe partir de un estado limpio: si hay sesión de otra
+    // cuenta, el signUp viaja con ese JWT y GoTrue falla (y de todos modos
+    // la sesión nueva no reemplazaría la vista). Cerramos antes.
+    if (authStore.session) {
+      await authStore.logout();
+    }
     await authStore.register(
       form.email,
       form.password,
@@ -170,7 +185,15 @@ async function handleRegister() {
       router.push('/auth/login');
     }
   } catch (e: any) {
-    authError.value = e.message || 'Error al registrarse';
+    const msg = e?.message ?? '';
+    if (e?.status === 422 || /already registered|ya está registrad/i.test(msg)) {
+      authError.value = 'Este email ya tiene una cuenta. Inicia sesión con ese email en su lugar.';
+    } else if (/unexpected_failure|Database error/i.test(msg)) {
+      authError.value =
+        'No pudimos crear la cuenta en este momento. Espera unos segundos e inténtalo de nuevo.';
+    } else {
+      authError.value = msg || 'Error al registrarse';
+    }
   } finally {
     loading.value = false;
   }

@@ -152,9 +152,15 @@ export const employeeRepository = {
       .delete()
       .eq('employee_id', employeeId);
     if (unique.length > 0) {
+      const authStore = useAuthStore();
+      const tenantId = authStore.user?.tenant_id;
       const { error: insertError } = await (supabase as any)
         .from('employee_categories')
-        .insert(unique.map((cid) => ({ employee_id: employeeId, category_id: cid })));
+        .insert(unique.map((cid) => ({
+          tenant_id: tenantId,
+          employee_id: employeeId,
+          category_id: cid,
+        })));
       if (insertError) throw insertError;
     }
 
