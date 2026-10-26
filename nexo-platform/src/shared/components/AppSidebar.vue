@@ -85,7 +85,7 @@
             :title="opt.title"
             rounded="lg"
             class="sidebar-item mb-1"
-            :class="{ 'sidebar-item--active': isOptionActive(route, opt), 'sidebar-item--new': opt.action === 'new-booking' }"
+            :class="{ 'sidebar-item--active': isOptionActive(route, opt) }"
             @click="go(opt.to)"
           />
         </v-list>
@@ -135,7 +135,7 @@
             rounded="md"
             color="primary"
             class="sidebar-item mb-1"
-            :class="{ 'sidebar-item--active': isOptionActive(route, opt), 'sidebar-item--new': opt.action === 'new-booking' }"
+            :class="{ 'sidebar-item--active': isOptionActive(route, opt) }"
             @click="go(opt.to)"
           />
         </v-list>
@@ -261,17 +261,6 @@ watch(isDesktop, (val) => {
 
 .sidebar-item--active .v-icon {
   color: #fff !important;
-}
-
-.sidebar-item--new {
-  color: rgb(var(--v-theme-primary)) !important;
-  font-weight: 600;
-  min-height: 40px;
-  border: 1px solid rgb(var(--v-theme-primary));
-}
-
-.sidebar-item--new .v-icon {
-  color: rgb(var(--v-theme-primary)) !important;
 }
 
 .desktop-nav {

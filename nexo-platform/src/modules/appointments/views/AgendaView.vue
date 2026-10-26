@@ -239,17 +239,9 @@
           :entries="bookingStore.waitlist"
           :loading="bookingStore.waitlistLoading"
           @cancel="onWaitlistCancel"
-          @convert="onWaitlistConvert"
         />
       </v-card-text>
     </v-card>
-
-    <BookingForm
-      :visible="showForm"
-      :prefill="waitlistPrefill"
-      @close="closeForm"
-      @save="onCreateBooking"
-    />
 
     <BookingDetailDrawer
       :visible="showDetail"
@@ -259,46 +251,8 @@
       show-actions
       @close="showDetail = false"
       @cancel-turn="onCancelTurn"
-      @waitlist-convert="onDetailWaitlistConvert"
       @waitlist-remove="onWaitlistCancel"
     />
-
-    <v-dialog v-model="whatsAppDialog" max-width="480">
-      <v-card>
-        <v-card-title class="d-flex align-center ga-2">
-          <v-icon color="success">mdi-whatsapp</v-icon>
-          Aviso al cliente
-        </v-card-title>
-        <v-card-text>
-          <p class="text-body-2 mb-3">
-            No se pudo abrir WhatsApp automáticamente. Copia el mensaje y envíalo por el chat del cliente:
-          </p>
-          <v-textarea
-            :model-value="whatsAppDialogMessage"
-            readonly
-            auto-grow
-            rows="4"
-            variant="outlined"
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="whatsAppDialog = false">Cerrar</v-btn>
-          <v-btn
-            v-if="whatsAppDialogDigits"
-            color="success"
-            prepend-icon="mdi-whatsapp"
-            :href="whatsAppDialogHref"
-            target="_blank"
-          >
-            Abrir chat
-          </v-btn>
-          <v-btn color="primary" prepend-icon="mdi-content-copy" @click="copyWhatsAppMessage">
-            Copiar mensaje
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 
     <v-dialog
       v-if="smAndDown"
@@ -427,7 +381,6 @@ import { useNotification } from '@/shared/composables/useNotification';
 import { useBookingStore } from '../stores/booking.store';
 import { useEmployeeStore } from '../stores/employee.store';
 import BookingCard from '../components/BookingCard.vue';
-import BookingForm from '../components/BookingForm.vue';
 import BookingDetailDrawer from '../components/BookingDetailDrawer.vue';
 import BookingApprovalList from '../components/BookingApprovalList.vue';
 import WaitlistPanel from '../components/WaitlistPanel.vue';
@@ -444,7 +397,7 @@ import { useAuthStore } from '@/shared/stores/auth.store';
 import { useUiStore } from '@/shared/stores/ui.store';
 import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import { formatDate } from '@/shared/utils/format';
-import type { Booking, BookingFormPrefill, CreateBookingDTO, WaitlistEntry, DailyExtra, BlockedSlot } from '../types/booking.types';
+import type { Booking, WaitlistEntry, DailyExtra, BlockedSlot } from '../types/booking.types';
 import TeamScheduleBoard from '../components/TeamScheduleBoard.vue';
 
 const bookingStore = useBookingStore();
@@ -465,18 +418,12 @@ const weekCounts = ref<Record<string, WeekDayCount>>({});
 const monthAnchor = ref(new Date().toISOString().split('T')[0]);
 const monthLoading = ref(false);
 const monthCounts = ref<Record<string, WeekDayCount>>({});
-const showForm = ref(false);
 const showDetail = ref(false);
 const showClosure = ref(false);
-const whatsAppDialog = ref(false);
-const whatsAppDialogMessage = ref('');
-const whatsAppDialogDigits = ref<string | null>(null);
 const dayClosed = ref(false);
 const selectedBooking = ref<Booking | null>(null);
 const dayBlocks = ref<BlockedSlot[]>([]);
 const closurePanelRef = ref<InstanceType<typeof DailyClosurePanel> | null>(null);
-const waitlistPrefill = ref<BookingFormPrefill | null>(null);
-const waitlistConversionTarget = ref<WaitlistEntry | null>(null);
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
 const workspaceStore = useWorkspaceStore();
@@ -603,63 +550,6 @@ const timeline = computed(() => {
   }));
   return [...bookings, ...blocks].sort((a, b) => a.start.localeCompare(b.start));
 });
-
-function firstWaitlistClient(booking: Booking): WaitlistEntry | null {
-  const active = (waitlistBySlot.value[booking.id] ?? []).filter(
-    (e) => e.status === 'waiting' || e.status === 'notified',
-  );
-  return (
-    [...active].sort(
-      (a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at),
-    )[0] ?? null
-  );
-}
-
-const whatsAppDialogHref = computed(() =>
-  whatsAppDialogDigits.value
-    ? `https://wa.me/${whatsAppDialogDigits.value}?text=${encodeURIComponent(whatsAppDialogMessage.value)}`
-    : '',
-);
-
-function buildAssignmentMessage(booking: Booking, customerName: string, accessToken: string | null): string {
-  const tenantName = tenantStore.tenant?.name ?? 'nuestro negocio';
-  const serviceName = booking.service?.name ?? 'tu servicio';
-  const dateLabel = formatDate(booking.date, "EEEE d 'de' MMMM");
-  const timeLabel = booking.start_time?.slice(0, 5) ?? '';
-  const base = `Hola ${customerName}, tu turno para ${serviceName} el ${dateLabel} a las ${timeLabel} fue aprobado en la agenda de ${tenantName}.`;
-  if (accessToken && tenantStore.tenant?.slug) {
-    const link = `${window.location.origin}/${tenantStore.tenant.slug}/reservas/${accessToken}`;
-    return `${base} ¿Vas a asistir? Confirma aquí: ${link}`;
-  }
-  return `${base} Si no puedes asistir, avísanos por este chat.`;
-}
-
-function normalizeWhatsAppDigits(phone: string | null): string | null {
-  if (!phone) return null;
-  let digits = phone.replace(/\D/g, '');
-  if (digits.length === 8) digits = `53${digits}`;
-  return digits || null;
-}
-
-function openWhatsAppChat(booking: Booking, entry: WaitlistEntry, accessToken: string | null) {
-  const message = buildAssignmentMessage(booking, entry.customer_name, accessToken);
-  const digits = normalizeWhatsAppDigits(entry.customer_phone);
-  whatsAppDialogMessage.value = message;
-  whatsAppDialogDigits.value = digits;
-  if (!digits) {
-    whatsAppDialog.value = true;
-    return;
-  }
-  const win = window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, '_blank');
-  if (!win) whatsAppDialog.value = true;
-}
-
-async function copyWhatsAppMessage() {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(whatsAppDialogMessage.value);
-    notification.success('Mensaje copiado');
-  }
-}
 
 async function loadDayBlocks() {
   if (!tenantId.value || !filters.employee_id || !filters.date) {
@@ -840,10 +730,6 @@ onMounted(async () => {
   }
   await loadForTab(tabKey.value);
   await bookingStore.fetchWaitlist();
-  if (route.query.nueva === '1' && !workspaceStore.isWorkMode) {
-    openCreateForm();
-    await router.replace({ query: { tab: tabKey.value } });
-  }
 });
 
 watch(() => route.query.tab, (tab) => {
@@ -852,13 +738,6 @@ watch(() => route.query.tab, (tab) => {
 
 watch(() => route.query.vista, (vista) => {
   teamView.value = vista === 'equipo';
-});
-
-watch(() => route.query.nueva, (nueva) => {
-  if (nueva === '1' && !workspaceStore.isWorkMode) {
-    openCreateForm();
-    router.replace({ query: { tab: tabKey.value } });
-  }
 });
 
 watch(filters, () => {
@@ -884,89 +763,38 @@ async function loadForTab(tab: string) {
   }
 }
 
-async function refreshBookings() {
-  await bookingStore.fetchBookings();
-}
-
-function openCreateForm() {
-  waitlistConversionTarget.value = null;
-  waitlistPrefill.value = null;
-  showForm.value = true;
-}
-
-function closeForm() {
-  showForm.value = false;
-  waitlistPrefill.value = null;
-  waitlistConversionTarget.value = null;
-}
-
 function openDetail(booking: Booking) {
   selectedBooking.value = booking;
   showDetail.value = true;
 }
 
-async function onCreateBooking(data: CreateBookingDTO) {
-  try {
-    await bookingStore.createBooking(data);
-    showForm.value = false;
-
-    const entry = waitlistConversionTarget.value;
-    waitlistConversionTarget.value = null;
-    waitlistPrefill.value = null;
-
-    if (entry) {
-      try {
-        await bookingStore.markWaitlistConverted(entry.id);
-        await bookingStore.fetchWaitlist();
-        notification.success('Reserva creada desde la lista de espera');
-      } catch {
-        notification.success('Reserva creada');
-      }
-    } else {
-      notification.success('Reserva creada');
-    }
-
-    await refreshBookings();
-  } catch {
-    notification.error('Error al crear reserva');
-  }
+async function refreshBookings() {
+  await bookingStore.fetchBookings();
 }
 
-async function onCancelTurn(data: { assign: boolean; keepBlocked: boolean; reason: string }) {
+async function onCancelTurn(data: { keepBlocked: boolean; reason: string }) {
   const booking = selectedBooking.value;
   if (!booking) return;
   try {
-    if (data.assign) {
-      const firstClient = firstWaitlistClient(booking);
-      if (!firstClient) {
-        notification.error('No hay cliente en la cola para este turno');
-        return;
-      }
-      const result = await bookingStore.transferBookingToWaitlist(booking.id, firstClient.id);
-      notification.success('Turno asignado al primer cliente de la cola');
-      await bookingStore.fetchWaitlist();
-      openWhatsAppChat(booking, firstClient, result.customer_access_token);
+    await bookingStore.updateStatus(
+      booking.id,
+      'cancelled',
+      data.reason || undefined,
+      'employee',
+    );
+    if (data.keepBlocked && booking.employee_id) {
+      await blockedSlotsRepository.create({
+        tenant_id: booking.tenant_id,
+        employee_id: booking.employee_id ?? '',
+        date: booking.date,
+        start_time: booking.start_time?.slice(0, 5) || '',
+        end_time: booking.end_time?.slice(0, 5) || '',
+        reason: data.reason || 'Turno cancelado',
+        created_by: authStore.user?.id ?? null,
+      });
+      notification.success('Turno cancelado y horario bloqueado');
     } else {
-      await bookingStore.updateStatus(
-        booking.id,
-        'cancelled',
-        data.reason || undefined,
-        'employee',
-      );
-      if (data.keepBlocked && booking.employee_id) {
-        await blockedSlotsRepository.create({
-          tenant_id: booking.tenant_id,
-          employee_id: booking.employee_id ?? '',
-          date: booking.date,
-          start_time: booking.start_time?.slice(0, 5) || '',
-          end_time: booking.end_time?.slice(0, 5) || '',
-          reason: data.reason || 'Turno cancelado',
-          created_by: authStore.user?.id ?? null,
-        });
-        notification.success('Turno cancelado y horario bloqueado');
-      } else {
-        notification.success('Turno cancelado');
-      }
+      notification.success('Turno cancelado');
     }
     showDetail.value = false;
     await refreshBookings();
@@ -1007,22 +835,6 @@ async function onRejectBooking(booking: Booking, reason: string) {
 }
 
 // Waitlist handlers
-function onDetailWaitlistConvert(entry: WaitlistEntry) {
-  const b = selectedBooking.value;
-  if (!b) return;
-  waitlistConversionTarget.value = entry;
-  waitlistPrefill.value = {
-    service_id: b.service_id,
-    employee_id: b.employee_id ?? undefined,
-    date: b.date,
-    start_time: b.start_time?.slice(0, 5),
-    customer_name: entry.customer_name,
-    customer_email: entry.customer_email,
-    customer_phone: entry.customer_phone ?? undefined,
-  };
-  showForm.value = true;
-}
-
 async function onWaitlistCancel(entry: WaitlistEntry) {
   try {
     await bookingStore.cancelWaitlistEntry(entry.id);
@@ -1031,20 +843,6 @@ async function onWaitlistCancel(entry: WaitlistEntry) {
   } catch {
     notification.error('Error al cancelar waitlist');
   }
-}
-
-function onWaitlistConvert(entry: WaitlistEntry) {
-  waitlistConversionTarget.value = entry;
-  waitlistPrefill.value = {
-    service_id: entry.service_id,
-    employee_id: entry.employee_id ?? undefined,
-    date: entry.preferred_date,
-    start_time: entry.preferred_times?.[0] ?? undefined,
-    customer_name: entry.customer_name,
-    customer_email: entry.customer_email,
-    customer_phone: entry.customer_phone ?? undefined,
-  };
-  showForm.value = true;
 }
 
 // Daily closure handlers

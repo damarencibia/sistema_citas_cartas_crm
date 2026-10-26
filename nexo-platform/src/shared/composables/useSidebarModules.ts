@@ -13,7 +13,6 @@ export interface SidebarOption {
   to: string;
   tab?: AgendaTab;
   vista?: 'equipo';
-  action?: 'new-booking';
 }
 
 export interface SidebarModule {
@@ -31,7 +30,6 @@ export interface BreadcrumbItem {
 }
 
 const AGENDA_ADMIN_OPTIONS: SidebarOption[] = [
-  { title: 'Nueva Reserva', icon: 'mdi-calendar-plus', to: '/appointments/agenda?tab=reservas&nueva=1', action: 'new-booking' },
   { title: 'Mi Día del Equipo', icon: 'mdi-view-column', to: '/appointments/agenda?tab=reservas&vista=equipo', tab: 'reservas', vista: 'equipo' },
   { title: 'Reservas', icon: 'mdi-clipboard-text-outline', to: '/appointments/agenda?tab=reservas', tab: 'reservas' },
   { title: 'Espera', icon: 'mdi-account-clock-outline', to: '/appointments/agenda?tab=espera', tab: 'espera' },
@@ -143,7 +141,6 @@ export function useSidebarModules() {
   }
 
   function isOptionActive(route: RouteLocationNormalizedLoaded, opt: SidebarOption): boolean {
-    if (opt.action) return false;
     if (route.path !== opt.to.split('?')[0]) return false;
     if (opt.vista) {
       return (route.query.vista as string | undefined) === opt.vista;

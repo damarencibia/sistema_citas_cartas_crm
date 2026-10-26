@@ -151,7 +151,6 @@
     <CancelTurnDialog
       :visible="showCancelDialog"
       :booking="booking"
-      :waitlist-entries="waitlistEntries ?? []"
       @close="showCancelDialog = false"
       @confirm="onCancelTurnConfirm"
     />
@@ -163,16 +162,15 @@ import { ref, computed } from 'vue';
 import { useDisplay } from 'vuetify';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import CancelTurnDialog from './CancelTurnDialog.vue';
-import type { Booking, WaitlistEntry } from '../types/booking.types';
+import type { Booking } from '../types/booking.types';
 
 const props = defineProps<{
   booking: Booking;
   showActions?: boolean;
-  waitlistEntries?: WaitlistEntry[];
 }>();
 
 const emit = defineEmits<{
-  cancelTurn: [data: { assign: boolean; keepBlocked: boolean; reason: string }];
+  cancelTurn: [data: { keepBlocked: boolean; reason: string }];
 }>();
 
 const authStore = useAuthStore();
@@ -272,7 +270,6 @@ const hasWhatsapp = computed(() => !!whatsappUrl.value);
 const hasPhone = computed(() => !!telUrl.value);
 
 function onCancelTurnConfirm(data: {
-  assign: boolean;
   keepBlocked: boolean;
   reason: string;
 }) {

@@ -89,16 +89,6 @@
             </v-btn>
             <v-btn
               size="small"
-              variant="tonal"
-              color="primary"
-              prepend-icon="mdi-calendar-plus"
-              title="Pasar este cliente a la agenda"
-              @click="emit('convert', entry)"
-            >
-              Agenda
-            </v-btn>
-            <v-btn
-              size="small"
               icon="mdi-close"
               variant="text"
               title="Quitar de la lista"
@@ -122,7 +112,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  convert: [entry: WaitlistEntry];
   remove: [entry: WaitlistEntry];
 }>();
 

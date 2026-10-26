@@ -46,16 +46,6 @@
             <div v-if="entry.status === 'waiting' || entry.status === 'notified'" class="d-flex ga-1">
               <v-btn
                 size="small"
-                variant="tonal"
-                color="primary"
-                prepend-icon="mdi-calendar-plus"
-                title="Convertir en cita"
-                @click="emit('convert', entry)"
-              >
-                Cita
-              </v-btn>
-              <v-btn
-                size="small"
                 icon="mdi-close"
                 variant="text"
                 title="Eliminar"
@@ -84,7 +74,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   cancel: [entry: WaitlistEntry];
-  convert: [entry: WaitlistEntry];
 }>();
 
 const statusFilter = ref<'all' | WaitlistEntry['status']>('all');

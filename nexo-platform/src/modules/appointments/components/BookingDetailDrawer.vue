@@ -45,7 +45,6 @@
           v-if="detailTab === 'detail'"
           :booking="booking"
           :show-actions="showActions"
-          :waitlist-entries="waitlistEntries"
           @cancel-turn="(d) => emit('cancelTurn', d)"
         />
 
@@ -54,7 +53,6 @@
           :booking="booking"
           :waitlist-entries="waitlistEntries"
           :tenant-name="tenantName"
-          @waitlist-convert="(e) => emit('waitlistConvert', e)"
           @waitlist-remove="(e) => emit('waitlistRemove', e)"
         />
       </div>
@@ -79,8 +77,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: [];
-  cancelTurn: [data: { assign: boolean; keepBlocked: boolean; reason: string }];
-  waitlistConvert: [entry: WaitlistEntry];
+  cancelTurn: [data: { keepBlocked: boolean; reason: string }];
   waitlistRemove: [entry: WaitlistEntry];
 }>();
 

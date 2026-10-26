@@ -48,7 +48,6 @@
       :slot-label="slotLabel"
       :tenant-name="tenantName"
       hide-header
-      @convert="emit('waitlistConvert', $event)"
       @remove="emit('waitlistRemove', $event)"
     />
     <div v-else class="text-center pa-8">
@@ -72,7 +71,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  waitlistConvert: [entry: WaitlistEntry];
   waitlistRemove: [entry: WaitlistEntry];
 }>();
 
