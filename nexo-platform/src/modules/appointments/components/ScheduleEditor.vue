@@ -31,7 +31,7 @@
             class="flex-grow-1"
             :style="{ maxWidth: '420px' }"
             :allowed-ids="allowedIds"
-            :include-default="!isEmployeeView"
+            :include-default="false"
             :disabled="isEmployeeView"
             @update:model-value="onEmployeeChange"
           />
@@ -62,15 +62,6 @@
             </v-chip>
             <v-chip variant="tonal" size="small" prepend-icon="mdi-clock-outline">
               {{ summary.hours }} semanales
-            </v-chip>
-            <v-chip
-              v-if="selectedEmployeeId === DEFAULT_SCHEDULE_ID"
-              variant="tonal"
-              size="small"
-              color="info"
-              prepend-icon="mdi-domain"
-            >
-              Se aplica a empleados sin horario propio
             </v-chip>
           </div>
 
@@ -170,7 +161,7 @@
             label="Copiar a"
             :allowed-ids="allowedIds"
             :exclude-ids="copyExcludeIds"
-            :include-default="!isEmployeeView"
+            :include-default="false"
           />
         </v-card-text>
         <v-card-actions class="pa-4 pt-0">
@@ -247,7 +238,9 @@ onMounted(async () => {
       selectedEmployeeId.value = myEmployeeId.value;
     }
   } else {
-    selectedEmployeeId.value = DEFAULT_SCHEDULE_ID;
+    // El marco del negocio lo edita BusinessHoursEditor: el selector
+    // siempre apunta a un empleado concreto.
+    selectedEmployeeId.value = employeeStore.activeEmployees[0]?.id ?? null;
   }
 });
 
