@@ -9,6 +9,8 @@
       <div class="day-header">
         <v-switch
           :model-value="isActive(day.value)"
+          :disabled="!isBusinessDay(day.value)"
+          :title="!isBusinessDay(day.value) ? 'El negocio no trabaja este día' : undefined"
           density="compact"
           color="primary"
           hide-details
@@ -38,36 +40,46 @@
       </div>
 
       <div class="day-body">
-        <template v-if="isActive(day.value)">
-          <div
-            v-for="(shift, idx) in getShifts(day.value)"
-            :key="`shift-${day.value}-${idx}`"
-            class="shift-block"
-            :class="shift.slot_mode === 'flexible' ? 'flexible' : 'fixed'"
-            @click="emit('edit-shift', day.value, idx)"
-          >
-            <div class="d-flex align-center ga-1">
-              <v-icon size="14">mdi-clock-outline</v-icon>
-              <span class="shift-time">{{ formatTime(shift.start_time) }} – {{ formatTime(shift.end_time) }}</span>
-              <v-spacer />
-              <v-btn
-                icon="mdi-delete"
-                size="x-small"
-                variant="text"
-                color="error"
-                class="shift-delete"
-                @click.stop="emit('remove-shift', day.value, idx)"
-              />
-            </div>
-            <div class="shift-meta">
-              <span>{{ shift.slot_mode === 'flexible' ? 'flexible' : `cada ${shift.slot_interval_minutes} min` }}</span>
-              <span v-if="shift.auto_confirm === false" class="auto-confirm-off">
-                <v-icon size="12" color="warning">mdi-message-clock-outline</v-icon>
-                pendiente
-              </span>
-            </div>
+        <div
+          v-for="(shift, idx) in getShifts(day.value)"
+          :key="`shift-${day.value}-${idx}`"
+          class="shift-block"
+          :class="[
+            shift.slot_mode === 'flexible' ? 'flexible' : 'fixed',
+            isOutOfFrame(day.value, shift) ? 'out-of-frame' : '',
+          ]"
+          @click="emit('edit-shift', day.value, idx)"
+        >
+          <div class="d-flex align-center ga-1">
+            <v-icon size="14">mdi-clock-outline</v-icon>
+            <span class="shift-time">{{ formatTime(shift.start_time) }} – {{ formatTime(shift.end_time) }}</span>
+            <v-spacer />
+            <v-btn
+              icon="mdi-delete"
+              size="x-small"
+              variant="text"
+              color="error"
+              class="shift-delete"
+              @click.stop="emit('remove-shift', day.value, idx)"
+            />
           </div>
+          <div class="shift-meta">
+            <span>{{ shift.slot_mode === 'flexible' ? 'flexible' : `cada ${shift.slot_interval_minutes} min` }}</span>
+            <span v-if="shift.auto_confirm === false" class="auto-confirm-off">
+              <v-icon size="12" color="warning">mdi-message-clock-outline</v-icon>
+              pendiente
+            </span>
+          </div>
+          <div v-if="isOutOfFrame(day.value, shift)" class="shift-warning">
+            <v-icon size="12" color="error">mdi-alert-circle-outline</v-icon>
+            Fuera del horario del negocio ({{ frameLabel(day.value) }})
+          </div>
+        </div>
 
+        <div v-if="!isBusinessDay(day.value)" class="day-empty rest">
+          El negocio no trabaja este día
+        </div>
+        <template v-else>
           <div v-if="getShifts(day.value).length === 0" class="day-empty">Sin turnos</div>
 
           <div class="pa-2">
@@ -83,19 +95,25 @@
             </v-btn>
           </div>
         </template>
-        <div v-else class="day-empty rest">Descanso</div>
       </div>
     </v-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ScheduleShiftInput } from '../types/schedule.types';
+import type { BusinessDayFrame, ScheduleShiftInput } from '../types/schedule.types';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   days: { value: number; label: string }[];
   shifts: Map<number, ScheduleShiftInput[]>;
-}>();
+  /**
+   * Marco global del negocio por día. Si está vacío, el negocio aún no ha
+   * definido su horario: se permite configurar cualquier día (compatibilidad).
+   */
+  frames?: Map<number, BusinessDayFrame>;
+}>(), {
+  frames: () => new Map<number, BusinessDayFrame>(),
+});
 
 const emit = defineEmits<{
   'toggle-day': [day: number];
@@ -113,6 +131,29 @@ function isActive(day: number): boolean {
   return getShifts(day).length > 0;
 }
 
+function isBusinessDay(day: number): boolean {
+  return props.frames.size === 0 || props.frames.has(day);
+}
+
+function frameFor(day: number): BusinessDayFrame | undefined {
+  return props.frames.get(day);
+}
+
+function t5(t: string): string {
+  return (t ?? '').slice(0, 5);
+}
+
+function isOutOfFrame(day: number, shift: ScheduleShiftInput): boolean {
+  const frame = frameFor(day);
+  if (!frame) return false;
+  return t5(shift.start_time) < t5(frame.start_time) || t5(shift.end_time) > t5(frame.end_time);
+}
+
+function frameLabel(day: number): string {
+  const frame = frameFor(day);
+  return frame ? `${t5(frame.start_time)} – ${t5(frame.end_time)}` : '';
+}
+
 function dayMinutes(shifts: ScheduleShiftInput[]): number {
   return shifts.reduce((acc, s) => {
     const [sh, sm] = s.start_time.split(':').map(Number);
@@ -122,6 +163,7 @@ function dayMinutes(shifts: ScheduleShiftInput[]): number {
 }
 
 function summary(day: number): string {
+  if (!isBusinessDay(day)) return 'Cerrado';
   const min = dayMinutes(getShifts(day));
   if (min <= 0) return 'Descanso';
   const h = Math.floor(min / 60);
@@ -207,6 +249,20 @@ function formatTime(t: string): string {
 .shift-block.flexible {
   background: rgba(251, 146, 60, 0.14);
   border: 1px solid rgba(251, 146, 60, 0.4);
+}
+
+.shift-block.out-of-frame {
+  background: rgba(var(--v-theme-error), 0.1);
+  border: 1px solid rgba(var(--v-theme-error), 0.45);
+}
+
+.shift-warning {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: rgb(var(--v-theme-error));
 }
 
 .shift-time {

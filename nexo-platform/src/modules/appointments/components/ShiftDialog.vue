@@ -20,6 +20,17 @@
       <v-card-text class="flex-grow-1 overflow-y-auto">
         <div class="text-body-2 text-medium-emphasis mb-4">{{ dayLabel }}</div>
 
+        <v-alert
+          v-if="frameStart && frameEnd"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-3"
+          icon="mdi-domain"
+        >
+          Horario del negocio: {{ t5(frameStart) }} – {{ t5(frameEnd) }}
+        </v-alert>
+
         <v-row>
           <v-col cols="12" sm="6">
             <v-text-field
@@ -203,6 +214,18 @@
         >
           Este horario se superpone con otro turno existente.
         </v-alert>
+
+        <v-alert
+          v-if="outOfFrameError"
+          type="error"
+          variant="tonal"
+          density="compact"
+          class="mt-2"
+          icon="mdi-alert"
+        >
+          El turno debe estar dentro del horario del negocio
+          ({{ t5(frameStart) }} – {{ t5(frameEnd) }}).
+        </v-alert>
       </v-card-text>
       <v-card-actions class="pa-4 pt-0 d-flex ga-2">
         <v-spacer class="hidden-xs-only" />
@@ -217,7 +240,7 @@
           color="primary"
           variant="flat"
           :block="$vuetify.display.xs"
-          :disabled="!isValid || overlapError"
+          :disabled="!isValid || overlapError || outOfFrameError"
           @click="onSave"
         >
           Guardar
@@ -251,6 +274,9 @@ const props = defineProps<{
   min_advance_minutes?: number;
   auto_confirm?: boolean;
   existingShifts: { start_time: string; end_time: string }[];
+  /** Marco global del negocio para este día (apertura/cierre). */
+  frameStart?: string;
+  frameEnd?: string;
 }>();
 
 const emit = defineEmits<{
@@ -336,13 +362,30 @@ const overlapError = computed(() => {
   });
 });
 
+const outOfFrameError = computed(() => {
+  if (!props.frameStart || !props.frameEnd) return false;
+  if (!form.start_time || !form.end_time) return false;
+  return form.start_time < t5(props.frameStart) || form.end_time > t5(props.frameEnd);
+});
+
+function t5(t?: string): string {
+  return (t ?? '').slice(0, 5);
+}
+
 function validateStart(v: string) {
-  return !!v || 'Requerido';
+  if (!v) return 'Requerido';
+  if (props.frameStart && v < t5(props.frameStart)) {
+    return `No antes de ${t5(props.frameStart)}`;
+  }
+  return true;
 }
 
 function validateEnd(v: string) {
   if (!v) return 'Requerido';
   if (form.start_time && v <= form.start_time) return 'Debe ser posterior a la hora de inicio';
+  if (props.frameEnd && v > t5(props.frameEnd)) {
+    return `No después de ${t5(props.frameEnd)}`;
+  }
   return true;
 }
 
@@ -368,8 +411,8 @@ watch(
   (v) => {
     if (v) {
       editing.value = !!props.start_time;
-      form.start_time = props.start_time ?? '09:00';
-      form.end_time = props.end_time ?? '17:00';
+      form.start_time = props.start_time ?? props.frameStart ?? '09:00';
+      form.end_time = props.end_time ?? props.frameEnd ?? '17:00';
       form.slot_mode = props.slot_mode ?? 'fixed';
       form.slot_interval_minutes = props.slot_interval_minutes ?? 30;
       form.advance_booking_days = props.advance_booking_days ?? 7;

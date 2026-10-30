@@ -98,9 +98,28 @@
             </v-tooltip>
           </div>
 
+          <v-alert
+            v-if="framesLoaded && !hasBusinessFrame"
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-3"
+            icon="mdi-domain"
+          >
+            <template v-if="isEmployeeView">
+              El negocio aún no ha definido su horario global. Puedes configurar tus turnos,
+              pero cuando lo definan deberán quedar dentro de ese marco.
+            </template>
+            <template v-else>
+              Aún no has definido el horario del negocio (bloque superior). Mientras no exista
+              un marco global, los empleados pueden configurar cualquier día y hora.
+            </template>
+          </v-alert>
+
           <WeekScheduleGrid
             :days="daysOfWeek"
             :shifts="localShifts"
+            :frames="businessFrames"
             @toggle-day="onToggleDay"
             @add-shift="openShiftDialog"
             @edit-shift="editShift"
@@ -144,6 +163,8 @@
       :min_advance_minutes="editingShift?.min_advance_minutes"
       :auto_confirm="editingShift?.auto_confirm"
       :existing-shifts="currentDayShiftsForValidation"
+      :frame-start="currentDayFrame?.start_time"
+      :frame-end="currentDayFrame?.end_time"
       @close="closeShiftDialog"
       @save="onShiftSave"
     />
@@ -189,11 +210,16 @@ import { useConfirm } from '@/shared/composables/useConfirm';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import { useEmployeeStore } from '../stores/employee.store';
+import { scheduleRepository } from '../repositories/schedule.repository';
 import EmployeeSelect from './EmployeeSelect.vue';
 import ShiftDialog from './ShiftDialog.vue';
 import WeekScheduleGrid from './WeekScheduleGrid.vue';
 import { DEFAULT_SCHEDULE_ID } from '../types/schedule.types';
-import type { ScheduleShiftInput, CreateScheduleDTO } from '../types/schedule.types';
+import type {
+  BusinessDayFrame,
+  ScheduleShiftInput,
+  CreateScheduleDTO,
+} from '../types/schedule.types';
 
 const scheduleStore = useScheduleStore();
 const notification = useNotification();
@@ -227,7 +253,7 @@ const copyExcludeIds = computed(() => {
 });
 
 onMounted(async () => {
-  await employeeStore.fetchEmployeesWithRoles();
+  await Promise.all([employeeStore.fetchEmployeesWithRoles(), loadBusinessFrames()]);
   if (isEmployeeView.value) {
     const userId = authStore.user?.id;
     const match = employeeStore.employees.find(
@@ -243,6 +269,60 @@ onMounted(async () => {
     selectedEmployeeId.value = employeeStore.activeEmployees[0]?.id ?? null;
   }
 });
+
+// --- Marco global del negocio (filas employee_id NULL) ---
+
+// Día de la semana -> apertura/cierre del negocio. Si el tenant tiene varias
+// filas globales en un día (datos legados) el marco es min(apertura)/max(cierre).
+const businessFrames = reactive(new Map<number, BusinessDayFrame>());
+const framesLoaded = ref(false);
+const hasBusinessFrame = computed(() => businessFrames.size > 0);
+
+async function loadBusinessFrames() {
+  try {
+    const rows = await scheduleRepository.getByEmployee(null);
+    businessFrames.clear();
+    for (const row of rows) {
+      if (!row.is_active) continue;
+      const start = t5(row.start_time);
+      const end = t5(row.end_time);
+      const current = businessFrames.get(row.day_of_week);
+      businessFrames.set(row.day_of_week, current
+        ? {
+            start_time: start < t5(current.start_time) ? start : current.start_time,
+            end_time: end > t5(current.end_time) ? end : current.end_time,
+          }
+        : { start_time: start, end_time: end });
+    }
+  } finally {
+    framesLoaded.value = true;
+  }
+}
+
+function t5(t?: string): string {
+  return (t ?? '').slice(0, 5);
+}
+
+function dayLabelOf(day: number): string {
+  return daysOfWeek.find((d) => d.value === day)?.label ?? `día ${day}`;
+}
+
+function validateAgainstFrame(): string | null {
+  if (businessFrames.size === 0) return null;
+  for (const [day, shifts] of localShifts) {
+    if (!shifts.length) continue;
+    const frame = businessFrames.get(day);
+    if (!frame) {
+      return `El negocio no trabaja el ${dayLabelOf(day)}. Elimina esos turnos para guardar.`;
+    }
+    for (const s of shifts) {
+      if (t5(s.start_time) < t5(frame.start_time) || t5(s.end_time) > t5(frame.end_time)) {
+        return `El turno del ${dayLabelOf(day)} (${t5(s.start_time)} – ${t5(s.end_time)}) está fuera del horario del negocio (${t5(frame.start_time)} – ${t5(frame.end_time)}).`;
+      }
+    }
+  }
+  return null;
+}
 
 function resolveEmployeeId(id: string | null): string | null {
   return id === DEFAULT_SCHEDULE_ID ? null : id;
@@ -281,10 +361,11 @@ const daysOfWeek = [
   { value: 0, label: 'Domingo' },
 ];
 
-function defaultShift(): ScheduleShiftInput {
+function defaultShift(day: number): ScheduleShiftInput {
+  const frame = businessFrames.get(day);
   return {
-    start_time: '09:00',
-    end_time: '17:00',
+    start_time: frame?.start_time ?? '09:00',
+    end_time: frame?.end_time ?? '17:00',
     slot_mode: 'fixed',
     slot_interval_minutes: 30,
     advance_booking_days: 7,
@@ -340,10 +421,14 @@ const summary = computed(() => {
 });
 
 function onToggleDay(day: number) {
+  if (businessFrames.size > 0 && !businessFrames.has(day)) {
+    notification.error(`El negocio no trabaja el ${dayLabelOf(day)}`);
+    return;
+  }
   if ((localShifts.get(day) ?? []).length > 0) {
     localShifts.set(day, []);
   } else {
-    localShifts.set(day, [defaultShift()]);
+    localShifts.set(day, [defaultShift(day)]);
   }
   dirty.value = true;
 }
@@ -361,6 +446,8 @@ const editingShift = computed(() => {
 const currentDayLabel = computed(() => {
   return daysOfWeek.find((d) => d.value === currentEditDay.value)?.label ?? '';
 });
+
+const currentDayFrame = computed(() => businessFrames.get(currentEditDay.value));
 
 const currentDayShiftsForValidation = computed(() => {
   const shifts = localShifts.get(currentEditDay.value) ?? [];
@@ -418,11 +505,17 @@ function removeShift(day: number, index: number) {
 
 function copyDayToWeek(day: number) {
   const source = localShifts.get(day) ?? [];
+  let skipped = 0;
   for (const d of daysOfWeek) {
+    if (businessFrames.size > 0 && !businessFrames.has(d.value)) {
+      if ((localShifts.get(d.value) ?? []).length === 0) skipped += 1;
+      continue;
+    }
     localShifts.set(d.value, source.map((s) => ({ ...s })));
   }
   dirty.value = true;
-  notification.info(`Horario del ${currentDayLabelFor(day)} copiado a toda la semana`);
+  const note = skipped ? ` (${skipped} días cerrados omitidos)` : '';
+  notification.info(`Horario del ${currentDayLabelFor(day)} copiado a los días laborables${note}`);
 }
 
 function currentDayLabelFor(day: number): string {
@@ -467,8 +560,21 @@ function buildPayload(): CreateScheduleDTO[] {
   return out;
 }
 
+function errorMessage(e: unknown): string {
+  if (typeof e === 'string') return e;
+  if (e && typeof e === 'object' && 'message' in e) {
+    return String((e as { message?: unknown }).message ?? '');
+  }
+  return '';
+}
+
 async function onSave() {
   if (!selectedEmployeeId.value) return;
+  const frameError = validateAgainstFrame();
+  if (frameError) {
+    notification.error(frameError);
+    return;
+  }
   saving.value = true;
   try {
     await scheduleStore.updateSchedules(buildPayload(), resolveEmployeeId(selectedEmployeeId.value));
@@ -477,8 +583,16 @@ async function onSave() {
     dirty.value = false;
     notification.success('Turnos guardados correctamente');
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : '';
-    if (msg.includes('Not authorized') || msg.includes('no autorizado') || msg.includes('authorized')) {
+    const msg = errorMessage(e);
+    const closed = /BUSINESS_DAY_CLOSED:(\d)/.exec(msg);
+    const outOfFrame = /SHIFT_OUT_OF_BUSINESS_HOURS:(\d+):([\d:]+):([\d:]+)/.exec(msg);
+    if (closed) {
+      notification.error(`El negocio no trabaja el ${dayLabelOf(Number(closed[1]))}`);
+    } else if (outOfFrame) {
+      notification.error(
+        `El turno del ${dayLabelOf(Number(outOfFrame[1]))} está fuera del horario del negocio (${outOfFrame[2]} – ${outOfFrame[3]})`,
+      );
+    } else if (msg.includes('Not authorized') || msg.includes('no autorizado') || msg.includes('authorized')) {
       notification.error('No tienes permiso para editar este horario');
     } else {
       notification.error('Error al guardar turnos');

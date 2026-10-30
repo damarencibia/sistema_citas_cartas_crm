@@ -51,6 +51,16 @@ export interface ScheduleShiftInput {
   auto_confirm: boolean;
 }
 
+/**
+ * Marco global del negocio para un día de la semana (apertura/cierre).
+ * Se deriva de las filas `schedules` con employee_id NULL:
+ * min(open) / max(close) de ese día.
+ */
+export interface BusinessDayFrame {
+  start_time: string;
+  end_time: string;
+}
+
 export interface CreateHolidayDTO {
   date: string;
   is_closed?: boolean;
