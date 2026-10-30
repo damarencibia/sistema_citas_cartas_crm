@@ -165,9 +165,7 @@ const cards = computed<StatCard[]>(() => {
   const noShow = list.filter((b) => b.status === 'no_show');
   const income = done.reduce((sum, b) => sum + (b.service?.price ?? 0), 0);
   const attended = done.length + noShow.length;
-  const pending = list.filter(
-    (b) => b.status === 'pending_approval' || b.status === 'pending_confirmation',
-  ).length;
+  const pending = list.filter((b) => b.status === 'pending_approval').length;
   return [
     { title: 'Citas completadas', value: String(done.length), icon: 'mdi-calendar-check-outline', color: 'success', bg: 'rgba(62, 207, 142, 0.1)' },
     { title: 'Ingresos', value: `$${(income / 100).toFixed(2)}`, icon: 'mdi-cash-multiple', color: 'primary', bg: 'rgba(59, 130, 246, 0.1)' },
@@ -241,7 +239,7 @@ async function loadData() {
     periodBookings.value = pb;
     barsBookings.value = bb;
     upcomingBookings.value = ub
-      .filter((b) => ['pending_approval', 'pending_confirmation', 'confirmed', 'in_progress'].includes(b.status))
+      .filter((b) => ['pending_approval', 'confirmed', 'in_progress'].includes(b.status))
       .sort((a, b) => `${a.date} ${a.start_time ?? ''}`.localeCompare(`${b.date} ${b.start_time ?? ''}`))
       .slice(0, 5);
   } finally {

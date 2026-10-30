@@ -1594,7 +1594,6 @@ export type Database = {
       schedules: {
         Row: {
           advance_booking_days: number
-          auto_confirm: boolean
           created_at: string
           day_of_week: number
           employee_id: string | null
@@ -1610,7 +1609,6 @@ export type Database = {
         }
         Insert: {
           advance_booking_days?: number
-          auto_confirm?: boolean
           created_at?: string
           day_of_week: number
           employee_id?: string | null
@@ -1626,7 +1624,6 @@ export type Database = {
         }
         Update: {
           advance_booking_days?: number
-          auto_confirm?: boolean
           created_at?: string
           day_of_week?: number
           employee_id?: string | null
@@ -2176,10 +2173,6 @@ export type Database = {
       auto_start_appointments: { Args: never; Returns: undefined }
       cleanup_old_notifications: { Args: never; Returns: undefined }
       cleanup_stale_push_subscriptions: { Args: never; Returns: number }
-      confirm_booking_attendance: {
-        Args: { p_attends: boolean; p_booking_id: string; p_token: string }
-        Returns: string
-      }
       count_recent_no_shows: {
         Args: { p_customer_email: string; p_days?: number; p_tenant_id: string }
         Returns: number
@@ -2338,13 +2331,6 @@ export type Database = {
           p_title: string
         }
         Returns: undefined
-      }
-      transfer_booking_to_waitlist: {
-        Args: { p_booking_id: string; p_waitlist_id: string }
-        Returns: {
-          customer_access_token: string
-          new_booking_id: string
-        }[]
       }
       upsert_booking_customer: {
         Args: {

@@ -17,7 +17,6 @@ export const BOOKING_STATUS = {
   NO_SHOW: 'no_show',
   CANCELLED: 'cancelled',
   PENDING_APPROVAL: 'pending_approval',
-  PENDING_CONFIRMATION: 'pending_confirmation',
 } as const;
 
 export const BOOKING_SOURCE = {

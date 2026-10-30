@@ -19,7 +19,6 @@ import type {
   RecurringInstance,
   BookingStatus,
   BookingStatusLog,
-  TransferBookingResult,
 } from '../types/booking.types';
 
 const TABLE = 'bookings' as const;
@@ -29,7 +28,6 @@ type BookingInsert = Database['public']['Tables']['bookings']['Insert'];
 
 const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   pending_approval: ['confirmed', 'cancelled'],
-  pending_confirmation: ['confirmed', 'cancelled'],
   confirmed: ['in_progress', 'completed', 'cancelled', 'no_show'],
   in_progress: ['completed', 'cancelled', 'no_show'],
   completed: ['no_show', 'confirmed'],
@@ -50,32 +48,6 @@ function computeEndTime(startTime: string, durationMinutes: number): string {
 
 function normalizeTime(t: string): string {
   return t.length === 5 ? `${t}:00` : t;
-}
-
-async function resolveAutoConfirm(
-  tenantId: string,
-  employeeId: string | null,
-  date: string,
-): Promise<boolean> {
-  const dow = new Date(`${date}T12:00:00`).getDay();
-  const base = () =>
-    supabase
-      .from('schedules')
-      .select('auto_confirm')
-      .eq('tenant_id', tenantId)
-      .eq('day_of_week', dow)
-      .eq('is_active', true);
-
-  if (employeeId) {
-    const { data, error } = await base().eq('employee_id', employeeId).limit(1);
-    if (!error && data && data.length > 0 && data[0].auto_confirm != null) {
-      return data[0].auto_confirm;
-    }
-  }
-
-  const { data, error } = await base().is('employee_id', null).limit(1);
-  if (error || !data || data.length === 0) return true;
-  return data[0].auto_confirm ?? true;
 }
 
 function extractCustomerUpsert(
@@ -155,9 +127,6 @@ export const bookingRepository = {
     let initialStatus: BookingStatus;
     if (serviceData.requires_approval) {
       initialStatus = 'pending_approval';
-    } else if (dto.source === 'online') {
-      const autoConfirm = await resolveAutoConfirm(tenantId, dto.employee_id, dto.date);
-      initialStatus = autoConfirm ? 'confirmed' : 'pending_confirmation';
     } else {
       initialStatus = 'confirmed';
     }
@@ -683,32 +652,6 @@ export const bookingRepository = {
   async markWaitlistConverted(id: string): Promise<void> {
     const { error } = await (supabase as any).rpc('mark_waitlist_converted', {
       p_waitlist_id: id,
-    });
-    if (error) throw error;
-  },
-
-  async transferBookingToWaitlist(
-    bookingId: string,
-    waitlistId: string,
-  ): Promise<TransferBookingResult> {
-    const { data, error } = await (supabase as any).rpc('transfer_booking_to_waitlist', {
-      p_booking_id: bookingId,
-      p_waitlist_id: waitlistId,
-    });
-    if (error) throw error;
-    const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
-    if (!row) throw new Error('No se pudo transferir el turno');
-    return {
-      new_booking_id: row.new_booking_id,
-      customer_access_token: row.customer_access_token ?? null,
-    };
-  },
-
-  async confirmBookingAttendance(token: string, bookingId: string, attends: boolean): Promise<void> {
-    const { error } = await (supabase as any).rpc('confirm_booking_attendance', {
-      p_token: token,
-      p_booking_id: bookingId,
-      p_attends: attends,
     });
     if (error) throw error;
   },

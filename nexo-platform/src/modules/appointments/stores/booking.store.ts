@@ -16,7 +16,6 @@ import type {
   CreateRecurringDTO,
   RecurringInstance,
   CustomerBookingSummary,
-  TransferBookingResult,
 } from '../types/booking.types';
 
 interface BookingStoreState {
@@ -59,13 +58,9 @@ export const useBookingStore = defineStore('appointments/bookings', {
       return state.bookings.filter((b) => b.date === today);
     },
     pendingBookings: (state) =>
-      state.bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending_confirmation'),
-    pendingConfirmationBookings: (state) =>
-      state.bookings.filter((b) => b.status === 'pending_confirmation'),
+      state.bookings.filter((b) => b.status === 'confirmed'),
     pendingApprovalBookings: (state) =>
-      state.bookings.filter(
-        (b) => b.status === 'pending_approval' || b.status === 'pending_confirmation',
-      ),
+      state.bookings.filter((b) => b.status === 'pending_approval'),
     filteredBookings: (state) => {
       let result = state.bookings;
       if (state.filters.employee_id) {
@@ -254,7 +249,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
       const booking = this.bookings.find((b) => b.id === bookingId) ?? this.currentBooking;
       const oldStatus = booking?.status ?? null;
 
-      if (oldStatus !== 'pending_approval' && oldStatus !== 'pending_confirmation') {
+      if (oldStatus !== 'pending_approval') {
         throw new Error('Solo se pueden aprobar reservas pendientes de aprobación.');
       }
 
@@ -288,7 +283,7 @@ export const useBookingStore = defineStore('appointments/bookings', {
       const booking = this.bookings.find((b) => b.id === bookingId) ?? this.currentBooking;
       const oldStatus = booking?.status ?? null;
 
-      if (oldStatus !== 'pending_approval' && oldStatus !== 'pending_confirmation') {
+      if (oldStatus !== 'pending_approval') {
         throw new Error('Solo se pueden rechazar reservas pendientes de aprobación.');
       }
 
@@ -346,17 +341,6 @@ export const useBookingStore = defineStore('appointments/bookings', {
       await bookingRepository.markWaitlistConverted(id);
       const entry = this.waitlist.find((w) => w.id === id);
       if (entry) entry.status = 'converted';
-    },
-
-    async transferBookingToWaitlist(
-      bookingId: string,
-      waitlistId: string,
-    ): Promise<TransferBookingResult> {
-      return bookingRepository.transferBookingToWaitlist(bookingId, waitlistId);
-    },
-
-    async confirmBookingAttendance(token: string, bookingId: string, attends: boolean): Promise<void> {
-      await bookingRepository.confirmBookingAttendance(token, bookingId, attends);
     },
 
     async removeWaitlistEntry(id: string): Promise<void> {

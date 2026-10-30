@@ -6,8 +6,7 @@ export type BookingStatus =
   | 'completed'
   | 'no_show'
   | 'cancelled'
-  | 'pending_approval'
-  | 'pending_confirmation';
+  | 'pending_approval';
 export type BookingSource = 'online' | 'manual' | 'phone' | 'walk_in';
 export type CancelledBy = 'customer' | 'employee' | 'system';
 export type StatusChangedBy = 'employee' | 'system' | 'customer';
@@ -75,11 +74,6 @@ export interface BookingFormPrefill {
 export interface CreateBookingResult {
   booking: Booking;
   accessToken: string | null;
-}
-
-export interface TransferBookingResult {
-  new_booking_id: string;
-  customer_access_token: string | null;
 }
 
 export interface CustomerBookingSummary {

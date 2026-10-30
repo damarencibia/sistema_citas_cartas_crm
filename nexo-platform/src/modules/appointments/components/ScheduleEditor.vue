@@ -65,39 +65,6 @@
             </v-chip>
           </div>
 
-          <div class="d-flex align-center ga-1 mb-3">
-            <v-switch
-              :model-value="autoConfirmGlobal"
-              :indeterminate="autoConfirmGlobal === null"
-              label="Auto-confirmar reservas"
-              color="primary"
-              density="compact"
-              hide-details
-              @update:model-value="onAutoConfirmToggle"
-            />
-            <v-chip
-              v-if="autoConfirmGlobal === null"
-              size="small"
-              color="info"
-              variant="tonal"
-            >
-              Personalizado
-            </v-chip>
-            <v-tooltip location="top" max-width="300">
-              <template #activator="{ props }">
-                <v-icon v-bind="props" size="small" color="medium-emphasis">
-                  mdi-information-outline
-                </v-icon>
-              </template>
-              <span>
-                Si está activo, las reservas del portal se agendan automáticamente en todos los
-                turnos de este horario. Si no, quedan como Pendientes de Confirmación para aprobar.
-                Puedes ajustar cada turno individualmente. Si hay turnos con ambas opciones, el
-                estado global queda como Personalizado.
-              </span>
-            </v-tooltip>
-          </div>
-
           <v-alert
             v-if="framesLoaded && !hasBusinessFrame"
             type="info"
@@ -161,7 +128,6 @@
       :slot_interval_minutes="editingShift?.slot_interval_minutes"
       :advance_booking_days="editingShift?.advance_booking_days"
       :min_advance_minutes="editingShift?.min_advance_minutes"
-      :auto_confirm="editingShift?.auto_confirm"
       :existing-shifts="currentDayShiftsForValidation"
       :frame-start="currentDayFrame?.start_time"
       :frame-end="currentDayFrame?.end_time"
@@ -330,27 +296,6 @@ function resolveEmployeeId(id: string | null): string | null {
 
 const localShifts = reactive<Map<number, ScheduleShiftInput[]>>(new Map());
 
-const hasAnyShift = computed(() => {
-  for (const [, shifts] of localShifts) {
-    if (shifts.length) return true;
-  }
-  return false;
-});
-
-const autoConfirmGlobal = computed<boolean | null>(() => {
-  let hasTrue = false;
-  let hasFalse = false;
-  for (const [, shifts] of localShifts) {
-    for (const s of shifts) {
-      if (s.auto_confirm === false) hasFalse = true;
-      else hasTrue = true;
-      if (hasTrue && hasFalse) return null;
-    }
-  }
-  if (hasFalse && !hasTrue) return false;
-  return true;
-});
-
 const daysOfWeek = [
   { value: 1, label: 'Lunes' },
   { value: 2, label: 'Martes' },
@@ -370,7 +315,6 @@ function defaultShift(day: number): ScheduleShiftInput {
     slot_interval_minutes: 30,
     advance_booking_days: 7,
     min_advance_minutes: 15,
-    auto_confirm: autoConfirmGlobal.value === false ? false : true,
   };
 }
 
@@ -389,19 +333,9 @@ function initLocalShifts() {
         slot_interval_minutes: s.slot_interval_minutes ?? 30,
         advance_booking_days: s.advance_booking_days ?? 7,
         min_advance_minutes: s.min_advance_minutes ?? 15,
-        auto_confirm: s.auto_confirm ?? true,
       })),
     );
   }
-}
-
-function onAutoConfirmToggle() {
-  if (!hasAnyShift.value) return;
-  const next = autoConfirmGlobal.value === true ? false : true;
-  for (const [, shifts] of localShifts) {
-    for (const s of shifts) s.auto_confirm = next;
-  }
-  dirty.value = true;
 }
 
 const summary = computed(() => {
@@ -484,7 +418,6 @@ function onShiftSave(data: ScheduleShiftInput) {
     slot_interval_minutes: data.slot_interval_minutes ?? 30,
     advance_booking_days: data.advance_booking_days ?? 7,
     min_advance_minutes: data.min_advance_minutes ?? 15,
-    auto_confirm: data.auto_confirm ?? true,
   };
 
   if (editingShiftIndex.value >= 0) {

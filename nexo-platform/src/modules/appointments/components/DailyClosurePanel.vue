@@ -558,8 +558,7 @@ const bookings = computed(() => {
   );
 });
 
-const isPending = (b: Booking) =>
-  b.status === 'confirmed' || b.status === 'in_progress' || b.status === 'pending_confirmation';
+const isPending = (b: Booking) => b.status === 'confirmed' || b.status === 'in_progress';
 
 const canMark = (b: Booking) => b.status === 'confirmed' || b.status === 'in_progress';
 

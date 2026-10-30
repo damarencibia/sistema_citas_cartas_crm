@@ -45,7 +45,7 @@
             prepend-icon="mdi-check"
             @click="onApprove(booking)"
           >
-            {{ booking.status === 'pending_confirmation' ? 'Confirmar' : 'Aprobar' }}
+            Aprobar
           </v-btn>
           <v-btn
             color="error"

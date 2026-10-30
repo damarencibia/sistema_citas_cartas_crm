@@ -220,18 +220,17 @@ interface BusinessDay {
   slot_interval_minutes: number;
   advance_booking_days: number;
   min_advance_minutes: number;
-  auto_confirm: boolean;
   error: string;
 }
 
 const days = reactive<BusinessDay[]>([
-  { value: 1, label: 'Lunes', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, auto_confirm: true, error: '' },
-  { value: 2, label: 'Martes', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, auto_confirm: true, error: '' },
-  { value: 3, label: 'Miércoles', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, auto_confirm: true, error: '' },
-  { value: 4, label: 'Jueves', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, auto_confirm: true, error: '' },
-  { value: 5, label: 'Viernes', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, auto_confirm: true, error: '' },
-  { value: 6, label: 'Sábado', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, auto_confirm: true, error: '' },
-  { value: 0, label: 'Domingo', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, auto_confirm: true, error: '' },
+  { value: 1, label: 'Lunes', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, error: '' },
+  { value: 2, label: 'Martes', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, error: '' },
+  { value: 3, label: 'Miércoles', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, error: '' },
+  { value: 4, label: 'Jueves', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, error: '' },
+  { value: 5, label: 'Viernes', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, error: '' },
+  { value: 6, label: 'Sábado', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, error: '' },
+  { value: 0, label: 'Domingo', active: false, open: '09:00', close: '17:00', slot_mode: 'fixed', slot_interval_minutes: 30, advance_booking_days: 7, min_advance_minutes: 15, error: '' },
 ]);
 
 onMounted(async () => {
@@ -253,7 +252,6 @@ async function loadDays() {
     d.slot_interval_minutes = 30;
     d.advance_booking_days = 7;
     d.min_advance_minutes = 15;
-    d.auto_confirm = true;
     d.error = '';
   }
   for (const row of rows) {
@@ -268,7 +266,6 @@ async function loadDays() {
       day.slot_interval_minutes = row.slot_interval_minutes ?? 30;
       day.advance_booking_days = row.advance_booking_days ?? 7;
       day.min_advance_minutes = row.min_advance_minutes ?? 15;
-      day.auto_confirm = row.auto_confirm ?? true;
     } else {
       // Consolidación de filas huérfanas: marco = min apertura / max cierre,
       // config heredada de la fila con apertura más temprana.
@@ -278,7 +275,6 @@ async function loadDays() {
         day.slot_interval_minutes = row.slot_interval_minutes ?? 30;
         day.advance_booking_days = row.advance_booking_days ?? 7;
         day.min_advance_minutes = row.min_advance_minutes ?? 15;
-        day.auto_confirm = row.auto_confirm ?? true;
       }
       if (row.end_time.slice(0, 5) > day.close) {
         day.close = row.end_time.slice(0, 5);
@@ -324,7 +320,6 @@ async function onSave() {
         slot_interval_minutes: d.slot_interval_minutes,
         advance_booking_days: d.advance_booking_days,
         min_advance_minutes: d.min_advance_minutes,
-        auto_confirm: d.auto_confirm,
       }));
     await scheduleRepository.replaceAll(null, payload);
     dirty.value = false;

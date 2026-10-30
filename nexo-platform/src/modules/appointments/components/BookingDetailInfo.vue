@@ -230,7 +230,6 @@ const statusColor = computed(() => {
     no_show: 'error',
     cancelled: 'error',
     pending_approval: 'warning',
-    pending_confirmation: 'warning',
   };
   return map[props.booking.status] ?? 'grey';
 });
@@ -243,7 +242,6 @@ const statusLabel = computed(() => {
     no_show: 'No asistió',
     cancelled: 'Cancelada',
     pending_approval: 'Pendiente aprobación',
-    pending_confirmation: 'Pendiente confirmación',
   };
   return map[props.booking.status] ?? props.booking.status ?? '';
 });
