@@ -122,67 +122,6 @@
           </div>
         </v-expand-transition>
 
-        <v-divider class="my-3" />
-
-        <div class="text-subtitle-2 mb-2">Configuración de Slots</div>
-
-        <v-select
-          v-model="form.slot_mode"
-          :items="slotModes"
-          item-title="label"
-          item-value="value"
-          label="Modo de slots"
-          density="compact"
-          hide-details
-          class="mb-2"
-          :hint="form.slot_mode === 'flexible' ? 'Los clientes eligen cualquier hora libre dentro del turno' : 'Los huecos se generan automáticamente a intervalos fijos'"
-          persistent-hint
-        />
-
-        <v-text-field
-          v-model.number="form.slot_interval_minutes"
-          label="Duración de cada hueco (min)"
-          type="number"
-          :min="5"
-          :max="480"
-          :step="5"
-          density="compact"
-          hide-details
-          class="mb-2"
-          :disabled="form.slot_mode === 'flexible'"
-          hint="Duración de cada cita que se genera dentro del turno"
-          persistent-hint
-        />
-
-        <v-row dense class="mt-2">
-          <v-col cols="12" sm="6">
-            <v-text-field
-              v-model.number="form.advance_booking_days"
-              label="Días máx. anticipación"
-              type="number"
-              :min="1"
-              :max="365"
-              density="compact"
-              hide-details
-              hint="Cuántos días adelante pueden reservar"
-              persistent-hint
-            />
-          </v-col>
-          <v-col cols="12" sm="6">
-            <v-text-field
-              v-model.number="form.min_advance_minutes"
-              label="Mín. anticipación (min)"
-              type="number"
-              :min="0"
-              :max="4320"
-              density="compact"
-              hide-details
-              hint="Tiempo mínimo antes de la cita para reservar"
-              persistent-hint
-            />
-          </v-col>
-        </v-row>
-
         <v-alert
           v-if="overlapError"
           type="error"
@@ -235,10 +174,6 @@ import { ref, reactive, computed, watch } from 'vue';
 interface ShiftForm {
   start_time: string;
   end_time: string;
-  slot_mode: 'fixed' | 'flexible';
-  slot_interval_minutes: number;
-  advance_booking_days: number;
-  min_advance_minutes: number;
 }
 
 const props = defineProps<{
@@ -246,10 +181,6 @@ const props = defineProps<{
   dayLabel: string;
   start_time?: string;
   end_time?: string;
-  slot_mode?: 'fixed' | 'flexible';
-  slot_interval_minutes?: number;
-  advance_booking_days?: number;
-  min_advance_minutes?: number;
   existingShifts: { start_time: string; end_time: string }[];
   /** Marco global del negocio para este día (apertura/cierre). */
   frameStart?: string;
@@ -266,16 +197,7 @@ const editing = ref(false);
 const form = reactive<ShiftForm>({
   start_time: '09:00',
   end_time: '17:00',
-  slot_mode: 'fixed',
-  slot_interval_minutes: 30,
-  advance_booking_days: 7,
-  min_advance_minutes: 15,
 });
-
-const slotModes = [
-  { label: 'Fijo (auto-genera)', value: 'fixed' },
-  { label: 'Flexible (ventanas)', value: 'flexible' },
-];
 
 const durationUnits = [
   { label: 'Minutos', value: 'minutes' },
@@ -389,10 +311,6 @@ watch(
       editing.value = !!props.start_time;
       form.start_time = props.start_time ?? props.frameStart ?? '09:00';
       form.end_time = props.end_time ?? props.frameEnd ?? '17:00';
-      form.slot_mode = props.slot_mode ?? 'fixed';
-      form.slot_interval_minutes = props.slot_interval_minutes ?? 30;
-      form.advance_booking_days = props.advance_booking_days ?? 7;
-      form.min_advance_minutes = props.min_advance_minutes ?? 15;
       resetDuration();
     }
   },

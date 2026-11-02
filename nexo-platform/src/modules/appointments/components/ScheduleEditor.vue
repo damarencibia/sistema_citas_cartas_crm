@@ -83,6 +83,50 @@
             </template>
           </v-alert>
 
+          <!-- Política de reserva del empleado (autogestionada) -->
+          <v-card
+            v-if="isEmployeeView"
+            variant="tonal"
+            border
+            class="mb-4 pa-4"
+          >
+            <div class="text-subtitle-2 mb-1 d-flex align-center ga-1">
+              <v-icon size="16">mdi-calendar-clock-outline</v-icon>
+              Políticas de reserva
+            </div>
+            <div class="text-caption text-medium-emphasis mb-3">
+              Aplican a todos tus turnos. Cuentan desde hoy hasta el día de la cita.
+            </div>
+            <v-row dense>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model.number="policy.advance_booking_days"
+                  label="Días máx. anticipación"
+                  type="number"
+                  :min="1"
+                  :max="365"
+                  density="compact"
+                  hide-details
+                  hint="Cuántos días adelante pueden reservar contigo"
+                  persistent-hint
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model.number="policy.min_advance_minutes"
+                  label="Mín. anticipación (min)"
+                  type="number"
+                  :min="0"
+                  :max="4320"
+                  density="compact"
+                  hide-details
+                  hint="Tiempo mínimo antes de la cita para reservar"
+                  persistent-hint
+                />
+              </v-col>
+            </v-row>
+          </v-card>
+
           <WeekScheduleGrid
             :days="daysOfWeek"
             :shifts="localShifts"
@@ -124,10 +168,6 @@
       :day-label="currentDayLabel"
       :start_time="editingShift?.start_time"
       :end_time="editingShift?.end_time"
-      :slot_mode="editingShift?.slot_mode"
-      :slot_interval_minutes="editingShift?.slot_interval_minutes"
-      :advance_booking_days="editingShift?.advance_booking_days"
-      :min_advance_minutes="editingShift?.min_advance_minutes"
       :existing-shifts="currentDayShiftsForValidation"
       :frame-start="currentDayFrame?.start_time"
       :frame-end="currentDayFrame?.end_time"
@@ -177,6 +217,7 @@ import { useAuthStore } from '@/shared/stores/auth.store';
 import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import { useEmployeeStore } from '../stores/employee.store';
 import { scheduleRepository } from '../repositories/schedule.repository';
+import { employeeRepository } from '../repositories/employee.repository';
 import EmployeeSelect from './EmployeeSelect.vue';
 import ShiftDialog from './ShiftDialog.vue';
 import WeekScheduleGrid from './WeekScheduleGrid.vue';
@@ -228,6 +269,7 @@ onMounted(async () => {
     myEmployeeId.value = match?.id ?? null;
     if (myEmployeeId.value) {
       selectedEmployeeId.value = myEmployeeId.value;
+      loadPolicyFromEmployee();
     }
   } else {
     // El marco del negocio lo edita BusinessHoursEditor: el selector
@@ -235,6 +277,28 @@ onMounted(async () => {
     selectedEmployeeId.value = employeeStore.activeEmployees[0]?.id ?? null;
   }
 });
+
+// --- Política de reserva (autogestionada por el empleado) ---
+
+const policy = reactive({
+  advance_booking_days: 7,
+  min_advance_minutes: 15,
+});
+
+function loadPolicyFromEmployee() {
+  const me = employeeStore.employees.find((e) => e.id === myEmployeeId.value);
+  if (!me) return;
+  policy.advance_booking_days = me.advance_booking_days ?? 7;
+  policy.min_advance_minutes = me.min_advance_minutes ?? 15;
+}
+
+function savePolicy() {
+  if (!myEmployeeId.value) return Promise.resolve();
+  return employeeRepository.update(myEmployeeId.value, {
+    advance_booking_days: policy.advance_booking_days,
+    min_advance_minutes: policy.min_advance_minutes,
+  });
+}
 
 // --- Marco global del negocio (filas employee_id NULL) ---
 
@@ -311,10 +375,6 @@ function defaultShift(day: number): ScheduleShiftInput {
   return {
     start_time: frame?.start_time ?? '09:00',
     end_time: frame?.end_time ?? '17:00',
-    slot_mode: 'fixed',
-    slot_interval_minutes: 30,
-    advance_booking_days: 7,
-    min_advance_minutes: 15,
   };
 }
 
@@ -329,10 +389,6 @@ function initLocalShifts() {
       daySchedules.map((s) => ({
         start_time: s.start_time,
         end_time: s.end_time,
-        slot_mode: s.slot_mode ?? 'fixed',
-        slot_interval_minutes: s.slot_interval_minutes ?? 30,
-        advance_booking_days: s.advance_booking_days ?? 7,
-        min_advance_minutes: s.min_advance_minutes ?? 15,
       })),
     );
   }
@@ -414,10 +470,6 @@ function onShiftSave(data: ScheduleShiftInput) {
   const shiftData: ScheduleShiftInput = {
     start_time: data.start_time,
     end_time: data.end_time,
-    slot_mode: data.slot_mode ?? 'fixed',
-    slot_interval_minutes: data.slot_interval_minutes ?? 30,
-    advance_booking_days: data.advance_booking_days ?? 7,
-    min_advance_minutes: data.min_advance_minutes ?? 15,
   };
 
   if (editingShiftIndex.value >= 0) {
@@ -512,6 +564,9 @@ async function onSave() {
   try {
     await scheduleStore.updateSchedules(buildPayload(), resolveEmployeeId(selectedEmployeeId.value));
     await scheduleStore.fetchSchedules(resolveEmployeeId(selectedEmployeeId.value));
+    if (isEmployeeView.value && myEmployeeId.value) {
+      await savePolicy();
+    }
     initLocalShifts();
     dirty.value = false;
     notification.success('Turnos guardados correctamente');
@@ -540,6 +595,7 @@ function onDiscard() {
   confirm('¿Descartar los cambios sin guardar?').then((ok) => {
     if (ok) {
       initLocalShifts();
+      loadPolicyFromEmployee();
       dirty.value = false;
     }
   });

@@ -17,10 +17,6 @@ export const scheduleRepository = {
         day_of_week: s.day_of_week,
         start_time: s.start_time,
         end_time: s.end_time,
-        slot_mode: s.slot_mode ?? 'fixed',
-        slot_interval_minutes: s.slot_interval_minutes ?? 30,
-        advance_booking_days: s.advance_booking_days ?? 7,
-        min_advance_minutes: s.min_advance_minutes ?? 15,
       })),
     });
     if (error) throw error;

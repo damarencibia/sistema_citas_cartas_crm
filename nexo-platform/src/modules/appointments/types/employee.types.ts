@@ -18,6 +18,12 @@ export interface Employee extends BaseEntity {
   category_ids?: string[];
   /** Servicios que el empleado ofrece (elige en Mis Servicios) */
   enabled_service_ids?: string[];
+  /**
+   * Política de reserva del empleado (autogestionada en Mi Horario).
+   * NULL → valores por defecto en BD (7 días / 15 minutos).
+   */
+  advance_booking_days?: number | null;
+  min_advance_minutes?: number | null;
 }
 
 export interface CreateEmployeeDTO {
@@ -28,4 +34,6 @@ export interface CreateEmployeeDTO {
   color?: string;
 }
 
-export type UpdateEmployeeDTO = Partial<CreateEmployeeDTO & { is_active: boolean }>;
+export type UpdateEmployeeDTO = Partial<
+  CreateEmployeeDTO & { is_active: boolean; advance_booking_days: number | null; min_advance_minutes: number | null }
+>;

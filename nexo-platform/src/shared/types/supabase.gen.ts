@@ -843,6 +843,7 @@ export type Database = {
       }
       employees: {
         Row: {
+          advance_booking_days: number | null
           color: string | null
           created_at: string
           deleted_at: string | null
@@ -851,12 +852,14 @@ export type Database = {
           id: string
           is_active: boolean
           last_name: string
+          min_advance_minutes: number | null
           phone: string | null
           tenant_id: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          advance_booking_days?: number | null
           color?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -865,12 +868,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_name: string
+          min_advance_minutes?: number | null
           phone?: string | null
           tenant_id: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          advance_booking_days?: number | null
           color?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -879,6 +884,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_name?: string
+          min_advance_minutes?: number | null
           phone?: string | null
           tenant_id?: string
           updated_at?: string
@@ -1593,46 +1599,34 @@ export type Database = {
       }
       schedules: {
         Row: {
-          advance_booking_days: number
           created_at: string
           day_of_week: number
           employee_id: string | null
           end_time: string
           id: string
           is_active: boolean
-          min_advance_minutes: number
-          slot_interval_minutes: number
-          slot_mode: string
           start_time: string
           tenant_id: string
           updated_at: string
         }
         Insert: {
-          advance_booking_days?: number
           created_at?: string
           day_of_week: number
           employee_id?: string | null
           end_time: string
           id?: string
           is_active?: boolean
-          min_advance_minutes?: number
-          slot_interval_minutes?: number
-          slot_mode?: string
           start_time: string
           tenant_id: string
           updated_at?: string
         }
         Update: {
-          advance_booking_days?: number
           created_at?: string
           day_of_week?: number
           employee_id?: string | null
           end_time?: string
           id?: string
           is_active?: boolean
-          min_advance_minutes?: number
-          slot_interval_minutes?: number
-          slot_mode?: string
           start_time?: string
           tenant_id?: string
           updated_at?: string

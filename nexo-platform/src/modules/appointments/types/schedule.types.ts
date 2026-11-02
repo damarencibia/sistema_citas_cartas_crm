@@ -9,10 +9,6 @@ export interface Schedule extends BaseEntity {
   start_time: string;
   end_time: string;
   is_active: boolean;
-  slot_mode: 'fixed' | 'flexible';
-  slot_interval_minutes: number;
-  advance_booking_days: number;
-  min_advance_minutes: number;
 }
 
 export interface HolidayException {
@@ -33,28 +29,16 @@ export interface CreateScheduleDTO {
   day_of_week: number;
   start_time: string;
   end_time: string;
-  slot_mode?: 'fixed' | 'flexible';
-  slot_interval_minutes?: number;
-  advance_booking_days?: number;
-  min_advance_minutes?: number;
 }
 
+/**
+ * Rango horario de un turno. La retícula de slots se genera por
+ * la duración del servicio, no del turno: el turno solo define
+ * inicio y fin.
+ */
 export interface ScheduleShiftInput {
   start_time: string;
   end_time: string;
-  slot_mode: 'fixed' | 'flexible';
-  slot_interval_minutes: number;
-  advance_booking_days: number;
-  min_advance_minutes: number;
-}
-
-export interface ScheduleShiftInput {
-  start_time: string;
-  end_time: string;
-  slot_mode: 'fixed' | 'flexible';
-  slot_interval_minutes: number;
-  advance_booking_days: number;
-  min_advance_minutes: number;
 }
 
 /**

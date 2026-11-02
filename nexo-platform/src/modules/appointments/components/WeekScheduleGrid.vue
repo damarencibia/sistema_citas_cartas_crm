@@ -44,10 +44,7 @@
           v-for="(shift, idx) in getShifts(day.value)"
           :key="`shift-${day.value}-${idx}`"
           class="shift-block"
-          :class="[
-            shift.slot_mode === 'flexible' ? 'flexible' : 'fixed',
-            isOutOfFrame(day.value, shift) ? 'out-of-frame' : '',
-          ]"
+          :class="[isOutOfFrame(day.value, shift) ? 'out-of-frame' : '']"
           @click="emit('edit-shift', day.value, idx)"
         >
           <div class="d-flex align-center ga-1">
@@ -62,9 +59,6 @@
               class="shift-delete"
               @click.stop="emit('remove-shift', day.value, idx)"
             />
-          </div>
-          <div class="shift-meta">
-            <span>{{ shift.slot_mode === 'flexible' ? 'flexible' : `cada ${shift.slot_interval_minutes} min` }}</span>
           </div>
           <div v-if="isOutOfFrame(day.value, shift)" class="shift-warning">
             <v-icon size="12" color="error">mdi-alert-circle-outline</v-icon>
@@ -229,22 +223,14 @@ function formatTime(t: string): string {
 .shift-block {
   border-radius: 6px;
   padding: 6px 8px;
+  background: rgba(var(--v-theme-primary), 0.12);
+  border: 1px solid rgba(var(--v-theme-primary), 0.3);
   cursor: pointer;
   transition: filter 0.15s ease;
 }
 
 .shift-block:hover {
   filter: brightness(0.96);
-}
-
-.shift-block.fixed {
-  background: rgba(var(--v-theme-primary), 0.12);
-  border: 1px solid rgba(var(--v-theme-primary), 0.3);
-}
-
-.shift-block.flexible {
-  background: rgba(251, 146, 60, 0.14);
-  border: 1px solid rgba(251, 146, 60, 0.4);
 }
 
 .shift-block.out-of-frame {
@@ -265,12 +251,6 @@ function formatTime(t: string): string {
   font-size: 12px;
   font-weight: 500;
   color: rgb(var(--v-theme-on-surface));
-}
-
-.shift-meta {
-  font-size: 11px;
-  color: rgb(var(--v-theme-medium-emphasis));
-  margin-top: 2px;
 }
 
 .shift-delete {
