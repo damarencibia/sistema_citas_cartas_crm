@@ -276,7 +276,14 @@ export const bookingRepository = {
       updated_at: new Date().toISOString(),
     };
     if (status === 'cancelled') {
-      updatePayload.cancellation_reason = reason ?? null;
+      // La constraint bookings_check1 exige cancellation_reason cuando
+      // cancelled_at tiene valor. Default según quién cancela.
+      const fallbackReason = cancelledBy === 'customer'
+        ? 'Cancelada por el cliente'
+        : cancelledBy === 'system'
+          ? 'Cancelada automáticamente'
+          : 'Cancelada por el empleado';
+      updatePayload.cancellation_reason = reason?.trim() ? reason.trim() : fallbackReason;
       updatePayload.cancelled_by = cancelledBy;
       updatePayload.cancelled_at = new Date().toISOString();
     }
@@ -445,7 +452,7 @@ export const bookingRepository = {
       .from(TABLE)
       .update({
         status: 'cancelled',
-        cancellation_reason: reason ?? 'Rechazado por administrador',
+        cancellation_reason: reason?.trim() || 'Rechazado por administrador',
         cancelled_by: 'employee',
         cancelled_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
