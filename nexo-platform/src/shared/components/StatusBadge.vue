@@ -31,10 +31,23 @@ const statusMap: Record<string, { label: string; color: string; icon: string }> 
   delivered: { label: 'Entregado', color: 'success', icon: 'mdi-check-all' },
   trial: { label: 'Prueba', color: 'info', icon: 'mdi-star-outline' },
   suspended: { label: 'Suspendido', color: 'error', icon: 'mdi-block-helper' },
+  // Estados de eventos y aprobaciones de reservas (antes caían en snake_case crudo)
+  waitlisted: { label: 'En Espera', color: 'warning', icon: 'mdi-clock-alert' },
+  attended: { label: 'Asistió', color: 'info', icon: 'mdi-check-all' },
+  approved: { label: 'Aprobada', color: 'success', icon: 'mdi-check-circle-outline' },
+  rejected: { label: 'Rechazada', color: 'error', icon: 'mdi-close-circle-outline' },
 };
 
+/**
+ * Fallback legible para estados no mapeados: `payment_pending` → `Payment pending`.
+ */
+function humanize(status: string): string {
+  const text = status.replace(/_/g, ' ').trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 const config = computed(
-  () => statusMap[props.status] || { label: props.status, color: 'grey', icon: '' },
+  () => statusMap[props.status] || { label: humanize(props.status), color: 'grey', icon: '' },
 );
 const label = computed(() => config.value.label);
 const color = computed(() => config.value.color);

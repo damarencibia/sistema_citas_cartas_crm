@@ -287,7 +287,10 @@ async function onSave(dto: CreateEventDTO) {
 }
 
 async function onDelete(event: Event) {
-  const ok = await confirm(`¿Eliminar el evento "${event.name}"?`);
+  const ok = await confirm(`¿Eliminar el evento "${event.name}"?`, 'Eliminar Evento', {
+    danger: true,
+    confirmText: 'Eliminar',
+  });
   if (!ok) return;
   try {
     await eventStore.deleteEvent(event.id);

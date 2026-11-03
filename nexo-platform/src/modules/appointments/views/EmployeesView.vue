@@ -855,7 +855,10 @@ async function toggleActive(member: Employee, value: boolean) {
 
 async function onDelete(member: Employee) {
   if (member.role === 'owner') return;
-  const ok = await confirm(`¿Eliminar a "${member.first_name} ${member.last_name}"?`);
+  const ok = await confirm(`¿Eliminar a "${member.first_name} ${member.last_name}"?`, 'Eliminar Empleado', {
+    danger: true,
+    confirmText: 'Eliminar',
+  });
   if (!ok) return;
   try {
     await employeeStore.deleteEmployee(member.id);

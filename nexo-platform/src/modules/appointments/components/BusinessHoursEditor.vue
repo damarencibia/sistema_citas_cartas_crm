@@ -350,7 +350,10 @@ async function onCreateHoliday() {
 }
 
 async function onDeleteHoliday(h: HolidayException) {
-  const ok = await confirm(`¿Eliminar el feriado del ${formatDate(h.date)}?`);
+  const ok = await confirm(`¿Eliminar el feriado del ${formatDate(h.date)}?`, 'Eliminar Feriado', {
+    danger: true,
+    confirmText: 'Eliminar',
+  });
   if (!ok) return;
   try {
     await scheduleRepository.deleteHoliday(h.id);

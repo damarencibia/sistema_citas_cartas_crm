@@ -2,6 +2,27 @@
   <div>
     <PageHeader title="Dashboard" subtitle="Resumen de tu negocio" />
 
+    <v-alert
+      v-if="loadError"
+      type="warning"
+      variant="tonal"
+      density="comfortable"
+      class="mb-4"
+      closable
+    >
+      <div class="d-flex align-center flex-wrap ga-2">
+        <span>No se pudo cargar el resumen del negocio.</span>
+        <v-btn
+          size="x-small"
+          variant="tonal"
+          color="primary"
+          @click="loadDashboard"
+        >
+          Reintentar
+        </v-btn>
+      </div>
+    </v-alert>
+
     <v-row>
       <v-col
         v-for="stat in stats"
@@ -86,9 +107,13 @@ import { useTenantStore } from '@/shared/stores/tenant.store';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import DailySummaryCard from '@/modules/appointments/components/DailySummaryCard.vue';
+import { useNotification } from '@/shared/composables/useNotification';
+
+const notification = useNotification();
 
 const tenantStore = useTenantStore();
 const loading = ref(true);
+const loadError = ref(false);
 
 const stats = reactive([
   { title: 'Citas Hoy', value: '0', icon: 'mdi-calendar-today', color: 'primary', bgColor: 'rgba(62, 207, 142, 0.1)' },
@@ -115,7 +140,10 @@ const summary = reactive([
   { label: 'Canceladas', value: '0', color: 'error' },
 ]);
 
-onMounted(async () => {
+onMounted(loadDashboard);
+
+async function loadDashboard() {
+  loadError.value = false;
   const tenantId = tenantStore.tenant?.id;
   if (!tenantId) {
     loading.value = false;
@@ -156,11 +184,12 @@ onMounted(async () => {
       initials: ((b.customer_name as string ?? 'C')).charAt(0).toUpperCase(),
     }));
   } catch {
-    // Keep default zeros on error
+    loadError.value = true;
+    notification.error('No se pudo cargar el resumen del negocio');
   } finally {
     loading.value = false;
   }
-});
+}
 </script>
 
 <style scoped>

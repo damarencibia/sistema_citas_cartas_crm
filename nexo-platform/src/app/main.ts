@@ -20,6 +20,9 @@ async function bootstrap() {
   const authStore = useAuthStore();
   await authStore.initialize();
 
+  const { useUiStore } = await import('@/shared/stores/ui.store');
+  useUiStore().initTheme();
+
   const tenantStore = useTenantStore();
   if (authStore.user?.tenant_id) {
     await tenantStore.fetchTenant(authStore.user.tenant_id);

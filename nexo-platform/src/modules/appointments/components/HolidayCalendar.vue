@@ -259,7 +259,10 @@ async function onCreate() {
 }
 
 async function onDelete(holiday: HolidayException) {
-  const ok = await confirm(`¿Eliminar la excepción del ${formatDate(holiday.date)}?`);
+  const ok = await confirm(`¿Eliminar la excepción del ${formatDate(holiday.date)}?`, 'Eliminar Excepción', {
+    danger: true,
+    confirmText: 'Eliminar',
+  });
   if (!ok) return;
   try {
     await scheduleStore.deleteHoliday(holiday.id);

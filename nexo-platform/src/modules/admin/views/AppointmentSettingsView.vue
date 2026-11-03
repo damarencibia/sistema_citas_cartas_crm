@@ -160,6 +160,7 @@
       @save="onWindowSave"
     />
 
+
     <!-- Resources Section -->
     <v-card class="pa-6 mt-4">
       <div class="d-flex align-center ga-3 mb-4">
@@ -256,10 +257,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
-      {{ snackbarText }}
-    </v-snackbar>
   </div>
 </template>
 
@@ -272,16 +269,15 @@ import { useAuthStore } from '@/shared/stores/auth.store';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import FormSection from '@/shared/components/FormSection.vue';
 import BookingWindowsDialog from '@/modules/appointments/components/BookingWindowsDialog.vue';
+import { useNotification } from '@/shared/composables/useNotification';
 import type { BookingWindow } from '@/modules/appointments/types/booking.types';
 import type { Resource } from '@/modules/appointments/types/resource.types';
 
 const tenantStore = useTenantStore();
 const authStore = useAuthStore();
 const resourceStore = useResourceStore();
+const notification = useNotification();
 const saving = ref(false);
-const snackbar = ref(false);
-const snackbarText = ref('');
-const snackbarColor = ref('success');
 
 const form = reactive({
   auto_start: false,
@@ -326,9 +322,9 @@ async function onWindowSave(data: any) {
     await bookingRepository.createBookingWindow(tenantId, data);
     await loadBookingWindows();
     showWindowDialog.value = false;
-    notify('Ventana guardada correctamente', 'success');
+    notification.success('Ventana guardada correctamente');
   } catch {
-    notify('Error al guardar la ventana', 'error');
+    notification.error('Error al guardar la ventana');
   }
 }
 
@@ -336,9 +332,9 @@ async function deleteWindow(bw: BookingWindow) {
   try {
     await bookingRepository.deleteBookingWindow(bw.id);
     await loadBookingWindows();
-    notify('Ventana eliminada', 'success');
+    notification.success('Ventana eliminada');
   } catch {
-    notify('Error al eliminar la ventana', 'error');
+    notification.error('Error al eliminar la ventana');
   }
 }
 
@@ -392,9 +388,9 @@ async function saveResource() {
     }
     await loadResources();
     showResourceDialog.value = false;
-    notify(editingResource.value ? 'Recurso actualizado' : 'Recurso creado', 'success');
+    notification.success(editingResource.value ? 'Recurso actualizado' : 'Recurso creado');
   } catch {
-    notify('Error al guardar recurso', 'error');
+    notification.error('Error al guardar recurso');
   } finally {
     savingResource.value = false;
   }
@@ -404,16 +400,10 @@ async function deleteResource(resource: Resource) {
   try {
     await resourceStore.removeResource(resource.id);
     await loadResources();
-    notify('Recurso eliminado', 'success');
+    notification.success('Recurso eliminado');
   } catch {
-    notify('Error al eliminar recurso', 'error');
+    notification.error('Error al eliminar recurso');
   }
-}
-
-function notify(text: string, color: string) {
-  snackbarText.value = text;
-  snackbarColor.value = color;
-  snackbar.value = true;
 }
 
 // --- Lifecycle ---
@@ -449,13 +439,9 @@ async function save() {
         },
       },
     } as any);
-    snackbarText.value = 'Configuración guardada correctamente';
-    snackbarColor.value = 'success';
-    snackbar.value = true;
+    notification.success('Configuración guardada correctamente');
   } catch {
-    snackbarText.value = 'Error al guardar la configuración';
-    snackbarColor.value = 'error';
-    snackbar.value = true;
+    notification.error('Error al guardar la configuración');
   } finally {
     saving.value = false;
   }

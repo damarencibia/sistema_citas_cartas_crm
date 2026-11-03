@@ -133,7 +133,10 @@ async function onSave(dto: CreateServiceDTO) {
 }
 
 async function onDelete(service: Service) {
-  const ok = await confirm(`¿Eliminar el servicio "${service.name}"?`);
+  const ok = await confirm(`¿Eliminar el servicio "${service.name}"?`, 'Eliminar Servicio', {
+    danger: true,
+    confirmText: 'Eliminar',
+  });
   if (!ok) return;
   try {
     await serviceStore.deleteService(service.id);

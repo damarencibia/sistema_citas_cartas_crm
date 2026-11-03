@@ -19,6 +19,8 @@ export default [
       'vue/multi-word-component-names': 'off',
       'vue/max-attributes-per-line': ['warn', { singleline: 3, multiline: 1 }],
       'vue/singleline-html-element-content-newline': 'off',
+      // Vuetify usa slots con puntos (#item.name) — los "modificadores" del slot son legítimos aquí
+      'vue/valid-v-slot': ['error', { allowModifiers: true }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-empty-object-type': 'warn',
     },

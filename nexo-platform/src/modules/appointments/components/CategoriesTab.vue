@@ -133,7 +133,10 @@ async function onSave(dto: CreateServiceCategoryDTO) {
 }
 
 async function onDelete(category: ServiceCategory) {
-  const ok = await confirm(`¿Eliminar la categoría "${category.name}"?`);
+  const ok = await confirm(`¿Eliminar la categoría "${category.name}"?`, 'Eliminar Categoría', {
+    danger: true,
+    confirmText: 'Eliminar',
+  });
   if (!ok) return;
   try {
     await categoryStore.deleteCategory(category.id);

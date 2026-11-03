@@ -329,7 +329,11 @@ async function onPromote(reg: EventRegistration) {
 }
 
 async function onCancel(reg: EventRegistration) {
-  const ok = await confirm(`¿Cancelar el registro de "${reg.customer_name || 'este asistente'}"?`);
+  const ok = await confirm(
+    'Se eliminará el registro y el asistente dejará de ocupar un lugar en el evento.',
+    'Cancelar Registro',
+    { danger: true, confirmText: 'Cancelar registro' },
+  );
   if (!ok) return;
   try {
     await registrationStore.cancelRegistration(reg.id);

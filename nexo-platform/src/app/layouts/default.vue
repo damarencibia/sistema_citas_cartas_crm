@@ -30,6 +30,9 @@
       :visible="visible"
       :title="title"
       :message="message"
+      :danger="dialogDanger"
+      :confirm-text="dialogConfirmText"
+      :cancel-text="dialogCancelText"
       @confirm="onConfirm"
       @cancel="onCancel"
     />
@@ -62,7 +65,7 @@ const mainStyle = computed(() => {
   return { paddingLeft: `${60 + secondaryWidth + toggleSpace}px` };
 });
 
-const { visible, title, message, onConfirm, onCancel } = useConfirm();
+const { visible, title, message, danger: dialogDanger, confirmText: dialogConfirmText, cancelText: dialogCancelText, onConfirm, onCancel } = useConfirm();
 </script>
 
 <style scoped>

@@ -37,8 +37,8 @@ export const useTenantStore = defineStore('tenant', {
       if (appointments) return 'appointments';
       return 'none';
     },
-    primaryColor: (state) => state.tenant?.primary_color ?? '#1976D2',
-    secondaryColor: (state) => state.tenant?.secondary_color ?? '#424242',
+    primaryColor: (state) => state.tenant?.primary_color ?? '#3ecf8e',
+    secondaryColor: (state) => state.tenant?.secondary_color ?? '#6b7280',
   },
 
   actions: {

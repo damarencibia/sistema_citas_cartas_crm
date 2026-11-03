@@ -238,6 +238,8 @@ async function onSave(dto: CreateServiceDTO) {
 async function onDelete(service: Service) {
   const ok = await confirm(
     `¿Eliminar el servicio "${service.name}"? Dejará de estar disponible para todos los empleados.`,
+    'Eliminar Servicio',
+    { danger: true, confirmText: 'Eliminar' },
   );
   if (!ok) return;
   try {
