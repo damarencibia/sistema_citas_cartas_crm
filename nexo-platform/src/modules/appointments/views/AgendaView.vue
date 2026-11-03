@@ -97,6 +97,7 @@
             <v-btn value="dia">Día</v-btn>
             <v-btn value="semana">Semana</v-btn>
             <v-btn value="mes">Mes</v-btn>
+            <v-btn value="unificada">Unificada</v-btn>
           </v-btn-toggle>
         </div>
 
@@ -107,6 +108,23 @@
             @change-date="filters.date = $event"
             @open-booking="openDetail"
             @select-employee="onTeamSelectEmployee"
+          />
+        </template>
+
+        <template v-else-if="viewSegment === 'unificada'">
+          <EditorialCalendar
+            :week-dates="weekDates"
+            :week-bookings="weekBookings"
+            :blocked-slots="dayBlocks"
+            :selected-date="filters.date"
+            :loading="weekLoading"
+            :employee-names="employeeNamesById"
+            @select-date="onSelectUnifiedDay"
+            @prev-week="shiftWeek(-7)"
+            @next-week="shiftWeek(7)"
+            @today="goToTodayWeek"
+            @open-booking="openDetail"
+            @open-block="onReleaseBlock"
           />
         </template>
 
@@ -387,6 +405,7 @@ import WaitlistPanel from '../components/WaitlistPanel.vue';
 import DailyClosurePanel from '../components/DailyClosurePanel.vue';
 import WeekDayStrip from '../components/WeekDayStrip.vue';
 import MonthCalendar from '../components/MonthCalendar.vue';
+import EditorialCalendar from '../components/EditorialCalendar.vue';
 import type { WeekDayCount } from '../components/WeekDayStrip.vue';
 import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
 import { dailyClosureRepository } from '../repositories/daily-closure.repository';
@@ -411,10 +430,12 @@ const router = useRouter();
 const { smAndDown } = useDisplay();
 
 const reservasTab = ref<'all' | 'approval'>('all');
-const viewSegment = ref<'dia' | 'semana' | 'mes'>('dia');
+const viewSegment = ref<'dia' | 'semana' | 'mes' | 'unificada'>('dia');
 const weekAnchor = ref(new Date().toISOString().split('T')[0]);
 const weekLoading = ref(false);
 const weekCounts = ref<Record<string, WeekDayCount>>({});
+/** Reservas completas de la semana en modo unificada (misma consulta que los counts) */
+const weekBookings = ref<Booking[]>([]);
 const monthAnchor = ref(new Date().toISOString().split('T')[0]);
 const monthLoading = ref(false);
 const monthCounts = ref<Record<string, WeekDayCount>>({});
@@ -510,6 +531,20 @@ const employeeOptions = computed(() =>
   })),
 );
 
+/** Mapa id → nombre para la meta de los bloques de la vista unificada */
+const employeeNamesById = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {};
+  for (const e of employeeStore.employees) {
+    map[e.id] = `${e.first_name} ${e.last_name}`;
+  }
+  return map;
+});
+
+/** En la vista unificada el click en un día lo selecciona sin salir del modo */
+function onSelectUnifiedDay(day: string) {
+  filters.date = day;
+}
+
 const closureEmployeeName = computed(() => {
   if (!filters.employee_id) return 'Sin empleado';
   const emp = employeeStore.employees.find((e) => e.id === filters.employee_id);
@@ -598,7 +633,7 @@ const weekDates = computed(() => {
   for (let i = 0; i < 7; i++) {
     const dd = new Date(d);
     dd.setDate(d.getDate() + i);
-    dates.push(dd.toISOString().split('T')[0]);
+    dates.push(toIsoDate(dd));
   }
   return dates;
 });
@@ -612,6 +647,8 @@ async function loadWeekCounts() {
       date_to: end,
       employee_id: filters.employee_id,
     });
+    // Mismo fetch alimenta los counts (strip/día) y los bloques de la vista unificada
+    weekBookings.value = data;
     const counts: Record<string, WeekDayCount> = {};
     for (const b of data) {
       if (b.status === 'cancelled' || b.status === 'no_show') continue;
@@ -692,12 +729,12 @@ function toIsoDate(d: Date): string {
 }
 
 watch(() => viewSegment.value, (segment) => {
-  if (segment === 'semana') loadWeekCounts();
+  if (segment === 'semana' || segment === 'unificada') loadWeekCounts();
   if (segment === 'mes') loadMonthCounts();
 });
 
 watch(() => filters.employee_id, () => {
-  if (viewSegment.value === 'semana') loadWeekCounts();
+  if (viewSegment.value === 'semana' || viewSegment.value === 'unificada') loadWeekCounts();
   if (viewSegment.value === 'mes') loadMonthCounts();
 });
 
@@ -706,7 +743,7 @@ watch(() => [filters.employee_id, filters.date], loadDayClosed, { immediate: tru
 watch(() => [filters.employee_id, filters.date], loadDayBlocks, { immediate: true });
 
 watch(weekAnchor, () => {
-  if (viewSegment.value === 'semana') loadWeekCounts();
+  if (viewSegment.value === 'semana' || viewSegment.value === 'unificada') loadWeekCounts();
 });
 
 watch(monthAnchor, () => {
