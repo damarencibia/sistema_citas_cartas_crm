@@ -24,7 +24,70 @@
     "hasAccount": "Already have an account?",
     "createAccount": "Create Account",
     "invalidCredentials": "Invalid credentials",
-    "sessionExpired": "Session expired"
+    "sessionExpired": "Session expired",
+    "loginScene": {
+      "brand": "Nexo",
+      "signUp": "Sign up",
+      "title": "Welcome back",
+      "subtitle": "Enter your credentials to access your workspace",
+      "labels": {
+        "email": "Email",
+        "password": "Password"
+      },
+      "placeholders": {
+        "email": "you@email.com",
+        "password": "••••••••"
+      },
+      "forgot": "Forgot it?",
+      "legal": "By continuing you accept the Terms and the Privacy Policy.",
+      "footnote": "© 2026 Nexo Platform · Bookings, letters and CRM for your business",
+      "promoTitle": "Book more, wait less",
+      "promoSub": "Centralize bookings, consultation letters and customers in one place — your business never sleeps.",
+      "discover": "Discover",
+      "submitLabel": "Sign in",
+      "errors": {
+        "required": "Required field",
+        "email": "Enter a valid email"
+      }
+    },
+    "registerScene": {
+      "brand": "Nexo",
+      "login": "Sign in",
+      "title": "Create your account",
+      "subtitle": "Register your business on Nexo Platform",
+      "labels": {
+        "businessName": "Business name",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "phone": "Phone",
+        "password": "Password",
+        "confirmPassword": "Confirm password"
+      },
+      "placeholders": {
+        "businessName": "My Business LLC",
+        "firstName": "Lucy",
+        "lastName": "Smith",
+        "email": "you@email.com",
+        "phone": "5 123 4567 · 8 digits",
+        "password": "At least 8 characters",
+        "confirmPassword": "Repeat the password"
+      },
+      "phonePrefix": "+53",
+      "legal": "By continuing you accept the Terms and the Privacy Policy.",
+      "footnote": "© 2026 Nexo Platform · Bookings, letters and CRM for your business",
+      "promoTitle": "Your business, in order from day one",
+      "promoSub": "Create your account and start booking appointments in minutes — nothing to install.",
+      "submitLabel": "Create account",
+      "sessionNotice": "You have an active session from another account. Creating the new business will close that session and take you straight into the new workspace.",
+      "errors": {
+        "required": "Required field",
+        "email": "Enter a valid email",
+        "phone": "Must be an 8-digit number",
+        "passwordMin": "At least 8 characters",
+        "passwordMatch": "Passwords do not match"
+      }
+    }
   },
   "nav": {
     "dashboard": "Dashboard",

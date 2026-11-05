@@ -89,7 +89,7 @@
     </div>
 
     <!-- ─── Columnas ─── -->
-    <div v-else class="ec__scroll">
+    <div v-else ref="scrollRef" class="ec__scroll">
       <div class="ec__grid">
         <div
           v-for="col in columns"
@@ -98,9 +98,11 @@
           :class="{
             'ec__col--active': col.isSelected,
             'ec__col--today': col.isToday && !col.isSelected,
+            'ec__col--sealed': col.isSelected && dayClosed,
             'ec__col--clickable': true,
           }"
         >
+          <span aria-hidden="true" class="ec__sweep" />
           <!-- Encabezado del día -->
           <button
             type="button"
@@ -165,6 +167,33 @@
           <div v-else class="ec__empty">
             <span>—</span>
           </div>
+
+          <!-- Ficha de cierre / sello del día seleccionado -->
+          <div v-if="col.isSelected" class="ec__closure">
+            <button
+              v-if="dayClosed"
+              type="button"
+              class="ec__stamp"
+              title="Ver el resumen del cierre del día"
+              @click="emit('open-closure')"
+            >
+              <span class="ec__stamp-label">Día Cerrado</span>
+              <span class="ec__stamp-meta">
+                <v-icon size="12">mdi-check-decagram</v-icon>
+                {{ closureDateLabel }}
+              </span>
+            </button>
+            <button
+              v-else-if="canClose"
+              type="button"
+              class="ec__closure-tile"
+              :title="`Abrir el cierre del día ${closureDateLabel}`"
+              @click="emit('open-closure')"
+            >
+              <span class="ec__closure-label">Cerrar Día — {{ closureDateLabel }}</span>
+              <span class="ec__closure-stats">{{ closureStats }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -172,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { format as fmt } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Booking, BlockedSlot } from '../types/booking.types';
@@ -190,6 +219,10 @@ const props = defineProps<{
   loading: boolean;
   /** Nombres por id de empleado para la meta de cada bloque */
   employeeNames: Record<string, string>;
+  /** El día seleccionado ya tiene cierre registrado */
+  dayClosed?: boolean;
+  /** Puede operar el cierre (hay empleado seleccionado) */
+  canClose?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -199,6 +232,7 @@ const emit = defineEmits<{
   today: [];
   'open-booking': [booking: Booking];
   'open-block': [block: BlockedSlot];
+  'open-closure': [];
 }>();
 
 const pickerMenu = ref(false);
@@ -293,6 +327,51 @@ function onPickerPick(value: unknown) {
 // Al cambiar de rango, cierra el popover (reabre en el mes correcto)
 watch(() => props.weekDates[0], () => {
   pickerMenu.value = false;
+});
+
+// ─── Ficha de cierre / sello ────────────────────────────────
+const closureDateLabel = computed(() => {
+  if (!props.selectedDate) return '';
+  return fmt(new Date(`${props.selectedDate}T12:00:00`), 'd MMM', { locale: es }).toUpperCase();
+});
+
+/** Resumen mini del día seleccionado: citas activas, pendientes y atendidas */
+const closureStats = computed(() => {
+  const col = columns.value.find((c) => c.isSelected);
+  if (!col) return '';
+  const actives = col.events.filter((e) => e.type === 'booking');
+  const pending = actives.filter((e) => e.booking.status === 'pending_approval').length;
+  const done = actives.filter((e) => e.booking.status === 'completed').length;
+  const parts = [`${actives.length} citas`];
+  if (pending > 0) parts.push(`${pending} por aprobar`);
+  if (done > 0) parts.push(`${done} atendidas`);
+  return parts.join(' · ');
+});
+
+// ─── Auto-scroll de la columna activa (touch: sin hover, la ficha debe ser visible)
+const scrollRef = ref<HTMLElement | null>(null);
+
+function scrollActiveIntoView() {
+  if (typeof window === 'undefined') return;
+  if (!window.matchMedia('(max-width: 960px)').matches) return;
+  const active = scrollRef.value?.querySelector('.ec__col--active');
+  active?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+}
+
+watch(
+  () => props.selectedDate,
+  async () => {
+    await nextTick();
+    scrollActiveIntoView();
+  },
+  { immediate: true },
+);
+
+watch(() => props.loading, async (isLoading) => {
+  if (!isLoading) {
+    await nextTick();
+    scrollActiveIntoView();
+  }
 });
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -410,6 +489,7 @@ function eventClass(status: string): string {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  position: relative;
   transition: background-color 0.15s ease;
 }
 
@@ -421,9 +501,20 @@ function eventClass(status: string): string {
   background: rgb(var(--v-theme-surface-variant), 0.4);
 }
 
-/* Día seleccionado: borde superior de 2px en acento (mecánica del mockup) */
-.ec__col--active {
-  border-top: 2px solid var(--ec-accent);
+/* Día seleccionado: el marcador del mockup se pinta con barrido (transition en width) */
+.ec__sweep {
+  position: absolute;
+  top: -2px;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background: var(--ec-accent);
+  transition: width 0.22s ease-out;
+  pointer-events: none;
+}
+
+.ec__col--active .ec__sweep {
+  width: 100%;
 }
 
 .ec__col--today:not(.ec__col--active) {
@@ -601,6 +692,130 @@ function eventClass(status: string): string {
   user-select: none;
 }
 
+/* ── Ficha de cierre / sello (solo en la columna del día seleccionado) ── */
+.ec__closure {
+  margin-top: auto;
+  padding: 2px 10px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Estado A — día abierto: la ficha "day ledger" al pie de la columna */
+.ec__closure-tile {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 4px;
+  cursor: pointer;
+  border-top: 1px dashed var(--ec-hairline);
+  transition: background-color 0.12s ease, border-color 0.18s ease, transform 0.08s ease;
+}
+
+.ec__closure-tile:focus-visible {
+  outline: 2px solid var(--ec-accent);
+  outline-offset: -2px;
+}
+
+.ec__closure-tile:active {
+  background: rgb(var(--v-theme-primary), 0.1);
+  transform: scale(0.985);
+}
+
+.ec__closure-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ec-accent);
+}
+
+.ec__closure-stats {
+  font-size: 10px;
+  color: rgb(var(--v-theme-on-surface), 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hover con mouse: la hairline superior se pinta de acento (mejora progresiva) */
+@media (pointer: fine) {
+  .ec__closure-tile:hover {
+    background: rgb(var(--v-theme-primary), 0.05);
+    border-top-color: var(--ec-accent);
+  }
+}
+
+/* Estado B — día cerrado: sello editorial */
+.ec__stamp {
+  all: unset;
+  box-sizing: border-box;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  justify-content: center;
+  padding: 10px 18px;
+  margin: 10px 0 4px;
+  cursor: pointer;
+  border: 1.5px solid rgb(var(--v-theme-success));
+  border-radius: 4px;
+  color: rgb(var(--v-theme-success));
+  transform: rotate(-6deg);
+  animation: ec-stamp-in 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.08s ease, background-color 0.12s ease;
+}
+
+.ec__stamp:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-success));
+  outline-offset: 3px;
+}
+
+.ec__stamp:hover {
+  background: rgb(var(--v-theme-success), 0.06);
+}
+
+.ec__stamp:active {
+  transform: rotate(-6deg) scale(0.97);
+}
+
+@keyframes ec-stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-14deg) scale(1.35);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-6deg) scale(1);
+  }
+}
+
+.ec__stamp-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ec__stamp-meta {
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.85;
+}
+
+/* Día cerrado: los bloques del día se "descargan" visualmente */
+.ec__col--sealed .ec__event:not(.ec__event--cancelled):not(.ec__event--blocked) {
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
 /* ── Skeleton ── */
 .ec__grid--skeleton {
   min-height: 280px;
@@ -628,6 +843,90 @@ function eventClass(status: string): string {
 
   .ec__title {
     font-size: 20px;
+  }
+}
+
+/* ── Celular: header en dos filas, popover ancho ── */
+@media (max-width: 600px) {
+  .ec__header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .ec__header > .v-spacer {
+    display: none;
+  }
+
+  .ec__title {
+    order: 3;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .ec__picker {
+    min-width: min(320px, 86vw);
+  }
+}
+
+/* ── Touch: sin hover, los affordances viven en el estado de reposo ── */
+@media (pointer: coarse) {
+  /* La ficha se nota sin tocar: borde + tinte de reposo en acento */
+  .ec__closure-tile {
+    border: 1px solid rgb(var(--v-theme-primary), 0.55);
+    border-radius: 6px;
+    background: rgb(var(--v-theme-primary), 0.06);
+    padding: 10px 12px;
+  }
+
+  /* Targets táctiles ≥ 44px */
+  .ec__event {
+    min-height: 44px;
+    justify-content: center;
+    transition: background-color 0.12s ease, transform 0.08s ease;
+  }
+
+  .ec__event:active {
+    background: rgb(var(--v-theme-surface-variant), 0.7);
+    transform: scale(0.985);
+  }
+
+  .ec__day-head {
+    min-height: 44px;
+    justify-content: center;
+    transition: transform 0.08s ease;
+  }
+
+  .ec__day-head:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ── Accesibilidad: respeta reduced motion en todas las animaciones ── */
+@media (prefers-reduced-motion: reduce) {
+  .ec__sweep {
+    transition: none;
+  }
+
+  .ec__col--active .ec__sweep {
+    width: 100%;
+  }
+
+  .ec__stamp {
+    animation: none;
+  }
+
+  .ec__closure-tile,
+  .ec__event,
+  .ec__col,
+  .ec__stamp {
+    transition: none;
+  }
+
+  .ec__closure-tile:active,
+  .ec__event:active,
+  .ec__day-head:active,
+  .ec__stamp:active {
+    transform: none;
   }
 }
 </style>

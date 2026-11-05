@@ -4,65 +4,7 @@
 
     <v-card v-if="tabKey === 'reservas'">
       <v-card-text class="pa-4">
-        <div
-          v-if="workSummary"
-          class="d-flex align-center justify-center ga-6 mb-4 flex-wrap"
-        >
-          <div class="d-flex align-center ga-2">
-            <v-avatar color="primary" variant="tonal" size="40">
-              <v-icon>mdi-calendar-check-outline</v-icon>
-            </v-avatar>
-            <div>
-              <div class="text-h6 font-weight-bold text-primary leading-none">{{ workSummary.total }}</div>
-              <div class="text-caption text-medium-emphasis">
-                citas {{ workSummary.isToday ? 'hoy' : 'ese día' }}
-              </div>
-            </div>
-          </div>
-
-          <div v-if="workSummary.pendings > 0" class="d-flex align-center ga-2">
-            <v-avatar color="warning" variant="tonal" size="40">
-              <v-icon>mdi-clock-alert-outline</v-icon>
-            </v-avatar>
-            <div>
-              <div class="text-h6 font-weight-bold text-warning leading-none">{{ workSummary.pendings }}</div>
-              <div class="text-caption text-medium-emphasis">por aprobar</div>
-            </div>
-          </div>
-
-          <div
-            v-if="workSummary.next"
-            class="d-flex align-center ga-2 next-booking"
-            :title="`Abrir detalle de la cita de ${workSummary.next.customer_name || 'cliente'}`"
-            @click="openDetail(workSummary.next)"
-          >
-            <v-avatar color="teal" variant="tonal" size="40">
-              <v-icon>mdi-clock-outline</v-icon>
-            </v-avatar>
-            <div>
-              <div class="text-subtitle-1 font-weight-bold text-teal leading-none">
-                {{ workSummary.next.start_time?.slice(0, 5) }}
-              </div>
-              <div class="text-caption text-medium-emphasis text-truncate" style="max-width: 230px;">
-                {{ workSummary.nextLabel }}:
-                {{ workSummary.next.service?.name ?? 'Servicio' }}
-                · {{ workSummary.next.customer_name || 'Cliente' }}
-              </div>
-            </div>
-          </div>
-
-          <v-chip
-            v-else-if="workSummary.dayOver"
-            size="small"
-            variant="tonal"
-            color="success"
-            prepend-icon="mdi-check-circle-outline"
-          >
-            Sin más citas hoy
-          </v-chip>
-        </div>
-
-        <div class="d-flex align-center justify-center ga-4 mb-4 flex-wrap">
+        <div class="d-flex align-center ga-2 mb-4 flex-wrap">
           <v-select
             v-if="!workspaceStore.isWorkMode"
             v-model="filters.employee_id"
@@ -75,7 +17,7 @@
             style="max-width: 240px;"
           />
           <v-btn-toggle
-            v-if="!workspaceStore.isWorkMode"
+            v-if="!workspaceStore.isWorkMode && !teamView"
             :model-value="teamView ? 'equipo' : 'individual'"
             density="compact"
             mandatory
@@ -85,19 +27,6 @@
           >
             <v-btn value="equipo">Equipo</v-btn>
             <v-btn value="individual">Individual</v-btn>
-          </v-btn-toggle>
-          <v-btn-toggle
-            v-if="!teamView"
-            v-model="viewSegment"
-            density="compact"
-            mandatory
-            rounded="lg"
-            color="primary"
-          >
-            <v-btn value="dia">Día</v-btn>
-            <v-btn value="semana">Semana</v-btn>
-            <v-btn value="mes">Mes</v-btn>
-            <v-btn value="unificada">Unificada</v-btn>
           </v-btn-toggle>
         </div>
 
@@ -111,132 +40,45 @@
           />
         </template>
 
-        <template v-else-if="viewSegment === 'unificada'">
-          <EditorialCalendar
-            :week-dates="weekDates"
-            :week-bookings="weekBookings"
-            :blocked-slots="dayBlocks"
-            :selected-date="filters.date"
-            :loading="weekLoading"
-            :employee-names="employeeNamesById"
-            @select-date="onSelectUnifiedDay"
-            @prev-week="shiftWeek(-7)"
-            @next-week="shiftWeek(7)"
-            @today="goToTodayWeek"
-            @open-booking="openDetail"
-            @open-block="onReleaseBlock"
-          />
-        </template>
-
-        <template v-else-if="viewSegment === 'semana'">
-          <WeekDayStrip
-            :week-dates="weekDates"
-            :counts="weekCounts"
-            :selected-date="filters.date"
-            :loading="weekLoading"
-            @select-date="onSelectWeekDay"
-            @prev-week="shiftWeek(-7)"
-            @next-week="shiftWeek(7)"
-            @today="goToTodayWeek"
-          />
-        </template>
-
-        <template v-else-if="viewSegment === 'mes'">
-          <MonthCalendar
-            :month-anchor="monthAnchor"
-            :counts="monthCounts"
-            :selected-date="filters.date"
-            :loading="monthLoading"
-            @select-date="onSelectMonthDay"
-            @prev-month="shiftMonth(-1)"
-            @next-month="shiftMonth(1)"
-            @today="goToTodayMonth"
-          />
-        </template>
-
         <template v-else>
-          <div class="d-flex align-center justify-space-between ga-2 mb-4 flex-wrap">
-            <v-tabs v-model="reservasTab" density="compact" color="primary">
-              <v-tab value="all">Todas</v-tab>
-              <v-tab value="approval">
-                Pendientes de Aprobación
-                <v-badge
-                  v-if="bookingStore.pendingApprovalBookings.length > 0"
-                  :content="bookingStore.pendingApprovalBookings.length"
-                  color="amber"
-                  inline
-                  class="ml-2"
-                />
-              </v-tab>
-            </v-tabs>
-            <span v-if="filters.date" class="text-subtitle-2 text-medium-emphasis">
-              Reservas del {{ formatDate(filters.date) }}
-            </span>
-            <v-btn
-              size="small"
-              rounded="lg"
-              :color="dayClosed ? 'success' : 'primary'"
-              :variant="dayClosed ? 'tonal' : 'flat'"
-              :prepend-icon="dayClosed ? 'mdi-check-decagram' : 'mdi-clipboard-check-outline'"
-              :disabled="!filters.employee_id"
-              :title="
-                dayClosed
-                  ? 'Ver el resumen del cierre del día'
-                  : filters.employee_id
-                    ? 'Abrir el cierre del día'
-                    : 'Selecciona un empleado para cerrar el día'
-              "
-              @click="openClosure"
-            >
-              {{ dayClosed ? 'Ver Resumen' : 'Cerrar Día' }}
-            </v-btn>
-          </div>
+          <v-tabs
+            v-model="reservasTab"
+            density="compact"
+            color="primary"
+            class="mb-4 align-self-start"
+          >
+            <v-tab value="all">Todas</v-tab>
+            <v-tab value="approval">
+              Pendientes de Aprobación
+              <v-badge
+                v-if="bookingStore.pendingApprovalBookings.length > 0"
+                :content="bookingStore.pendingApprovalBookings.length"
+                color="amber"
+                inline
+                class="ml-2"
+              />
+            </v-tab>
+          </v-tabs>
 
           <v-tabs-window v-model="reservasTab">
             <v-tabs-window-item value="all">
-              <div v-if="bookingStore.loading" class="text-center pa-8">
-                <v-progress-circular indeterminate color="primary" />
-              </div>
-
-              <div v-else-if="timeline.length === 0" class="text-center pa-8">
-                <v-icon size="64" color="medium-emphasis">mdi-calendar-blank</v-icon>
-                <p class="text-body-1 text-medium-emphasis mt-4">No hay reservas</p>
-              </div>
-
-              <template v-else>
-                <template v-for="item in timeline" :key="item.key">
-                  <BookingCard
-                    v-if="item.type === 'booking'"
-                    :booking="item.data"
-                    :waitlist-entries="waitlistBySlot[item.data.id] ?? []"
-                    @detail="openDetail"
-                  />
-                  <v-card v-else class="blocked-slot-card mb-2">
-                    <v-card-text class="d-flex align-center ga-3 py-3">
-                      <div class="blocked-slot-time text-body-2 font-weight-medium text-center">
-                        <div>{{ item.data.start_time?.slice(0, 5) }}</div>
-                        <div class="text-caption text-medium-emphasis">{{ item.data.end_time?.slice(0, 5) }}</div>
-                      </div>
-                      <v-divider vertical />
-                      <div class="flex-grow-1" style="min-width: 0">
-                        <div class="text-subtitle-2 text-truncate">Ocupado · bloqueado</div>
-                        <div class="text-caption text-medium-emphasis text-truncate">
-                          {{ item.data.reason || 'Bloqueo manual' }}
-                        </div>
-                      </div>
-                      <v-btn
-                        size="small"
-                        variant="tonal"
-                        color="error"
-                        prepend-icon="mdi-lock-open-variant-outline"
-                        @click="onReleaseBlock(item.data)"
-                      >
-                        Liberar
-                      </v-btn>
-                    </v-card-text>
-                  </v-card>
-                </template>
-              </template>
+              <EditorialCalendar
+                :week-dates="weekDates"
+                :week-bookings="weekBookings"
+                :blocked-slots="dayBlocks"
+                :selected-date="filters.date"
+                :loading="weekLoading"
+                :employee-names="employeeNamesById"
+                :day-closed="dayClosed"
+                :can-close="!!filters.employee_id"
+                @select-date="onSelectUnifiedDay"
+                @prev-week="shiftWeek(-7)"
+                @next-week="shiftWeek(7)"
+                @today="goToTodayWeek"
+                @open-booking="openDetail"
+                @open-block="onReleaseBlock"
+                @open-closure="openClosure"
+              />
             </v-tabs-window-item>
 
             <v-tabs-window-item value="approval">
@@ -398,15 +240,11 @@ import PageHeader from '@/shared/components/PageHeader.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useBookingStore } from '../stores/booking.store';
 import { useEmployeeStore } from '../stores/employee.store';
-import BookingCard from '../components/BookingCard.vue';
 import BookingDetailDrawer from '../components/BookingDetailDrawer.vue';
 import BookingApprovalList from '../components/BookingApprovalList.vue';
 import WaitlistPanel from '../components/WaitlistPanel.vue';
 import DailyClosurePanel from '../components/DailyClosurePanel.vue';
-import WeekDayStrip from '../components/WeekDayStrip.vue';
-import MonthCalendar from '../components/MonthCalendar.vue';
 import EditorialCalendar from '../components/EditorialCalendar.vue';
-import type { WeekDayCount } from '../components/WeekDayStrip.vue';
 import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
 import { dailyClosureRepository } from '../repositories/daily-closure.repository';
 import { bookingRepository } from '../repositories/booking.repository';
@@ -430,15 +268,10 @@ const router = useRouter();
 const { smAndDown } = useDisplay();
 
 const reservasTab = ref<'all' | 'approval'>('all');
-const viewSegment = ref<'dia' | 'semana' | 'mes' | 'unificada'>('dia');
 const weekAnchor = ref(new Date().toISOString().split('T')[0]);
 const weekLoading = ref(false);
-const weekCounts = ref<Record<string, WeekDayCount>>({});
-/** Reservas completas de la semana en modo unificada (misma consulta que los counts) */
+/** Reservas completas de la semana para la vista unificada */
 const weekBookings = ref<Booking[]>([]);
-const monthAnchor = ref(new Date().toISOString().split('T')[0]);
-const monthLoading = ref(false);
-const monthCounts = ref<Record<string, WeekDayCount>>({});
 const showDetail = ref(false);
 const showClosure = ref(false);
 const dayClosed = ref(false);
@@ -482,44 +315,6 @@ const submoduleTitle = computed(() => {
       ? 'Mi Agenda'
       : teamView.value ? 'Mi Día del Equipo' : 'Reservas';
   }
-});
-
-const todayIso = computed(() => new Date().toISOString().split('T')[0]);
-
-function timeToMinutes(t?: string | null): number {
-  if (!t) return Number.POSITIVE_INFINITY;
-  const [h, m] = t.split(':').map(Number);
-  return (h || 0) * 60 + (m || 0);
-}
-
-/**
- * Micro-dashboard del Modo Trabajo: citas del día seleccionado,
- * pendientes por aprobar y la próxima cita (si es hoy).
- */
-const workSummary = computed(() => {
-  if (!workspaceStore.isWorkMode) return null;
-  const list = bookingStore.bookings.filter(
-    (b) => b.status !== 'cancelled' && b.status !== 'no_show',
-  );
-  const sorted = [...list].sort((a, b) => (a.start_time ?? '').localeCompare(b.start_time ?? ''));
-  const isToday = filters.date === todayIso.value;
-  let next: Booking | null = null;
-  let nextLabel: 'Próxima' | 'Primera' = 'Primera';
-  if (isToday) {
-    const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
-    next = sorted.find((b) => timeToMinutes(b.start_time) >= nowMin) ?? null;
-    nextLabel = 'Próxima';
-  } else {
-    next = sorted[0] ?? null;
-  }
-  return {
-    total: list.length,
-    pendings: list.filter((b) => b.status === 'pending_approval').length,
-    next,
-    nextLabel,
-    isToday,
-    dayOver: isToday && list.length > 0 && !next,
-  };
 });
 
 const tenantId = computed(() => tenantStore.tenant?.id ?? '');
@@ -568,22 +363,6 @@ const waitlistBySlot = computed<Record<string, WaitlistEntry[]>>(() => {
     if (matches.length) map[b.id] = matches;
   }
   return map;
-});
-
-const timeline = computed(() => {
-  const bookings = bookingStore.bookings.map((b) => ({
-    type: 'booking' as const,
-    data: b,
-    key: `booking-${b.id}`,
-    start: b.start_time ?? '',
-  }));
-  const blocks = dayBlocks.value.map((blk) => ({
-    type: 'block' as const,
-    data: blk,
-    key: `block-${blk.id}`,
-    start: blk.start_time ?? '',
-  }));
-  return [...bookings, ...blocks].sort((a, b) => a.start.localeCompare(b.start));
 });
 
 async function loadDayBlocks() {
@@ -638,25 +417,16 @@ const weekDates = computed(() => {
   return dates;
 });
 
-async function loadWeekCounts() {
+/** Reservas completas de la semana para el calendario unificado */
+async function loadWeekData() {
   weekLoading.value = true;
   try {
     const [start, end] = [weekDates.value[0], weekDates.value[6]];
-    const data = await bookingRepository.getByFilters({
+    weekBookings.value = await bookingRepository.getByFilters({
       date_from: start,
       date_to: end,
       employee_id: filters.employee_id,
     });
-    // Mismo fetch alimenta los counts (strip/día) y los bloques de la vista unificada
-    weekBookings.value = data;
-    const counts: Record<string, WeekDayCount> = {};
-    for (const b of data) {
-      if (b.status === 'cancelled' || b.status === 'no_show') continue;
-      counts[b.date] = counts[b.date] ?? { total: 0, pending: 0 };
-      counts[b.date].total += 1;
-      if (b.status === 'pending_approval') counts[b.date].pending += 1;
-    }
-    weekCounts.value = counts;
   } finally {
     weekLoading.value = false;
   }
@@ -672,55 +442,6 @@ function goToTodayWeek() {
   weekAnchor.value = new Date().toISOString().split('T')[0];
 }
 
-function onSelectWeekDay(day: string) {
-  filters.date = day;
-  viewSegment.value = 'dia';
-}
-
-const monthDates = computed(() => {
-  const d = new Date(monthAnchor.value + 'T12:00:00');
-  const first = new Date(d.getFullYear(), d.getMonth(), 1);
-  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  return { start: toIsoDate(first), end: toIsoDate(last) };
-});
-
-async function loadMonthCounts() {
-  monthLoading.value = true;
-  try {
-    const { start, end } = monthDates.value;
-    const data = await bookingRepository.getByFilters({
-      date_from: start,
-      date_to: end,
-      employee_id: filters.employee_id,
-    });
-    const counts: Record<string, WeekDayCount> = {};
-    for (const b of data) {
-      if (b.status === 'cancelled' || b.status === 'no_show') continue;
-      counts[b.date] = counts[b.date] ?? { total: 0, pending: 0 };
-      counts[b.date].total += 1;
-      if (b.status === 'pending_approval') counts[b.date].pending += 1;
-    }
-    monthCounts.value = counts;
-  } finally {
-    monthLoading.value = false;
-  }
-}
-
-function shiftMonth(months: number) {
-  const d = new Date(monthAnchor.value + 'T12:00:00');
-  d.setMonth(d.getMonth() + months);
-  monthAnchor.value = toIsoDate(d);
-}
-
-function goToTodayMonth() {
-  monthAnchor.value = new Date().toISOString().split('T')[0];
-}
-
-function onSelectMonthDay(day: string) {
-  filters.date = day;
-  viewSegment.value = 'dia';
-}
-
 function toIsoDate(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -728,14 +449,8 @@ function toIsoDate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-watch(() => viewSegment.value, (segment) => {
-  if (segment === 'semana' || segment === 'unificada') loadWeekCounts();
-  if (segment === 'mes') loadMonthCounts();
-});
-
 watch(() => filters.employee_id, () => {
-  if (viewSegment.value === 'semana' || viewSegment.value === 'unificada') loadWeekCounts();
-  if (viewSegment.value === 'mes') loadMonthCounts();
+  loadWeekData();
 });
 
 watch(() => [filters.employee_id, filters.date], loadDayClosed, { immediate: true });
@@ -743,11 +458,7 @@ watch(() => [filters.employee_id, filters.date], loadDayClosed, { immediate: tru
 watch(() => [filters.employee_id, filters.date], loadDayBlocks, { immediate: true });
 
 watch(weekAnchor, () => {
-  if (viewSegment.value === 'semana' || viewSegment.value === 'unificada') loadWeekCounts();
-});
-
-watch(monthAnchor, () => {
-  if (viewSegment.value === 'mes') loadMonthCounts();
+  loadWeekData();
 });
 
 onMounted(async () => {
@@ -797,6 +508,7 @@ async function loadForTab(tab: string) {
       date: filters.date ?? undefined,
       employee_id: filters.employee_id,
     });
+    await loadWeekData();
   }
 }
 
@@ -944,17 +656,6 @@ async function onRemoveExtra(extra: DailyExtra) {
 .closure-dialog__body {
   min-height: 0;
 }
-
-.next-booking {
-  cursor: pointer;
-  border-radius: 10px;
-  padding: 2px 10px;
-  transition: background-color 0.15s ease;
-}
-
-.next-booking:hover {
-  background-color: color-mix(in srgb, rgb(var(--v-theme-teal)) 10%, transparent);
-}
 </style>
 
 <style>
@@ -975,15 +676,5 @@ async function onRemoveExtra(extra: DailyExtra) {
 
 .closure-drawer :deep(.v-navigation-drawer__content) {
   overscroll-behavior: contain;
-}
-
-.blocked-slot-card {
-  border-left: 4px solid rgb(var(--v-theme-error));
-  background: color-mix(in srgb, rgb(var(--v-theme-error)) 8%, transparent);
-}
-
-.blocked-slot-time {
-  min-width: 50px;
-  flex-shrink: 0;
 }
 </style>

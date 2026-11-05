@@ -1,5 +1,8 @@
 <template>
-  <v-layout class="auth-layout">
+  <!-- Vistas "standalone" (ej. LoginScene full-viewport): se montan sin el contenedor v-card -->
+  <router-view v-if="isStandalone" />
+
+  <v-layout v-else class="auth-layout">
     <v-main
       class="d-flex align-center justify-center"
       style="min-height: 100vh; background: #f8f9fb"
@@ -19,3 +22,11 @@
     </v-main>
   </v-layout>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const isStandalone = computed(() => route.meta.standalone === true);
+</script>

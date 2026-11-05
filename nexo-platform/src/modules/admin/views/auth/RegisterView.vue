@@ -1,165 +1,38 @@
 <template>
-  <div>
-    <h2 class="text-h5 font-weight-bold text-center mb-1">Crear tu Cuenta</h2>
-    <p class="text-body-2 text-medium-emphasis text-center mb-6">
-      Registra tu negocio en Nexo Platform
-    </p>
-
-    <v-alert
-      v-if="authError"
-      type="error"
-      variant="tonal"
-      class="mb-4"
-      closable
-    >
-      {{ authError }}
-    </v-alert>
-    <v-alert
-      v-if="successMessage"
-      type="success"
-      variant="tonal"
-      class="mb-4"
-    >
-      {{ successMessage }}
-    </v-alert>
-    <v-alert
-      v-if="authStore.session"
-      type="info"
-      variant="tonal"
-      class="mb-4"
-    >
-      Tienes una sesión activa de otra cuenta. Al crear el nuevo negocio se
-      cerrará esa sesión y entrarás directamente al nuevo espacio.
-    </v-alert>
-
-    <v-form @submit.prevent="handleRegister">
-      <v-text-field
-        v-model="form.businessName"
-        label="Nombre del negocio"
-        prepend-inner-icon="mdi-store"
-        :rules="[required]"
-      />
-      <v-text-field
-        v-model="form.firstName"
-        label="Nombre"
-        prepend-inner-icon="mdi-account"
-        :rules="[required]"
-      />
-      <v-text-field
-        v-model="form.lastName"
-        label="Apellido"
-        prepend-inner-icon="mdi-account"
-        :rules="[required]"
-      />
-      <v-text-field
-        v-model="form.email"
-        label="Correo electrónico"
-        prepend-inner-icon="mdi-email"
-        type="email"
-        :rules="[required, validEmail]"
-        autocomplete="email"
-      />
-      <v-text-field
-        v-model="form.phone"
-        label="Número de teléfono"
-        hint="Solo el número. El prefijo de Cuba (+53) está fijo."
-        persistent-hint
-        maxlength="8"
-        :rules="[required, validPhone]"
-        autocomplete="tel-national"
-      >
-        <template #prepend-inner>
-          <v-icon icon="mdi-phone" size="20" class="mr-1 opacity-60" />
-          <span class="phone-prefix">+53</span>
-          <v-divider vertical class="ml-2 mr-3" />
-        </template>
-      </v-text-field>
-      <v-text-field
-        v-model="form.password"
-        label="Contraseña"
-        prepend-inner-icon="mdi-lock"
-        type="password"
-        :rules="[required, minLength]"
-        autocomplete="new-password"
-      />
-      <v-text-field
-        v-model="form.confirmPassword"
-        label="Confirmar contraseña"
-        prepend-inner-icon="mdi-lock-check"
-        type="password"
-        :rules="[required, matchesPassword]"
-        autocomplete="new-password"
-      />
-
-      <v-btn
-        type="submit"
-        color="primary"
-        size="large"
-        block
-        :loading="loading"
-        class="mt-2"
-      >
-        Crear Cuenta
-      </v-btn>
-    </v-form>
-
-    <p class="text-center text-body-2 mt-4">
-      ¿Ya tienes cuenta?
-      <router-link
-        to="/auth/login"
-        class="text-primary font-weight-medium"
-      >
-        Iniciar Sesión
-      </router-link>
-    </p>
-  </div>
+  <RegisterScene
+    :loading="loading"
+    :auth-error="authError"
+    :has-active-session="!!authStore.session"
+    @submit="handleRegister"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import RegisterScene from './RegisterScene.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const loading = ref(false);
 const authError = ref<string | null>(null);
-const successMessage = ref<string | null>(null);
 
-// Prefijo de Cuba, fijo y no editable
+// Prefijo de Cuba, fijo y no editable (el.scene envía el número local de 8 dígitos)
 const PHONE_PREFIX = '+53';
 
-const form = reactive({
-  businessName: '',
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  password: '',
-  confirmPassword: '',
-});
-
-function required(value: string) {
-  return !!value || 'Campo requerido';
-}
-function minLength(value: string) {
-  return value.length >= 8 || 'Mínimo 8 caracteres';
-}
-function validEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || 'Correo electrónico no válido';
-}
-function validPhone(value: string) {
-  return /^\d{8}$/.test(value) || 'Debe ser un número de 8 dígitos';
-}
-function matchesPassword(value: string) {
-  return value === form.password || 'Las contraseñas no coinciden';
+interface RegisterPayload {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  phone: string;
 }
 
-async function handleRegister() {
-  if (form.password !== form.confirmPassword) return;
+async function handleRegister(payload: RegisterPayload) {
   loading.value = true;
   authError.value = null;
-  successMessage.value = null;
   try {
     // El registro debe partir de un estado limpio: si hay sesión de otra
     // cuenta, el signUp viaja con ese JWT y GoTrue falla (y de todos modos
@@ -168,25 +41,25 @@ async function handleRegister() {
       await authStore.logout();
     }
     await authStore.register(
-      form.email,
-      form.password,
-      form.firstName,
-      form.lastName,
-      form.businessName,
-      `${PHONE_PREFIX}${form.phone}`,
+      payload.email,
+      payload.password,
+      payload.firstName,
+      payload.lastName,
+      payload.businessName,
+      `${PHONE_PREFIX}${payload.phone}`,
     );
     // Con el autoconfirm activo, signUp devuelve sesión y podemos
     // avanzar directo al dashboard. Si Supabase devolviera un estado
-    // sin sesión (confirmación requerida), ir al login con aviso.
+    // sin sesión (confirmación requerida), ir al login.
     if (authStore.session) {
       router.push('/');
     } else {
-      successMessage.value = 'Cuenta creada. Inicia sesión para continuar.';
       router.push('/auth/login');
     }
-  } catch (e: any) {
-    const msg = e?.message ?? '';
-    if (e?.status === 422 || /already registered|ya está registrad/i.test(msg)) {
+  } catch (e: unknown) {
+    const err = (e ?? null) as { status?: number; message?: string } | null;
+    const msg = err?.message ?? '';
+    if (err?.status === 422 || /already registered|ya está registrad/i.test(msg)) {
       authError.value = 'Este email ya tiene una cuenta. Inicia sesión con ese email en su lugar.';
     } else if (/unexpected_failure|Database error/i.test(msg)) {
       authError.value =
@@ -199,12 +72,3 @@ async function handleRegister() {
   }
 }
 </script>
-
-<style scoped>
-.phone-prefix {
-  color: rgba(0, 0, 0, 0.6);
-  font-weight: 500;
-  line-height: 1.2;
-}
-</style>
-

@@ -24,7 +24,70 @@
     "hasAccount": "¿Ya tienes cuenta?",
     "createAccount": "Crear Cuenta",
     "invalidCredentials": "Credenciales inválidas",
-    "sessionExpired": "Sesión expirada"
+    "sessionExpired": "Sesión expirada",
+    "loginScene": {
+      "brand": "Nexo",
+      "signUp": "Regístrate",
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Ingresa tus credenciales para acceder a tu espacio",
+      "labels": {
+        "email": "Correo electrónico",
+        "password": "Contraseña"
+      },
+      "placeholders": {
+        "email": "tu@correo.com",
+        "password": "••••••••"
+      },
+      "forgot": "¿La olvidé?",
+      "legal": "Al continuar aceptas los Términos y la Política de Privacidad.",
+      "footnote": "© 2026 Nexo Platform · Citas, cartas y CRM para tu negocio",
+      "promoTitle": "Agenda más, espera menos",
+      "promoSub": "Centraliza citas, cartas de consulta y clientes en un solo lugar — tu negocio nunca duerme.",
+      "discover": "Descubrir",
+      "submitLabel": "Iniciar sesión",
+      "errors": {
+        "required": "Campo requerido",
+        "email": "Ingresa un correo válido"
+      }
+    },
+    "registerScene": {
+      "brand": "Nexo",
+      "login": "Iniciar sesión",
+      "title": "Crea tu cuenta",
+      "subtitle": "Registra tu negocio en Nexo Platform",
+      "labels": {
+        "businessName": "Nombre del negocio",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "email": "Correo electrónico",
+        "phone": "Teléfono",
+        "password": "Contraseña",
+        "confirmPassword": "Confirmar contraseña"
+      },
+      "placeholders": {
+        "businessName": "Mi Negocio S.A.",
+        "firstName": "Lucía",
+        "lastName": "Pérez",
+        "email": "tu@correo.com",
+        "phone": "5 123 4567 · 8 dígitos",
+        "password": "Mínimo 8 caracteres",
+        "confirmPassword": "Repite la contraseña"
+      },
+      "phonePrefix": "+53",
+      "legal": "Al continuar aceptas los Términos y la Política de Privacidad.",
+      "footnote": "© 2026 Nexo Platform · Citas, cartas y CRM para tu negocio",
+      "promoTitle": "Tu negocio, en orden desde el día uno",
+      "promoSub": "Crea tu cuenta y empieza a agendar citas en minutos — sin instalar nada.",
+      "submitLabel": "Crear cuenta",
+      "sessionNotice": "Tienes una sesión activa de otra cuenta. Al crear el nuevo negocio se cerrará esa sesión y entrarás directamente al nuevo espacio.",
+      "errors": {
+        "required": "Campo requerido",
+        "email": "Ingresa un correo válido",
+        "phone": "Debe ser un número de 8 dígitos",
+        "passwordMin": "Mínimo 8 caracteres",
+        "passwordMatch": "Las contraseñas no coinciden"
+      }
+    }
   },
   "nav": {
     "dashboard": "Dashboard",

@@ -158,13 +158,13 @@ export const routes: RouteRecordRaw[] = [
         path: 'login',
         name: 'login',
         component: () => import('@/modules/admin/views/auth/LoginView.vue'),
-        meta: { title: 'Iniciar Sesión' },
+        meta: { title: 'Iniciar Sesión', standalone: true },
       },
       {
         path: 'register',
         name: 'register',
         component: () => import('@/modules/admin/views/auth/RegisterView.vue'),
-        meta: { title: 'Registrarse' },
+        meta: { title: 'Registrarse', standalone: true },
       },
       {
         path: 'forgot-password',

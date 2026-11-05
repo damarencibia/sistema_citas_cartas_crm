@@ -24,7 +24,70 @@
     "hasAccount": "Já tem conta?",
     "createAccount": "Criar Conta",
     "invalidCredentials": "Credenciais inválidas",
-    "sessionExpired": "Sessão expirada"
+    "sessionExpired": "Sessão expirada",
+    "loginScene": {
+      "brand": "Nexo",
+      "signUp": "Registre-se",
+      "title": "Bem-vindo de volta",
+      "subtitle": "Insira suas credenciais para acessar seu espaço",
+      "labels": {
+        "email": "E-mail",
+        "password": "Senha"
+      },
+      "placeholders": {
+        "email": "voce@email.com",
+        "password": "••••••••"
+      },
+      "forgot": "Esqueceu?",
+      "legal": "Ao continuar você aceita os Termos e a Política de Privacidade.",
+      "footnote": "© 2026 Nexo Platform · Consultas, cartas e CRM para o seu negócio",
+      "promoTitle": "Agende mais, espere menos",
+      "promoSub": "Centralize consultas, cartas e clientes em um só lugar — seu negócio nunca dorme.",
+      "discover": "Descobrir",
+      "submitLabel": "Entrar",
+      "errors": {
+        "required": "Campo obrigatório",
+        "email": "Insira um e-mail válido"
+      }
+    },
+    "registerScene": {
+      "brand": "Nexo",
+      "login": "Entrar",
+      "title": "Crie sua conta",
+      "subtitle": "Registre seu negócio no Nexo Platform",
+      "labels": {
+        "businessName": "Nome do negócio",
+        "firstName": "Nome",
+        "lastName": "Sobrenome",
+        "email": "E-mail",
+        "phone": "Telefone",
+        "password": "Senha",
+        "confirmPassword": "Confirmar senha"
+      },
+      "placeholders": {
+        "businessName": "Meu Negócio LTDA",
+        "firstName": "Ana",
+        "lastName": "Silva",
+        "email": "voce@email.com",
+        "phone": "5 123 4567 · 8 dígitos",
+        "password": "Mínimo 8 caracteres",
+        "confirmPassword": "Repita a senha"
+      },
+      "phonePrefix": "+53",
+      "legal": "Ao continuar você aceita os Termos e a Política de Privacidade.",
+      "footnote": "© 2026 Nexo Platform · Consultas, cartas e CRM para o seu negócio",
+      "promoTitle": "Seu negócio, em ordem desde o primeiro dia",
+      "promoSub": "Crie sua conta e comece a agendar consultas em minutos — sem instalar nada.",
+      "submitLabel": "Criar conta",
+      "sessionNotice": "Você tem uma sessão ativa de outra conta. Ao criar o novo negócio, essa sessão será encerrada e você entrará direto no novo espaço.",
+      "errors": {
+        "required": "Campo obrigatório",
+        "email": "Insira um e-mail válido",
+        "phone": "Deve ser um número de 8 dígitos",
+        "passwordMin": "Mínimo 8 caracteres",
+        "passwordMatch": "As senhas não coincidem"
+      }
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
