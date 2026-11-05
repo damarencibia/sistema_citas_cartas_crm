@@ -3,8 +3,9 @@
     <PageHeader :title="submoduleTitle" />
 
     <v-card v-if="tabKey === 'reservas'">
-      <v-card-text class="pa-4">
-        <div class="d-flex align-center ga-2 mb-4 flex-wrap">
+      <!-- Filtros y tabs en una sola fila para aprovechar el alto (se apilan solos en móvil) -->
+      <v-card-text class="pa-3 pa-sm-4">
+        <div class="d-flex align-start ga-2 mb-3 flex-wrap">
           <v-select
             v-if="!workspaceStore.isWorkMode"
             v-model="filters.employee_id"
@@ -28,24 +29,14 @@
             <v-btn value="equipo">Equipo</v-btn>
             <v-btn value="individual">Individual</v-btn>
           </v-btn-toggle>
-        </div>
 
-        <template v-if="showTeamBoard">
-          <TeamScheduleBoard
-            :date="filters.date ?? ''"
-            :employees="employeeStore.activeEmployees"
-            @change-date="filters.date = $event"
-            @open-booking="openDetail"
-            @select-employee="onTeamSelectEmployee"
-          />
-        </template>
-
-        <template v-else>
           <v-tabs
+            v-if="!showTeamBoard"
             v-model="reservasTab"
             density="compact"
             color="primary"
-            class="mb-4 align-self-start"
+            class="align-self-start"
+            :class="{ 'ml-auto': !workspaceStore.isWorkMode }"
           >
             <v-tab value="all">Todas</v-tab>
             <v-tab value="approval">
@@ -59,7 +50,19 @@
               />
             </v-tab>
           </v-tabs>
+        </div>
 
+        <template v-if="showTeamBoard">
+          <TeamScheduleBoard
+            :date="filters.date ?? ''"
+            :employees="employeeStore.activeEmployees"
+            @change-date="filters.date = $event"
+            @open-booking="openDetail"
+            @select-employee="onTeamSelectEmployee"
+          />
+        </template>
+
+        <template v-else>
           <v-tabs-window v-model="reservasTab">
             <v-tabs-window-item value="all">
               <EditorialCalendar
@@ -71,6 +74,7 @@
                 :employee-names="employeeNamesById"
                 :day-closed="dayClosed"
                 :can-close="!!filters.employee_id"
+                :closed-dates="weekClosedDates"
                 @select-date="onSelectUnifiedDay"
                 @prev-week="shiftWeek(-7)"
                 @next-week="shiftWeek(7)"
@@ -163,7 +167,7 @@
             @cancel-selection="onCancelSelection"
             @mark-all-attended="onMarkAllAttended"
             @remove-extra="onRemoveExtra"
-            @closure-changed="dayClosed = $event"
+            @closure-changed="onClosureChanged"
             @close-dialog="showClosure = false"
           />
         </div>
@@ -223,7 +227,7 @@
             @cancel-selection="onCancelSelection"
             @mark-all-attended="onMarkAllAttended"
             @remove-extra="onRemoveExtra"
-            @closure-changed="dayClosed = $event"
+            @closure-changed="onClosureChanged"
             @close-dialog="showClosure = false"
           />
         </div>
@@ -272,6 +276,8 @@ const weekAnchor = ref(new Date().toISOString().split('T')[0]);
 const weekLoading = ref(false);
 /** Reservas completas de la semana para la vista unificada */
 const weekBookings = ref<Booking[]>([]);
+/** Fechas de la semana ya cerradas (caja registradora / sello) */
+const weekClosedDates = ref<string[]>([]);
 const showDetail = ref(false);
 const showClosure = ref(false);
 const dayClosed = ref(false);
@@ -432,6 +438,24 @@ async function loadWeekData() {
   }
 }
 
+/** Cierres vigentes de la semana (caja registradora en días pendientes) */
+async function loadWeekClosedDates() {
+  if (!filters.employee_id) {
+    weekClosedDates.value = [];
+    return;
+  }
+  try {
+    const closures = await dailyClosureRepository.getByEmployeeAndRange(
+      filters.employee_id,
+      weekDates.value[0],
+      weekDates.value[6],
+    );
+    weekClosedDates.value = closures.map((c) => c.date);
+  } catch {
+    weekClosedDates.value = [];
+  }
+}
+
 function shiftWeek(days: number) {
   const d = new Date(weekAnchor.value + 'T12:00:00');
   d.setDate(d.getDate() + days);
@@ -451,6 +475,7 @@ function toIsoDate(d: Date): string {
 
 watch(() => filters.employee_id, () => {
   loadWeekData();
+  loadWeekClosedDates();
 });
 
 watch(() => [filters.employee_id, filters.date], loadDayClosed, { immediate: true });
@@ -459,6 +484,7 @@ watch(() => [filters.employee_id, filters.date], loadDayBlocks, { immediate: tru
 
 watch(weekAnchor, () => {
   loadWeekData();
+  loadWeekClosedDates();
 });
 
 onMounted(async () => {
@@ -509,7 +535,19 @@ async function loadForTab(tab: string) {
       employee_id: filters.employee_id,
     });
     await loadWeekData();
+    await loadWeekClosedDates();
   }
+}
+
+/** Cerrar/reabrir un día actualiza tanto el estado del día como el set semanal */
+function onClosureChanged(closed: boolean) {
+  dayClosed.value = closed;
+  const date = filters.date;
+  if (!date) return;
+  const set = new Set(weekClosedDates.value);
+  if (closed) set.add(date);
+  else set.delete(date);
+  weekClosedDates.value = [...set];
 }
 
 function openDetail(booking: Booking) {

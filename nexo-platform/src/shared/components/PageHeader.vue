@@ -1,5 +1,5 @@
 <template>
-  <div class="page-header mb-6">
+  <div class="page-header mb-4">
     <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
       <div
         v-if="title || subtitle"

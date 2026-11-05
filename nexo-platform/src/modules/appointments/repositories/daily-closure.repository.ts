@@ -14,6 +14,19 @@ export const dailyClosureRepository = {
     return (data as DailyClosure) ?? null;
   },
 
+  /** Cierres vigentes (sin reopen) en un rango de fechas del empleado */
+  async getByEmployeeAndRange(employeeId: string, startDate: string, endDate: string): Promise<DailyClosure[]> {
+    const { data, error } = await (supabase as any)
+      .from('daily_closures')
+      .select('*')
+      .eq('employee_id', employeeId)
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .is('reopened_at', null);
+    if (error) throw error;
+    return (data as DailyClosure[]) ?? [];
+  },
+
   async close(tenantId: string, dto: CloseDayDTO): Promise<DailyClosure> {
     const { data, error } = await (supabase as any)
       .from('daily_closures')

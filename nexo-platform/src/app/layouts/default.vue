@@ -6,7 +6,7 @@
     <PushOptInBanner />
     <PwaInstallBanner />
     <v-main :style="mainStyle" class="app-main">
-      <div class="main-content pa-4 pa-md-6">
+      <div class="main-content py-4 px-4 px-md-6">
         <v-alert
           v-if="authStore.user?.initial_password_pending"
           type="info"

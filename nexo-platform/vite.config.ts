@@ -6,7 +6,12 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [
-    vue(),
+    vue({
+      template: {
+        // <lord-icon> es un custom element (player de Lordicon), no un componente Vue
+        compilerOptions: { isCustomElement: (tag) => tag === 'lord-icon' },
+      },
+    }),
     vuetify({ autoImport: true }),
     VitePWA({
       registerType: 'autoUpdate',

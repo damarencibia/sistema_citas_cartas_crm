@@ -16,6 +16,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@lordicon/element": "^3.0.2",
     "@mdi/font": "^7.4.47",
     "@supabase/supabase-js": "^2.110.1",
     "axios": "^1.18.1",

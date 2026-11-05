@@ -1,7 +1,7 @@
 <template>
   <div class="ec">
     <!-- ─── Cabecera: navegación de semana · título · selector de fecha ─── -->
-    <div class="ec__header d-flex align-center ga-2 mb-4">
+    <div class="ec__header d-flex align-center ga-2 mb-2">
       <div class="ec__nav d-flex align-center ga-1">
         <v-btn
           icon
@@ -103,17 +103,78 @@
           }"
         >
           <span aria-hidden="true" class="ec__sweep" />
-          <!-- Encabezado del día -->
+
+          <!-- Día pendiente de cierre: caja registradora animada (Tabler/IconKing free, loop) -->
+          <button
+            v-if="col.pendingClosure && canClose"
+            type="button"
+            class="ec__register"
+            :title="`El día ${formatLong(col.date)} aún no se cerró`"
+            :aria-label="`Día ${formatLong(col.date)} pendiente de cierre`"
+            @click="onRegisterClick(col.date)"
+          >
+            <lord-icon
+              class="ec__register-icon"
+              src="/animations/cash-register.json"
+              trigger="loop"
+              speed="0.7"
+              loading="lazy"
+              current-color
+            />
+          </button>
+          <!-- Encabezado del día: 1er tap selecciona / revela la ficha; 2º tap la colapsa -->
           <button
             type="button"
             class="ec__day-head"
+            :aria-pressed="col.isSelected"
             :aria-label="`Ver ${formatLong(col.date)}`"
-            @click="emit('select-date', col.date)"
+            @click="onDayHeadClick(col.date)"
           >
             <span class="ec__weekday">{{ col.weekday }}</span>
             <span class="ec__daynum">{{ col.dayNumber }}</span>
             <span v-if="col.isToday && !col.isSelected" class="ec__today-dot" />
           </button>
+
+          <!-- Cartel permanente: día pasado sin reservas (no requiere selección) -->
+          <span
+            v-if="col.isPast && col.bookingCount === 0 && !col.isClosed"
+            class="ec__no-reservas"
+            title="Este día no registró reservas"
+          >
+            Sin Reservas
+          </span>
+
+          <!-- Ficha de cierre / sello: primera fila, cae desde detrás del header -->
+          <Transition :css="false" @enter="onClosureEnter" @leave="onClosureLeave">
+            <div
+              v-if="col.isSelected && !closureCollapsed && !col.isFuture && canClose && (dayClosed || col.bookingCount > 0)"
+              class="ec__closure"
+            >
+              <button
+                v-if="dayClosed"
+                type="button"
+                class="ec__stamp"
+                title="Ver el resumen del cierre del día"
+                @click="emit('open-closure')"
+              >
+                <span class="ec__stamp-label">Día Cerrado</span>
+                <span class="ec__stamp-meta">
+                  <v-icon size="12">mdi-check-decagram</v-icon>
+                  {{ closureDateLabel }}
+                </span>
+              </button>
+              <button
+                v-else-if="canClose && col.bookingCount > 0"
+                type="button"
+                class="ec__closure-tile"
+                :title="`Abrir el cierre del día ${closureDateLabel}`"
+                @click="emit('open-closure')"
+              >
+                <span class="ec__closure-label">Cerrar Día</span>
+                <span class="ec__closure-meta">{{ closureStats }}</span>
+              </button>
+            </div>
+          </Transition>
 
           <!-- Bloques del día -->
           <div v-if="col.events.length > 0" class="ec__events">
@@ -167,33 +228,6 @@
           <div v-else class="ec__empty">
             <span>—</span>
           </div>
-
-          <!-- Ficha de cierre / sello del día seleccionado -->
-          <div v-if="col.isSelected" class="ec__closure">
-            <button
-              v-if="dayClosed"
-              type="button"
-              class="ec__stamp"
-              title="Ver el resumen del cierre del día"
-              @click="emit('open-closure')"
-            >
-              <span class="ec__stamp-label">Día Cerrado</span>
-              <span class="ec__stamp-meta">
-                <v-icon size="12">mdi-check-decagram</v-icon>
-                {{ closureDateLabel }}
-              </span>
-            </button>
-            <button
-              v-else-if="canClose"
-              type="button"
-              class="ec__closure-tile"
-              :title="`Abrir el cierre del día ${closureDateLabel}`"
-              @click="emit('open-closure')"
-            >
-              <span class="ec__closure-label">Cerrar Día — {{ closureDateLabel }}</span>
-              <span class="ec__closure-stats">{{ closureStats }}</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -201,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { format as fmt } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Booking, BlockedSlot } from '../types/booking.types';
@@ -223,6 +257,10 @@ const props = defineProps<{
   dayClosed?: boolean;
   /** Puede operar el cierre (hay empleado seleccionado) */
   canClose?: boolean;
+  /** Fechas de la semana cuyo cierre ya existe (vigenetes, sin reopen) */
+  closedDates?: string[];
+  /** Hora local desde la que "hoy" cuenta como pendiente de cierre */
+  closureCutoffHour?: number;
 }>();
 
 const emit = defineEmits<{
@@ -238,8 +276,12 @@ const emit = defineEmits<{
 const pickerMenu = ref(false);
 
 // ─── Columnas ───────────────────────────────────────────────
+const closedSet = computed(() => new Set(props.closedDates ?? []));
+
 const columns = computed(() => {
   const todayIso = new Date().toISOString().split('T')[0];
+  const nowHour = new Date().getHours();
+  const cutoff = props.closureCutoffHour ?? 19;
   return props.weekDates.map((date) => {
     const bookings: Booking[] = props.weekBookings
       .filter((b) => b.date === date)
@@ -266,12 +308,31 @@ const columns = computed(() => {
     ].sort((a, b) => a.start.localeCompare(b.start));
 
     const d = new Date(`${date}T12:00:00`);
+
+    // Día pendiente de cierre (caja registradora):
+    //  - pasado con reservas sin cerrar: siempre
+    //  - hoy: solo con reservas, pasadas la hora de corte (default 19:00) y sin cerrar
+    //  - futuro: nunca; sin reservas: nunca (no hay nada que cerrar)
+    const isClosedDay = closedSet.value.has(date);
+    const isPast = date < todayIso;
+    let pendingClosure = false;
+    if (date === todayIso) {
+      pendingClosure = !isClosedDay && nowHour >= cutoff && bookings.length > 0;
+    } else if (isPast) {
+      pendingClosure = !isClosedDay && bookings.length > 0;
+    }
+
     return {
       date,
       weekday: fmt(d, 'EEE', { locale: es }).replace('.', '').toUpperCase(),
       dayNumber: d.getDate(),
       isToday: date === todayIso,
+      isPast,
+      isFuture: date > todayIso,
+      isClosed: isClosedDay,
       isSelected: date === props.selectedDate,
+      pendingClosure,
+      bookingCount: bookings.length,
       events,
     };
   });
@@ -321,7 +382,7 @@ function onPickerPick(value: unknown) {
   const d = Array.isArray(value) ? (value[0] as Date) : (value as Date);
   if (!d) return;
   const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  emit('select-date', iso);
+  onDayHeadClick(iso);
 }
 
 // Al cambiar de rango, cierra el popover (reabre en el mes correcto)
@@ -335,18 +396,140 @@ const closureDateLabel = computed(() => {
   return fmt(new Date(`${props.selectedDate}T12:00:00`), 'd MMM', { locale: es }).toUpperCase();
 });
 
-/** Resumen mini del día seleccionado: citas activas, pendientes y atendidas */
+/** 2º tap sobre un día ya seleccionado → colapsa (o vuelve a revelar) la ficha de cierre */
+const closureCollapsed = ref(false);
+
+/** Único punto de selección desde el calendario: 1er tap selecciona, 2º tap alterna la ficha */
+function onDayHeadClick(date: string) {
+  if (date === props.selectedDate) {
+    closureCollapsed.value = !closureCollapsed.value;
+    return;
+  }
+  closureCollapsed.value = false;
+  emit('select-date', date);
+}
+
+// ─── Lordicon: player de iconos animados, carga perezosa (runtime junto al chunk de Agenda) ──
+let ensureLordiconOnce: Promise<void> | null = null;
+function ensureLordicon(): Promise<void> {
+  ensureLordiconOnce ??= import('@lordicon/element').then((m) => m.defineElement());
+  return ensureLordiconOnce;
+}
+
+onMounted(() => {
+  void ensureLordicon();
+});
+
+/** Cantidad de reservas activas del día seleccionado (meta del botón Cerrar Día) */
 const closureStats = computed(() => {
   const col = columns.value.find((c) => c.isSelected);
-  if (!col) return '';
-  const actives = col.events.filter((e) => e.type === 'booking');
-  const pending = actives.filter((e) => e.booking.status === 'pending_approval').length;
-  const done = actives.filter((e) => e.booking.status === 'completed').length;
-  const parts = [`${actives.length} citas`];
-  if (pending > 0) parts.push(`${pending} por aprobar`);
-  if (done > 0) parts.push(`${done} atendidas`);
-  return parts.join(' · ');
+  const actives = col ? col.events.filter((e) => e.type === 'booking') : [];
+  const n = actives.length;
+  return `${n} ${n === 1 ? 'reserva' : 'reservas'}`;
 });
+
+/** Click en la caja registradora: selecciona el día y abre su cierre (la ficha siempre se revela) */
+function onRegisterClick(date: string) {
+  closureCollapsed.value = false;
+  emit('select-date', date);
+  emit('open-closure');
+}
+
+// ─── Animación drop-down de la ficha (JS hooks: altura real animable) ──
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+function cleanupClosure(el: HTMLElement) {
+  el.style.height = '';
+  el.style.overflow = '';
+  el.style.opacity = '';
+  el.style.transition = '';
+  const inner = el.firstElementChild as HTMLElement | null;
+  if (inner) {
+    inner.style.opacity = '';
+    inner.style.transform = '';
+    inner.style.transition = '';
+  }
+}
+
+/** Expandir desde 0 hasta la altura real (la ficha cae por debajo del header) */
+function onClosureEnter(el: Element, done: () => void) {
+  const node = el as HTMLElement;
+  const inner = node.firstElementChild as HTMLElement | null;
+
+  if (prefersReducedMotion()) {
+    cleanupClosure(node);
+    done();
+    return;
+  }
+
+  if (inner) {
+    inner.style.transition =
+      'opacity 200ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1)';
+    inner.style.opacity = '0';
+    inner.style.transform = 'translateY(-10px)';
+  }
+  node.style.overflow = 'hidden';
+  const target = node.scrollHeight;
+  node.style.height = '0px';
+  void node.offsetHeight; // reflow para fijar el punto de partida
+  node.style.transition = 'height 220ms ease-out';
+  node.style.height = `${target}px`;
+
+  requestAnimationFrame(() => {
+    if (inner) {
+      inner.style.opacity = '1';
+      inner.style.transform = 'translateY(0)';
+    }
+  });
+
+  node.addEventListener(
+    'transitionend',
+    (e) => {
+      if (e.target !== node || e.propertyName !== 'height') return;
+      cleanupClosure(node);
+      done();
+    },
+    { once: true },
+  );
+}
+
+/** Colapsar hacia arriba: la columna anterior se cierra mientras cae la nueva */
+function onClosureLeave(el: Element, done: () => void) {
+  const node = el as HTMLElement;
+  const inner = node.firstElementChild as HTMLElement | null;
+
+  if (prefersReducedMotion()) {
+    cleanupClosure(node);
+    done();
+    return;
+  }
+
+  if (inner) {
+    inner.style.transition = 'opacity 160ms ease, transform 160ms ease';
+    inner.style.opacity = '0';
+    inner.style.transform = 'translateY(-6px)';
+  }
+  node.style.overflow = 'hidden';
+  node.style.height = `${node.scrollHeight}px`;
+  void node.offsetHeight;
+  node.style.transition = 'height 180ms ease-in';
+  node.style.height = '0px';
+
+  node.addEventListener(
+    'transitionend',
+    (e) => {
+      if (e.target !== node || e.propertyName !== 'height') return;
+      cleanupClosure(node);
+      done();
+    },
+    { once: true },
+  );
+}
 
 // ─── Auto-scroll de la columna activa (touch: sin hover, la ficha debe ser visible)
 const scrollRef = ref<HTMLElement | null>(null);
@@ -361,6 +544,8 @@ function scrollActiveIntoView() {
 watch(
   () => props.selectedDate,
   async () => {
+    // Selección cambiada desde afuera (navegación de semanas): la ficha vuelve a mostrarse
+    closureCollapsed.value = false;
     await nextTick();
     scrollActiveIntoView();
   },
@@ -476,6 +661,8 @@ function eventClass(status: string): string {
 /* ── Grid de columnas ── */
 .ec__scroll {
   overflow-x: auto;
+  /* Reserva la franja donde flotan las cajas registradoras (sin clipping) */
+  padding-top: 44px;
 }
 
 .ec__grid {
@@ -692,60 +879,99 @@ function eventClass(status: string): string {
   user-select: none;
 }
 
-/* ── Ficha de cierre / sello (solo en la columna del día seleccionado) ── */
+/* ── Ficha de cierre / sello (primera fila de la columna activa) ── */
 .ec__closure {
-  margin-top: auto;
-  padding: 2px 10px 14px;
   display: flex;
   flex-direction: column;
+  margin: 0 14px 8px;
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--ec-hairline);
 }
 
-/* Estado A — día abierto: la ficha "day ledger" al pie de la columna */
+/* ── Día pendiente de cierre: Lordicon animado (hereda color del tema vía current-color) ── */
+.ec__register {
+  all: unset;
+  position: absolute;
+  /* El borde inferior del ícono queda a ~10px por encima de la línea del día */
+  top: -40px;
+  left: 50%;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* Área de toque invisible (el lord-icon es lo único visible) */
+  padding: 8px 10px;
+  color: rgb(var(--v-theme-on-surface));
+  cursor: pointer;
+  filter: drop-shadow(0 2px 3px rgba(var(--v-theme-on-surface), 0.12));
+  transform: translateX(-50%);
+}
+
+/* El player expone el host a 32px default: ajustamos el tamaño del ícono */
+.ec__register-icon {
+  width: 24px;
+  height: 24px;
+}
+
+@media (pointer: fine) {
+  .ec__register:hover {
+    /* Nudge sutil: la única movida es la respuesta al mouse */
+    transform: translateX(-50%) translateY(-2px);
+    filter: drop-shadow(0 4px 5px rgba(var(--v-theme-on-surface), 0.22));
+  }
+}
+
+/* Estado A — día abierto: ficha tonal success (misma familia que el sello) */
 .ec__closure-tile {
   all: unset;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
   width: 100%;
   min-height: 44px;
-  padding: 10px 4px;
+  padding: 4px 10px;
+  text-align: center;
   cursor: pointer;
-  border-top: 1px dashed var(--ec-hairline);
-  transition: background-color 0.12s ease, border-color 0.18s ease, transform 0.08s ease;
+  border: 1px solid rgb(var(--v-theme-success), 0.35);
+  border-radius: 6px;
+  background: rgb(var(--v-theme-success), 0.08);
+  color: rgb(var(--v-theme-success));
+  transition: background-color 0.12s ease, transform 0.08s ease;
 }
 
 .ec__closure-tile:focus-visible {
-  outline: 2px solid var(--ec-accent);
-  outline-offset: -2px;
+  outline: 2px solid rgb(var(--v-theme-success));
+  outline-offset: 1px;
 }
 
 .ec__closure-tile:active {
-  background: rgb(var(--v-theme-primary), 0.1);
+  background: rgb(var(--v-theme-success), 0.16);
   transform: scale(0.985);
 }
 
 .ec__closure-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ec-accent);
+  color: rgb(var(--v-theme-success));
 }
 
-.ec__closure-stats {
+/* Meta: contador de reservas debajo de la acción */
+.ec__closure-meta {
   font-size: 10px;
-  color: rgb(var(--v-theme-on-surface), 0.55);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgb(var(--v-theme-success), 0.8);
 }
 
-/* Hover con mouse: la hairline superior se pinta de acento (mejora progresiva) */
+/* Hover con mouse: intensifica el tonal (mejora progresiva) */
 @media (pointer: fine) {
   .ec__closure-tile:hover {
-    background: rgb(var(--v-theme-primary), 0.05);
-    border-top-color: var(--ec-accent);
+    background: rgb(var(--v-theme-success), 0.14);
   }
 }
 
@@ -760,8 +986,8 @@ function eventClass(status: string): string {
   gap: 2px;
   min-height: 44px;
   justify-content: center;
-  padding: 10px 18px;
-  margin: 10px 0 4px;
+  padding: 8px 18px;
+  margin: 2px auto 0;
   cursor: pointer;
   border: 1.5px solid rgb(var(--v-theme-success));
   border-radius: 4px;
@@ -808,6 +1034,31 @@ function eventClass(status: string): string {
   align-items: center;
   gap: 4px;
   opacity: 0.85;
+}
+
+/* Pasado sin reservas: cápsula permanente clon del sello, en warning */
+.ec__no-reservas {
+  all: unset;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 18px;
+  margin: 2px auto 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 1.5px solid rgb(var(--v-theme-warning));
+  border-radius: 4px;
+  color: rgb(var(--v-theme-warning));
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+  user-select: none;
+  cursor: default;
 }
 
 /* Día cerrado: los bloques del día se "descargan" visualmente */
@@ -870,11 +1121,8 @@ function eventClass(status: string): string {
 
 /* ── Touch: sin hover, los affordances viven en el estado de reposo ── */
 @media (pointer: coarse) {
-  /* La ficha se nota sin tocar: borde + tinte de reposo en acento */
+  /* El tile ya es tonal en reposo; en touch solo crece el área de toque */
   .ec__closure-tile {
-    border: 1px solid rgb(var(--v-theme-primary), 0.55);
-    border-radius: 6px;
-    background: rgb(var(--v-theme-primary), 0.06);
     padding: 10px 12px;
   }
 
@@ -906,6 +1154,8 @@ function eventClass(status: string): string {
   .ec__sweep {
     transition: none;
   }
+
+  /* El player Lordicon congela la animación por sí solo (motion: auto en defineElement) */
 
   .ec__col--active .ec__sweep {
     width: 100%;
