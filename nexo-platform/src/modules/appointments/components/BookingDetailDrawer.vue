@@ -1,70 +1,60 @@
 <template>
-  <v-navigation-drawer
-    :model-value="visible"
-    temporary
-    location="right"
-    :width="smAndDown ? '100%' : 600"
-    :scrim="smAndDown ? false : true"
-    class="booking-detail-drawer"
-    @update:model-value="(v) => !v && emit('close')"
+  <DetailDialog
+    :visible="visible"
+    title="Detalle de la cita"
+    :meta="detailMeta"
+    :width="640"
+    @close="emit('close')"
   >
-    <template v-if="booking">
-      <div class="booking-detail__shell d-flex flex-column">
-        <div class="booking-detail__headerbar d-flex align-center flex-shrink-0">
-          <v-tabs
-            v-model="detailTab"
-            density="compact"
+    <!-- Tabs: detalle / cola de espera (el close vive en el header del shell) -->
+    <template #tabs>
+      <v-tabs
+        v-model="detailTab"
+        density="compact"
+        color="primary"
+        class="booking-detail__tabs"
+      >
+        <v-tab value="detail">Detalle de la cita</v-tab>
+        <v-tab value="queue">
+          Cola de espera
+          <v-chip
+            v-if="queueCount > 0"
+            size="x-small"
+            variant="tonal"
             color="primary"
-            class="flex-grow-1"
+            class="ml-2"
           >
-            <v-tab value="detail">Detalle de la cita</v-tab>
-            <v-tab value="queue">
-              Cola de espera
-              <v-chip
-                v-if="queueCount > 0"
-                size="x-small"
-                variant="tonal"
-                color="primary"
-                class="ml-1"
-              >
-                {{ queueCount }}
-              </v-chip>
-            </v-tab>
-          </v-tabs>
-          <v-btn
-            icon="mdi-close"
-            size="default"
-            variant="text"
-            aria-label="Cerrar detalle"
-            class="mr-1"
-            @click="emit('close')"
-          />
-        </div>
-
-        <BookingDetailInfo
-          v-if="detailTab === 'detail'"
-          :booking="booking"
-          :show-actions="showActions"
-          @cancel-turn="(d) => emit('cancelTurn', d)"
-        />
-
-        <BookingWaitlistTab
-          v-if="detailTab === 'queue'"
-          :booking="booking"
-          :waitlist-entries="waitlistEntries"
-          :tenant-name="tenantName"
-          @waitlist-remove="(e) => emit('waitlistRemove', e)"
-        />
-      </div>
+            {{ queueCount }}
+          </v-chip>
+        </v-tab>
+      </v-tabs>
     </template>
-  </v-navigation-drawer>
+
+    <div v-if="booking" class="booking-detail__scroll">
+      <BookingDetailInfo
+        v-if="detailTab === 'detail'"
+        :booking="booking"
+        :show-actions="showActions"
+        @cancel-turn="(d) => emit('cancelTurn', d)"
+      />
+
+      <BookingWaitlistTab
+        v-else-if="detailTab === 'queue'"
+        :booking="booking"
+        :waitlist-entries="waitlistEntries"
+        :tenant-name="tenantName"
+        @waitlist-remove="(e) => emit('waitlistRemove', e)"
+      />
+    </div>
+  </DetailDialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useDisplay } from 'vuetify';
+import DetailDialog from './DetailDialog.vue';
 import BookingDetailInfo from './BookingDetailInfo.vue';
 import BookingWaitlistTab from './BookingWaitlistTab.vue';
+import { formatDate } from '@/shared/utils/format';
 import type { Booking, WaitlistEntry } from '../types/booking.types';
 
 const props = defineProps<{
@@ -81,39 +71,33 @@ const emit = defineEmits<{
   waitlistRemove: [entry: WaitlistEntry];
 }>();
 
-const { smAndDown } = useDisplay();
 const detailTab = ref<'detail' | 'queue'>('detail');
 
 const queueCount = computed(() => props.waitlistEntries?.length ?? 0);
+
+/** Meta editorial: fecha · hora */
+const detailMeta = computed(() => {
+  if (!props.booking) return '';
+  const time = props.booking.start_time?.slice(0, 5) ?? '';
+  return [props.booking.date ? formatDate(props.booking.date) : '', time]
+    .filter(Boolean)
+    .join(' · ');
+});
 </script>
 
 <style scoped>
-.booking-detail-drawer {
-  position: fixed !important;
-  top: 0 !important;
-  right: 0 !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  z-index: 1001 !important;
-  transition-property: transform !important;
-  transition-duration: 0.3s !important;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
-  will-change: transform;
-  box-shadow: none !important;
-  border-right: none !important;
-  border-left: 1px solid rgb(var(--v-border)) !important;
+.booking-detail__tabs :deep(.v-tab) {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.booking-detail-drawer :deep(.v-navigation-drawer__content) {
-  overflow: hidden;
-}
-
-.booking-detail__shell {
-  position: relative;
-  height: 100dvh;
-}
-
-.booking-detail__headerbar {
-  border-bottom: 1px solid rgb(var(--v-border));
+/* El shell no scrollea: el contenido del detalle define su propio scroll */
+.booking-detail__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 </style>

@@ -104,7 +104,8 @@
         >
           <span aria-hidden="true" class="ec__sweep" />
 
-          <!-- Día pendiente de cierre: caja registradora animada (Tabler/IconKing free, loop) -->
+          <!-- Día pendiente de cierre: clipboard animado (Lordicon system-solid, estado in-reveal).
+               loop(1500) = revela, queda quieto 1,5s y vuelve a revelar. -->
           <button
             v-if="col.pendingClosure && canClose"
             type="button"
@@ -115,11 +116,13 @@
           >
             <lord-icon
               class="ec__register-icon"
-              src="/animations/cash-register.json"
-              trigger="loop"
-              speed="0.7"
+              src="/animations/clipboard-text-reveal.json"
+              state="in-reveal"
+              trigger="loop(1500)"
+              speed="1.5"
               loading="lazy"
               current-color
+              @ready="onRegisterIconReady"
             />
           </button>
           <!-- Encabezado del día: 1er tap selecciona / revela la ficha; 2º tap la colapsa -->
@@ -159,7 +162,7 @@
               >
                 <span class="ec__stamp-label">Día Cerrado</span>
                 <span class="ec__stamp-meta">
-                  <v-icon size="12">mdi-check-decagram</v-icon>
+                  <v-icon size="11">mdi-check-decagram</v-icon>
                   {{ closureDateLabel }}
                 </span>
               </button>
@@ -399,9 +402,25 @@ const closureDateLabel = computed(() => {
 /** 2º tap sobre un día ya seleccionado → colapsa (o vuelve a revelar) la ficha de cierre */
 const closureCollapsed = ref(false);
 
+/** Si el día cambia de cerrado a abierto, asegurar que la ficha se muestre */
+watch(
+  () => props.dayClosed,
+  (newVal, oldVal) => {
+    // Si el día pasaba de cerrado a no cerrado, forzar visualización
+    if (oldVal && !newVal) {
+      closureCollapsed.value = false;
+    }
+  },
+);
+
 /** Único punto de selección desde el calendario: 1er tap selecciona, 2º tap alterna la ficha */
 function onDayHeadClick(date: string) {
   if (date === props.selectedDate) {
+    if (props.dayClosed) {
+      // Día cerrado: el sello es estado permanente, el tap no lo colapsa
+      closureCollapsed.value = false;
+      return;
+    }
     closureCollapsed.value = !closureCollapsed.value;
     return;
   }
@@ -419,6 +438,21 @@ function ensureLordicon(): Promise<void> {
 onMounted(() => {
   void ensureLordicon();
 });
+
+/**
+ * Con movimiento reducido, el trigger "loop" no reproduce nada y el icono
+ * quedaría en el frame 0 del estado in-reveal (forma sin revelar). Al estar
+ * listo, lo dejamos estático al final del trazado: icono completo, sin animación.
+ */
+function onRegisterIconReady(event: Event) {
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const icon = event.currentTarget as (HTMLElement & { seek?: (target: string) => void }) | null;
+  try {
+    icon?.seek?.('end');
+  } catch {
+    /* noop */
+  }
+}
 
 /** Cantidad de reservas activas del día seleccionado (meta del botón Cerrar Día) */
 const closureStats = computed(() => {
@@ -559,6 +593,11 @@ watch(() => props.loading, async (isLoading) => {
   }
 });
 
+// Si el día seleccionado pasa a cerrado, el sello se revela siempre (nunca queda colapsado)
+watch(() => props.dayClosed, (closed) => {
+  if (closed) closureCollapsed.value = false;
+});
+
 // ─── Helpers ────────────────────────────────────────────────
 function formatLong(date: string): string {
   return fmt(new Date(`${date}T12:00:00`), "EEEE d 'de' MMMM", { locale: es });
@@ -684,7 +723,7 @@ function eventClass(status: string): string {
   border-left: none;
 }
 
-.ec__col--clickable:hover {
+.ec__col--clickable:hover:not(.ec__col--sealed) {
   background: rgb(var(--v-theme-surface-variant), 0.4);
 }
 
@@ -946,11 +985,6 @@ function eventClass(status: string): string {
   outline-offset: 1px;
 }
 
-.ec__closure-tile:active {
-  background: rgb(var(--v-theme-success), 0.16);
-  transform: scale(0.985);
-}
-
 .ec__closure-label {
   font-size: 12px;
   font-weight: 700;
@@ -984,12 +1018,11 @@ function eventClass(status: string): string {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  min-height: 44px;
   justify-content: center;
-  padding: 8px 18px;
+  padding: 4px 12px;
   margin: 2px auto 0;
   cursor: pointer;
-  border: 1.5px solid rgb(var(--v-theme-success));
+  border: 1px solid rgb(var(--v-theme-success));
   border-radius: 4px;
   color: rgb(var(--v-theme-success));
   transform: rotate(-6deg);
@@ -1022,17 +1055,17 @@ function eventClass(status: string): string {
 }
 
 .ec__stamp-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .ec__stamp-meta {
-  font-size: 10px;
+  font-size: 9px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   opacity: 0.85;
 }
 
@@ -1045,20 +1078,25 @@ function eventClass(status: string): string {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 10px 18px;
+  padding: 4px 12px;
   margin: 2px auto 0;
-  min-height: 44px;
   box-sizing: border-box;
-  border: 1.5px solid rgb(var(--v-theme-warning));
+  border: 1px solid rgb(var(--v-theme-warning));
   border-radius: 4px;
   color: rgb(var(--v-theme-warning));
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   transform: rotate(-6deg);
   user-select: none;
   cursor: default;
+}
+
+/* Día cerrado: toda la columna se baña en success semitransparente */
+.ec__col--sealed {
+  background: rgb(var(--v-theme-success), 0.05);
+  transition: background-color 0.35s ease;
 }
 
 /* Día cerrado: los bloques del día se "descargan" visualmente */
@@ -1121,9 +1159,9 @@ function eventClass(status: string): string {
 
 /* ── Touch: sin hover, los affordances viven en el estado de reposo ── */
 @media (pointer: coarse) {
-  /* El tile ya es tonal en reposo; en touch solo crece el área de toque */
-  .ec__closure-tile {
-    padding: 10px 12px;
+  /* El sello se achicó visualmente: preservo su área de toque ≥ 44px */
+  .ec__stamp {
+    min-height: 44px;
   }
 
   /* Targets táctiles ≥ 44px */

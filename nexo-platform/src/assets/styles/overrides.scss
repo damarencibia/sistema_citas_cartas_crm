@@ -127,3 +127,228 @@
   text-transform: none !important;
   letter-spacing: 0 !important;
 }
+
+// --- Dialogs: captura de Extras (lineas de ticket) ---
+.v-dialog .closure-dialog-card {
+  --closure-hairline: rgb(var(--v-theme-on-surface), 0.12);
+  border: 1px solid var(--closure-hairline) !important;
+  box-shadow: none !important;
+}
+
+.v-dialog .closure-dialog-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 20px 12px;
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--v-theme-on-surface), 0.75);
+  border-bottom: 1px solid var(--closure-hairline);
+  white-space: normal;
+}
+
+.v-dialog .closure-dialog-title__sub {
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: rgb(var(--v-theme-on-surface), 0.55);
+}
+
+.v-dialog .closure-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 20px 10px;
+}
+
+.v-dialog .closure-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.v-dialog .closure-field__label {
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--v-theme-on-surface), 0.55);
+}
+
+.v-dialog .closure-field__error {
+  padding-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgb(var(--v-theme-error));
+}
+
+/* Controles del formulario: líneas de ticket (overrides locales deben quitar el estilo global) */
+.v-dialog .closure-input :deep(.v-field) {
+  --v-field-border-opacity: 1;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.v-dialog .closure-input :deep(.v-field:hover) {
+  border-color: transparent !important;
+}
+
+.v-dialog .closure-input :deep(.v-field--focused) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.v-dialog .closure-input :deep(.v-field__outline::before) {
+  border-color: rgb(var(--v-theme-on-surface), 0.18);
+}
+
+.v-dialog .closure-input :deep(.v-field:hover .v-field__outline::before) {
+  border-color: rgb(var(--v-theme-on-surface), 0.32);
+}
+
+.v-dialog .closure-input :deep(.v-field--error .v-field__outline::before) {
+  border-color: rgb(var(--v-theme-error));
+}
+
+.v-dialog .closure-input :deep(.v-field__outline::after) {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.v-dialog .closure-input :deep(.v-field__input),
+.v-dialog .closure-input :deep(.v-select__selection) {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--v-theme-on-surface), 0.9);
+}
+
+.v-dialog .closure-input :deep(.v-field__append-inner .v-icon),
+.v-dialog .closure-input :deep(.v-field__clearable .v-icon) {
+  font-size: 18px;
+  color: rgb(var(--v-theme-on-surface), 0.55);
+}
+
+/* Etiqueta de Vuetify oculta (solo para lectores de pantalla) */
+.v-dialog .closure-input :deep(.v-label) {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Stepper editorial */
+.v-dialog .closure-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.v-dialog .closure-stepper__btn.v-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--closure-hairline);
+  border-radius: 6px;
+  color: rgb(var(--v-theme-on-surface), 0.75);
+}
+
+.v-dialog .closure-stepper__btn.v-btn:not(:disabled):active {
+  background: rgb(var(--v-theme-on-surface), 0.06);
+}
+
+.v-dialog .closure-stepper__value {
+  width: 64px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid rgb(var(--v-theme-on-surface), 0.18);
+  background: transparent;
+  text-align: center;
+  font-size: 18px;
+  line-height: 44px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--v-theme-on-surface), 0.9);
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.v-dialog .closure-stepper__value:focus-visible {
+  border-bottom-color: rgb(var(--v-theme-primary));
+  box-shadow: inset 0 -1px 0 rgb(var(--v-theme-primary));
+}
+
+.v-dialog .closure-stepper__value::-webkit-outer-spin-button,
+.v-dialog .closure-stepper__value::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+/* Línea de recibo del lote */
+.v-dialog .closure-batch-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed rgb(var(--v-theme-on-surface), 0.22);
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgb(var(--v-theme-on-surface), 0.6);
+}
+
+.v-dialog .closure-batch-total__detail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v-dialog .closure-batch-total__amount {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--v-theme-on-surface), 0.85);
+}
+
+/* Acciones del diálogo */
+.v-dialog .closure-dialog-actions {
+  gap: 4px;
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--closure-hairline);
+}
+
+.v-dialog .closure-dialog-btn.v-btn {
+  height: 44px;
+  padding-inline: 16px;
+}
+
+/* Menú de servicios de Extras (teleportado fuera del scope del panel) */
+.closure-select-menu {
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.12);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+}
+
+.closure-select-menu .v-list-item {
+  min-height: 40px;
+}
+
+.closure-select-menu .v-list-item-title {
+  font-size: 14px;
+}

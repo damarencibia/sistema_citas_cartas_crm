@@ -118,128 +118,38 @@
       @waitlist-remove="onWaitlistCancel"
     />
 
-    <v-dialog
-      v-if="smAndDown"
-      v-model="showClosure"
-      fullscreen
-      class="closure-dialog"
+    <!-- Cierre del Día: modal centrado (fullscreen en móvil), shell editorial compartido -->
+    <DetailDialog
+      :visible="showClosure"
+      title="Cierre del Día"
+      :meta="closureMeta"
+      :sealed="dayClosed"
+      :width="920"
+      stretch
+      @close="showClosure = false"
     >
-      <v-card class="d-flex flex-column h-100">
-        <v-toolbar density="compact" color="transparent" class="flex-shrink-0">
-          <v-icon color="primary" class="ml-4">mdi-clipboard-check-outline</v-icon>
-          <v-toolbar-title class="text-subtitle-1 font-weight-semibold ml-1">
-            Cierre del Día
-          </v-toolbar-title>
-          <v-spacer />
-          <v-btn
-            icon="mdi-close"
-            size="small"
-            variant="text"
-            aria-label="Cerrar cierre del día"
-            @click="showClosure = false"
-          />
-        </v-toolbar>
-
-        <div class="px-4 pb-2 d-flex align-center ga-2 flex-wrap flex-shrink-0">
-          <v-chip
-            size="small"
-            variant="tonal"
-            color="primary"
-            prepend-icon="mdi-calendar-today"
-          >
-            {{ filters.date ? formatDate(filters.date) : '' }}
-          </v-chip>
-          <v-chip size="small" variant="tonal" prepend-icon="mdi-account">
-            {{ closureEmployeeName }}
-          </v-chip>
-        </div>
-        <v-divider />
-
-        <div class="flex-grow-1 d-flex flex-column closure-dialog__body">
-          <DailyClosurePanel
-            ref="closurePanelRef"
-            :visible="showClosure"
-            :employee-id="filters.employee_id"
-            :date="filters.date ?? ''"
-            :tenant-id="tenantId"
-            @mark-attended="onMarkAttended"
-            @mark-no-show="onMarkNoShow"
-            @cancel-selection="onCancelSelection"
-            @mark-all-attended="onMarkAllAttended"
-            @remove-extra="onRemoveExtra"
-            @closure-changed="onClosureChanged"
-            @close-dialog="showClosure = false"
-          />
-        </div>
-      </v-card>
-    </v-dialog>
-
-    <v-navigation-drawer
-      v-else
-      v-model="showClosure"
-      temporary
-      location="right"
-      width="600"
-      :scrim="false"
-      class="closure-drawer"
-      :style="{ position: 'fixed', top: '0', height: '100dvh', zIndex: 1001 }"
-    >
-      <div class="d-flex flex-column h-100">
-        <v-toolbar density="compact" color="transparent" class="flex-shrink-0">
-          <v-icon color="primary" class="ml-4">mdi-clipboard-check-outline</v-icon>
-          <v-toolbar-title class="text-subtitle-1 font-weight-semibold ml-1">
-            Cierre del Día
-          </v-toolbar-title>
-          <v-spacer />
-          <v-btn
-            icon="mdi-close"
-            size="small"
-            variant="text"
-            aria-label="Cerrar cierre del día"
-            @click="showClosure = false"
-          />
-        </v-toolbar>
-
-        <div class="px-4 pb-2 d-flex align-center ga-2 flex-wrap flex-shrink-0">
-          <v-chip
-            size="small"
-            variant="tonal"
-            color="primary"
-            prepend-icon="mdi-calendar-today"
-          >
-            {{ filters.date ? formatDate(filters.date) : '' }}
-          </v-chip>
-          <v-chip size="small" variant="tonal" prepend-icon="mdi-account">
-            {{ closureEmployeeName }}
-          </v-chip>
-        </div>
-        <v-divider />
-
-        <div class="flex-grow-1 d-flex flex-column closure-dialog__body">
-          <DailyClosurePanel
-            ref="closurePanelRef"
-            :visible="showClosure"
-            :employee-id="filters.employee_id"
-            :date="filters.date ?? ''"
-            :tenant-id="tenantId"
-            @mark-attended="onMarkAttended"
-            @mark-no-show="onMarkNoShow"
-            @cancel-selection="onCancelSelection"
-            @mark-all-attended="onMarkAllAttended"
-            @remove-extra="onRemoveExtra"
-            @closure-changed="onClosureChanged"
-            @close-dialog="showClosure = false"
-          />
-        </div>
-      </div>
-    </v-navigation-drawer>
+      <DailyClosurePanel
+        ref="closurePanelRef"
+        :visible="showClosure"
+        :employee-id="filters.employee_id"
+        :date="filters.date ?? ''"
+        :tenant-id="tenantId"
+        @mark-attended="onMarkAttended"
+        @mark-no-show="onMarkNoShow"
+        @cancel-selection="onCancelSelection"
+        @mark-all-attended="onMarkAllAttended"
+        @remove-extra="onRemoveExtra"
+        @closure-changed="onClosureChanged"
+        @close-dialog="showClosure = false"
+      />
+    </DetailDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useDisplay } from 'vuetify';
+import { formatDate } from '@/shared/utils/format';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useBookingStore } from '../stores/booking.store';
@@ -248,6 +158,7 @@ import BookingDetailDrawer from '../components/BookingDetailDrawer.vue';
 import BookingApprovalList from '../components/BookingApprovalList.vue';
 import WaitlistPanel from '../components/WaitlistPanel.vue';
 import DailyClosurePanel from '../components/DailyClosurePanel.vue';
+import DetailDialog from '../components/DetailDialog.vue';
 import EditorialCalendar from '../components/EditorialCalendar.vue';
 import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
 import { dailyClosureRepository } from '../repositories/daily-closure.repository';
@@ -257,7 +168,6 @@ import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useUiStore } from '@/shared/stores/ui.store';
 import { useWorkspaceStore } from '@/shared/stores/workspace.store';
-import { formatDate } from '@/shared/utils/format';
 import type { Booking, WaitlistEntry, DailyExtra, BlockedSlot } from '../types/booking.types';
 import TeamScheduleBoard from '../components/TeamScheduleBoard.vue';
 
@@ -269,7 +179,6 @@ const uiStore = useUiStore();
 const notification = useNotification();
 const route = useRoute();
 const router = useRouter();
-const { smAndDown } = useDisplay();
 
 const reservasTab = ref<'all' | 'approval'>('all');
 const weekAnchor = ref(new Date().toISOString().split('T')[0]);
@@ -351,6 +260,11 @@ const closureEmployeeName = computed(() => {
   const emp = employeeStore.employees.find((e) => e.id === filters.employee_id);
   return emp ? `${emp.first_name} ${emp.last_name}` : 'Empleado';
 });
+
+/** Meta editorial del shell: fecha · empleado */
+const closureMeta = computed(
+  () => `${filters.date ? formatDate(filters.date) : ''} · ${closureEmployeeName.value}`,
+);
 
 const waitlistBySlot = computed<Record<string, WaitlistEntry[]>>(() => {
   const map: Record<string, WaitlistEntry[]> = {};
@@ -689,30 +603,3 @@ async function onRemoveExtra(extra: DailyExtra) {
   }
 }
 </script>
-
-<style scoped>
-.closure-dialog__body {
-  min-height: 0;
-}
-</style>
-
-<style>
-.closure-drawer {
-  position: fixed !important;
-  top: 0 !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  z-index: 1001 !important;
-  transition-property: transform !important;
-  transition-duration: 0.35s !important;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
-  will-change: transform;
-  box-shadow: none !important;
-  border-right: none !important;
-  border-left: 1px solid rgb(var(--v-border)) !important;
-}
-
-.closure-drawer :deep(.v-navigation-drawer__content) {
-  overscroll-behavior: contain;
-}
-</style>
