@@ -9,7 +9,12 @@
     >
       <v-card class="auth-card pa-8" width="480">
         <div class="text-center mb-6">
-          <v-avatar color="primary" size="48" variant="flat" rounded="lg">
+          <v-avatar
+            color="primary"
+            size="48"
+            variant="flat"
+            rounded="lg"
+          >
             <span class="text-white font-weight-bold text-h6">N</span>
           </v-avatar>
           <h1 class="text-h5 font-weight-semibold mt-3">Nexo Platform</h1>

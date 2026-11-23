@@ -56,7 +56,7 @@
           <TeamScheduleBoard
             :date="filters.date ?? ''"
             :employees="employeeStore.activeEmployees"
-            @change-date="filters.date = $event"
+            @change-date="onSelectUnifiedDay"
             @open-booking="openDetail"
             @select-employee="onTeamSelectEmployee"
           />
@@ -65,23 +65,26 @@
         <template v-else>
           <v-tabs-window v-model="reservasTab">
             <v-tabs-window-item value="all">
-              <EditorialCalendar
-                :week-dates="weekDates"
-                :week-bookings="weekBookings"
-                :blocked-slots="dayBlocks"
+              <MonthlyAgendaBoard
+                :month-anchor="monthAnchor"
+                :dates="monthDates"
+                :bookings="monthBookings"
+                :closed-dates="monthClosedDates"
                 :selected-date="filters.date"
-                :loading="weekLoading"
+                :loading="monthLoading"
                 :employee-names="employeeNamesById"
-                :day-closed="dayClosed"
                 :can-close="!!filters.employee_id"
-                :closed-dates="weekClosedDates"
+                :blocked-slots="dayBlocks"
                 @select-date="onSelectUnifiedDay"
-                @prev-week="shiftWeek(-7)"
-                @next-week="shiftWeek(7)"
-                @today="goToTodayWeek"
+                @prev-month="shiftMonth(-1)"
+                @next-month="shiftMonth(1)"
+                @prev-year="shiftYear(-1)"
+                @next-year="shiftYear(1)"
+                @today="goToTodayMonth"
                 @open-booking="openDetail"
                 @open-block="onReleaseBlock"
                 @open-closure="openClosure"
+                @go-approval="reservasTab = 'approval'"
               />
             </v-tabs-window-item>
 
@@ -159,7 +162,7 @@ import BookingApprovalList from '../components/BookingApprovalList.vue';
 import WaitlistPanel from '../components/WaitlistPanel.vue';
 import DailyClosurePanel from '../components/DailyClosurePanel.vue';
 import DetailDialog from '../components/DetailDialog.vue';
-import EditorialCalendar from '../components/EditorialCalendar.vue';
+import MonthlyAgendaBoard from '../components/MonthlyAgendaBoard.vue';
 import { dailyExtrasRepository } from '../repositories/daily-extras.repository';
 import { dailyClosureRepository } from '../repositories/daily-closure.repository';
 import { bookingRepository } from '../repositories/booking.repository';
@@ -181,17 +184,17 @@ const route = useRoute();
 const router = useRouter();
 
 const reservasTab = ref<'all' | 'approval'>('all');
-const weekAnchor = ref(new Date().toISOString().split('T')[0]);
-const weekLoading = ref(false);
-/** Reservas completas de la semana para la vista unificada */
-const weekBookings = ref<Booking[]>([]);
-/** Fechas de la semana ya cerradas (caja registradora / sello) */
-const weekClosedDates = ref<string[]>([]);
+const monthAnchor = ref(new Date().toISOString().split('T')[0]);
+const monthLoading = ref(false);
+/** Reservas del mes visible (para la grilla y el panel del día) */
+const monthBookings = ref<Booking[]>([]);
+/** Fechas del mes visible con cierre vigente */
+const monthClosedDates = ref<string[]>([]);
+const dayBlocks = ref<BlockedSlot[]>([]);
 const showDetail = ref(false);
 const showClosure = ref(false);
 const dayClosed = ref(false);
 const selectedBooking = ref<Booking | null>(null);
-const dayBlocks = ref<BlockedSlot[]>([]);
 const closurePanelRef = ref<InstanceType<typeof DailyClosurePanel> | null>(null);
 const isEmployeeView = computed(() => authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
@@ -250,9 +253,10 @@ const employeeNamesById = computed<Record<string, string>>(() => {
   return map;
 });
 
-/** En la vista unificada el click en un día lo selecciona sin salir del modo */
+/** En la vista mensual, elegir un día también mueve el mes visible a su mes */
 function onSelectUnifiedDay(day: string) {
   filters.date = day;
+  monthAnchor.value = day;
 }
 
 const closureEmployeeName = computed(() => {
@@ -323,61 +327,84 @@ async function loadDayClosed() {
   }
 }
 
-const weekDates = computed(() => {
-  const d = new Date(weekAnchor.value + 'T12:00:00');
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
+/** Rango del mes visible: primer y último día */
+const monthRange = computed(() => {
+  const anchor = new Date(`${monthAnchor.value}T12:00:00`);
+  const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+  const last = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+  return [toIsoDate(first), toIsoDate(last)] as const;
+});
+
+/** Grilla del mes: semanas completas (lunes primero), 5 o 6 filas */
+const monthDates = computed(() => {
+  const anchor = new Date(`${monthAnchor.value}T12:00:00`);
+  const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+  const last = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+
+  const start = new Date(first);
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const end = new Date(last);
+  end.setDate(end.getDate() + (6 - ((end.getDay() + 6) % 7)));
+
   const dates: string[] = [];
-  for (let i = 0; i < 7; i++) {
-    const dd = new Date(d);
-    dd.setDate(d.getDate() + i);
-    dates.push(toIsoDate(dd));
+  for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+    dates.push(toIsoDate(cursor));
   }
   return dates;
 });
 
-/** Reservas completas de la semana para el calendario unificado */
-async function loadWeekData() {
-  weekLoading.value = true;
+/** Reservas del mes visible para la grilla mensual y su panel de día */
+async function loadMonthData() {
+  monthLoading.value = true;
   try {
-    const [start, end] = [weekDates.value[0], weekDates.value[6]];
-    weekBookings.value = await bookingRepository.getByFilters({
+    const [start, end] = monthRange.value;
+    monthBookings.value = await bookingRepository.getByFilters({
       date_from: start,
       date_to: end,
       employee_id: filters.employee_id,
     });
   } finally {
-    weekLoading.value = false;
+    monthLoading.value = false;
   }
 }
 
-/** Cierres vigentes de la semana (caja registradora en días pendientes) */
-async function loadWeekClosedDates() {
+/** Cierres vigentes del mes visible (sello en la grilla y CTA del panel) */
+async function loadMonthClosedDates() {
   if (!filters.employee_id) {
-    weekClosedDates.value = [];
+    monthClosedDates.value = [];
     return;
   }
   try {
+    const [start, end] = monthRange.value;
     const closures = await dailyClosureRepository.getByEmployeeAndRange(
       filters.employee_id,
-      weekDates.value[0],
-      weekDates.value[6],
+      start,
+      end,
     );
-    weekClosedDates.value = closures.map((c) => c.date);
+    monthClosedDates.value = closures.map((c) => c.date);
   } catch {
-    weekClosedDates.value = [];
+    monthClosedDates.value = [];
   }
 }
 
-function shiftWeek(days: number) {
-  const d = new Date(weekAnchor.value + 'T12:00:00');
-  d.setDate(d.getDate() + days);
-  weekAnchor.value = d.toISOString().split('T')[0];
+function shiftMonth(delta: number) {
+  const d = new Date(`${monthAnchor.value}T12:00:00`);
+  d.setDate(1);
+  d.setMonth(d.getMonth() + delta);
+  monthAnchor.value = toIsoDate(d);
 }
 
-function goToTodayWeek() {
-  weekAnchor.value = new Date().toISOString().split('T')[0];
+function shiftYear(delta: number) {
+  const d = new Date(`${monthAnchor.value}T12:00:00`);
+  d.setDate(1);
+  d.setFullYear(d.getFullYear() + delta);
+  monthAnchor.value = toIsoDate(d);
+}
+
+function goToTodayMonth() {
+  const today = new Date().toISOString().split('T')[0];
+  monthAnchor.value = today;
+  filters.date = today;
 }
 
 function toIsoDate(d: Date): string {
@@ -388,17 +415,17 @@ function toIsoDate(d: Date): string {
 }
 
 watch(() => filters.employee_id, () => {
-  loadWeekData();
-  loadWeekClosedDates();
+  loadMonthData();
+  loadMonthClosedDates();
 });
 
 watch(() => [filters.employee_id, filters.date], loadDayClosed, { immediate: true });
 
 watch(() => [filters.employee_id, filters.date], loadDayBlocks, { immediate: true });
 
-watch(weekAnchor, () => {
-  loadWeekData();
-  loadWeekClosedDates();
+watch(monthAnchor, () => {
+  loadMonthData();
+  loadMonthClosedDates();
 });
 
 onMounted(async () => {
@@ -448,20 +475,20 @@ async function loadForTab(tab: string) {
       date: filters.date ?? undefined,
       employee_id: filters.employee_id,
     });
-    await loadWeekData();
-    await loadWeekClosedDates();
+    await loadMonthData();
+    await loadMonthClosedDates();
   }
 }
 
-/** Cerrar/reabrir un día actualiza tanto el estado del día como el set semanal */
+/** Cerrar/reabrir un día actualiza tanto el estado del día como el set mensual */
 function onClosureChanged(closed: boolean) {
   dayClosed.value = closed;
   const date = filters.date;
   if (!date) return;
-  const set = new Set(weekClosedDates.value);
+  const set = new Set(monthClosedDates.value);
   if (closed) set.add(date);
   else set.delete(date);
-  weekClosedDates.value = [...set];
+  monthClosedDates.value = [...set];
 }
 
 function openDetail(booking: Booking) {
@@ -499,6 +526,7 @@ async function onCancelTurn(data: { keepBlocked: boolean; reason: string }) {
     }
     showDetail.value = false;
     await refreshBookings();
+    await loadMonthData();
     await loadDayBlocks();
   } catch (e) {
     notification.error((e as Error).message || 'Error al cancelar turno');
