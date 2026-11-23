@@ -6,11 +6,13 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import LoginScene from './LoginScene.vue';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const workspaceStore = useWorkspaceStore();
 const loading = ref(false);
 const authError = ref<string | null>(null);
 
@@ -19,6 +21,9 @@ async function handleLogin(payload: { email: string; password: string }) {
   authError.value = null;
   try {
     await authStore.login(payload.email, payload.password);
+    // Recalcular el espacio de trabajo para el usuario que acaba de entrar:
+    // evita arrastrar el modo de una sesión anterior (causa de bucles de guard).
+    workspaceStore.initMode();
     // 1) Respeta ?redirect= capturado por authGuard.
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null;
     if (redirect && redirect.startsWith('/')) {

@@ -6,7 +6,7 @@
     <PushOptInBanner />
     <PwaInstallBanner />
     <v-main :style="mainStyle" class="app-main">
-      <div class="main-content py-4 px-4 px-md-6">
+      <div class="main-content py-6 px-4 px-md-8">
         <v-alert
           v-if="authStore.user?.initial_password_pending"
           type="info"
@@ -74,7 +74,7 @@ const { visible, title, message, danger: dialogDanger, confirmText: dialogConfir
 }
 
 .main-content {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 

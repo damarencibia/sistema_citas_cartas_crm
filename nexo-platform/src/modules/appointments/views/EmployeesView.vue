@@ -615,7 +615,7 @@ const form = reactive({
   password: '',
   role: 'employee' as 'admin' | 'employee',
   phone: '',
-  color: '#1976D2',
+  color: '#FC4C13',
   category_ids: [] as string[],
 });
 
@@ -668,7 +668,7 @@ function openCreateDialog() {
   form.password = generatePassword();
   form.role = 'employee';
   form.phone = '';
-  form.color = '#1976D2';
+  form.color = '#FC4C13';
   form.category_ids = [];
   formError.value = null;
   createDialog.value = true;

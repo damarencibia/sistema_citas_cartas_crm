@@ -91,7 +91,7 @@ export const employeeRepository = {
         last_name: dto.last_name,
         email: dto.email ?? null,
         phone: dto.phone ?? null,
-        color: dto.color ?? '#1976D2',
+        color: dto.color ?? '#FC4C13',
       } as any)
       .select()
       .single();

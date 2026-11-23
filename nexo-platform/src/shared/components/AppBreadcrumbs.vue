@@ -39,22 +39,22 @@ const crumbs = computed(() => getBreadcrumbs(route));
 }
 
 .app-breadcrumbs__separator {
-  color: rgb(var(--v-theme-on-surface), 0.4);
-  font-weight: 300;
+  color: var(--text-faint);
+  font-weight: 400;
 }
 
 .app-breadcrumbs__link {
-  color: rgb(var(--v-theme-on-surface), 0.7);
+  color: var(--text-muted);
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color 0.15s ease;
 }
 
 .app-breadcrumbs__link:hover {
-  color: rgb(var(--v-theme-primary));
+  color: var(--text-primary);
 }
 
 .app-breadcrumbs__current {
-  color: rgb(var(--v-theme-primary));
-  font-weight: 600;
+  color: var(--text-primary);
+  font-weight: 500;
 }
 </style>

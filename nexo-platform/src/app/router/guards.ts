@@ -52,7 +52,15 @@ export async function workspaceGuard(to: RouteLocationNormalized) {
   if (workspaceStore.mode === required) return;
 
   if (required === 'work') {
+    // Destino sin meta.workspace: no reentra en este guard (evita bucles).
     return { path: '/appointments/agenda', query: { tab: 'reservas' } };
   }
-  return { path: '/' };
+
+  // required === 'admin': alinear el modo en vez de redirigir a '/',
+  // que también exige workspace 'admin' y provocaría un bucle infinito.
+  workspaceStore.setMode('admin');
+  if (workspaceStore.mode !== 'admin') {
+    // Empleado sin acceso al espacio admin: destino seguro sin meta.workspace.
+    return { path: '/appointments/agenda', query: { tab: 'reservas' } };
+  }
 }

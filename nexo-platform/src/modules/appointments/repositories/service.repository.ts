@@ -72,7 +72,7 @@ export const serviceRepository = {
         description: dto.description ?? null,
         duration_minutes: dto.duration_minutes,
         price: dto.price,
-        color: dto.color ?? '#1976D2',
+        color: dto.color ?? '#FC4C13',
         category_id: dto.category_id,
         image_url: dto.image_url ?? null,
         max_participants: dto.max_participants ?? 1,

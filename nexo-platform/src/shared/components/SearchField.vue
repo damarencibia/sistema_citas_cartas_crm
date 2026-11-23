@@ -5,7 +5,7 @@
     prepend-inner-icon="mdi-magnify"
     clearable
     hide-details
-    density="compact"
+    density="comfortable"
     variant="outlined"
     @input="onInput"
     @click:clear="onClear"

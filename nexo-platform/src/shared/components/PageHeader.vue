@@ -1,5 +1,5 @@
 <template>
-  <div class="page-header mb-4">
+  <div class="page-header">
     <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
       <div
         v-if="title || subtitle"
@@ -34,19 +34,21 @@ defineProps<{
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  margin-bottom: 24px;
 }
 
 .page-header__title {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--text-primary);
 }
 
 .page-header__subtitle {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 @media (max-width: 768px) {

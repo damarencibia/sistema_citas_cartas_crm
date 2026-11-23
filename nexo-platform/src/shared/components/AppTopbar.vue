@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar height="48" class="app-topbar" flat>
+  <v-app-bar height="56" class="app-topbar" flat>
     <div class="d-flex align-center ga-2" style="min-width: 0; margin-left: 18px;">
       <v-avatar
         color="primary"
@@ -22,7 +22,7 @@
       density="comfortable"
       rounded="pill"
       class="mr-2 workspace-toggle"
-      :color="workspaceStore.isWorkMode ? 'teal' : 'primary'"
+      color="primary"
       @update:model-value="onModeChange"
     >
       <v-btn value="work" size="small" class="text-none">
@@ -164,7 +164,9 @@ async function handleLogout() {
   right: 0 !important;
   width: auto !important;
   z-index: 1000 !important;
-  border-bottom: 1px solid rgb(var(--v-border-strong)) !important;
-  background-color: rgb(var(--v-theme-surface)) !important;
+  border-bottom: 1px solid rgb(var(--v-border)) !important;
+  background-color: rgba(var(--v-theme-surface), 0.85) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 </style>

@@ -102,7 +102,7 @@ const localForm = reactive<CreateServiceDTO>({
   description: '',
   duration_minutes: 30,
   price: 0,
-  color: '#1976D2',
+  color: '#FC4C13',
   category_id: '',
   max_participants: 1,
 });
@@ -134,7 +134,7 @@ watch(
       localForm.description = '';
       localForm.duration_minutes = 30;
       localForm.price = 0;
-      localForm.color = '#1976D2';
+      localForm.color = '#FC4C13';
       localForm.category_id = '';
       localForm.max_participants = 1;
     }

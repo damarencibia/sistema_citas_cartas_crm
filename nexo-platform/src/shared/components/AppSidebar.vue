@@ -235,9 +235,11 @@ watch(isDesktop, (val) => {
 
 .sidebar-item {
   font-size: 13px;
-  font-weight: 450;
+  font-weight: 500;
   letter-spacing: 0;
   min-height: 36px;
+  color: var(--text-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .app-sidebar--mobile .sidebar-item {
@@ -254,18 +256,18 @@ watch(isDesktop, (val) => {
 }
 
 .sidebar-item--active {
-  background-color: rgb(var(--v-theme-primary)) !important;
-  color: #fff !important;
+  background-color: rgba(var(--v-theme-primary), 0.1) !important;
+  color: rgb(var(--v-theme-primary)) !important;
   font-weight: 600;
 }
 
 .sidebar-item--active .v-icon {
-  color: #fff !important;
+  color: rgb(var(--v-theme-primary)) !important;
 }
 
 .desktop-nav {
   position: fixed;
-  top: 48px;
+  top: 56px;
   left: 0;
   bottom: 0;
   z-index: 1000;
@@ -310,19 +312,27 @@ watch(isDesktop, (val) => {
   align-items: center;
   width: 100%;
   height: 40px;
-  margin: 4px 0;
+  margin: 2px 0;
   padding: 0;
   overflow: hidden;
-  border-radius: 8px;
-  background: rgb(var(--v-theme-surface)) !important;
-  border: 1px solid rgb(var(--v-border));
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  background: transparent !important;
+  border: none;
+  box-shadow: none;
+  color: var(--text-muted);
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.primary-item:hover {
+  background: rgba(var(--v-theme-on-surface), 0.05) !important;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .primary-item__icon {
-  margin-left: 10px;
-  color: rgb(var(--v-theme-on-surface));
+  margin-left: 8px;
+  color: inherit;
+  transition: color 0.15s ease;
 }
 
 .primary-item__label {
@@ -332,17 +342,17 @@ watch(isDesktop, (val) => {
   white-space: nowrap;
   font-size: 13px;
   font-weight: 500;
-  color: rgb(var(--v-theme-on-surface));
+  color: inherit;
 }
 
 .primary-item--active {
-  background-color: rgb(var(--v-theme-primary)) !important;
-  border-color: rgb(var(--v-theme-primary)) !important;
+  background-color: rgba(var(--v-theme-primary), 0.1) !important;
 }
 
+.primary-item--active,
 .primary-item--active .primary-item__icon,
 .primary-item--active .primary-item__label {
-  color: #fff !important;
+  color: rgb(var(--v-theme-primary)) !important;
 }
 
 .desktop-nav__secondary {
@@ -364,13 +374,16 @@ watch(isDesktop, (val) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
-  min-height: 48px;
+  padding: 16px 16px 8px;
+  min-height: 44px;
 }
 
 .secondary-header__title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .secondary-toggle {
@@ -381,10 +394,10 @@ watch(isDesktop, (val) => {
   border-radius: 50% !important;
   background: rgb(var(--v-theme-surface)) !important;
   border: 1px solid rgb(var(--v-border));
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .secondary-toggle .v-icon {
-  color: rgb(var(--v-theme-on-surface));
+  color: var(--text-muted);
 }
 </style>

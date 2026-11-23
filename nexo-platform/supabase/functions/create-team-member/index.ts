@@ -110,7 +110,7 @@ serve(async (req: Request) => {
           last_name,
           email: email,
           phone: phone ?? null,
-          color: color ?? '#1976D2',
+          color: color ?? '#FC4C13',
           is_active: true,
         })
         .select('id')

@@ -11,10 +11,12 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import RegisterScene from './RegisterScene.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const workspaceStore = useWorkspaceStore();
 const loading = ref(false);
 const authError = ref<string | null>(null);
 
@@ -52,6 +54,7 @@ async function handleRegister(payload: RegisterPayload) {
     // avanzar directo al dashboard. Si Supabase devolviera un estado
     // sin sesión (confirmación requerida), ir al login.
     if (authStore.session) {
+      workspaceStore.initMode();
       router.push('/');
     } else {
       router.push('/auth/login');

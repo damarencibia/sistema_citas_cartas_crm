@@ -32,7 +32,10 @@
         >
           <v-card class="pa-4" :loading="loading">
             <div class="d-flex align-center ga-3">
-              <div class="stat-icon" :style="{ backgroundColor: stat.bg }">
+              <div
+                class="stat-icon"
+                :style="{ backgroundColor: `rgba(var(--v-theme-${stat.color}), 0.1)` }"
+              >
                 <v-icon :color="stat.color" size="20">{{ stat.icon }}</v-icon>
               </div>
               <div style="min-width: 0;">
@@ -156,7 +159,6 @@ interface StatCard {
   value: string;
   icon: string;
   color: string;
-  bg: string;
 }
 
 const cards = computed<StatCard[]>(() => {
@@ -167,16 +169,15 @@ const cards = computed<StatCard[]>(() => {
   const attended = done.length + noShow.length;
   const pending = list.filter((b) => b.status === 'pending_approval').length;
   return [
-    { title: 'Citas completadas', value: String(done.length), icon: 'mdi-calendar-check-outline', color: 'success', bg: 'rgba(62, 207, 142, 0.1)' },
-    { title: 'Ingresos', value: `$${(income / 100).toFixed(2)}`, icon: 'mdi-cash-multiple', color: 'primary', bg: 'rgba(59, 130, 246, 0.1)' },
+    { title: 'Citas completadas', value: String(done.length), icon: 'mdi-calendar-check-outline', color: 'success' },
+    { title: 'Ingresos', value: `$${(income / 100).toFixed(2)}`, icon: 'mdi-cash-multiple', color: 'primary' },
     {
       title: 'Tasa de asistencia',
       value: attended > 0 ? `${Math.round((done.length * 100) / attended)}%` : '—',
       icon: 'mdi-account-check-outline',
       color: 'info',
-      bg: 'rgba(59, 130, 246, 0.1)',
     },
-    { title: 'Por aprobar', value: String(pending), icon: 'mdi-clock-alert-outline', color: 'warning', bg: 'rgba(232, 168, 0, 0.1)' },
+    { title: 'Por aprobar', value: String(pending), icon: 'mdi-clock-alert-outline', color: 'warning' },
   ];
 });
 
@@ -270,22 +271,24 @@ watch(period, loadData);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   flex-shrink: 0;
 }
 
 .stat-value {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
-  line-height: 1.2;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
   font-size: 12px;
   color: var(--text-muted);
-  font-weight: 450;
+  font-weight: 500;
 }
 
 .bars-row {

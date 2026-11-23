@@ -81,14 +81,14 @@ function onUpdate(value: unknown) {
   overflow: hidden;
   background: rgb(var(--v-theme-surface));
   color: rgb(var(--v-theme-on-surface));
-  border-radius: 8px;
-  box-shadow: 0 18px 48px rgb(var(--v-theme-on-surface), 0.2);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px var(--overlay-shadow-strong);
 }
 
 /* Día cerrado: wash success sin tapar el contenido (inset-shadow separa capas) */
 .detail-dialog__shell--sealed {
   box-shadow: inset 0 0 0 9999px rgb(var(--v-theme-success), 0.04),
-    0 18px 48px rgb(var(--v-theme-on-surface), 0.2);
+    0 24px 64px var(--overlay-shadow-strong);
 }
 
 /* Modo stretch: altura definida para que el slot resuelva `height: 100%` */

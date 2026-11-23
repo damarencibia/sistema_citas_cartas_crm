@@ -65,7 +65,7 @@ const items = computed(() => {
       first_name: 'Horario por defecto del negocio',
       last_name: '',
       displayName: 'Horario por defecto del negocio',
-      color: '#64748b',
+      color: '#808080',
     },
     ...employees.value,
   ];

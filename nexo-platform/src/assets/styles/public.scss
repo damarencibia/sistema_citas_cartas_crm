@@ -38,11 +38,11 @@
 }
 
 .soft-shadow {
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 8px 30px rgba(29, 29, 29, 0.08) !important;
 }
 
 .soft-shadow-lg {
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16) !important;
+  box-shadow: 0 24px 70px rgba(29, 29, 29, 0.16) !important;
 }
 
 .hover-lift {
@@ -50,7 +50,7 @@
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12) !important;
+    box-shadow: 0 14px 36px rgba(29, 29, 29, 0.12) !important;
   }
 }
 

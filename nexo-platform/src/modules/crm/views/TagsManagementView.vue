@@ -181,9 +181,9 @@ const saving = ref(false);
 const isValid = ref(false);
 
 const palette = [
-  '#6b7280', '#3b82f6', '#3ecf8e', '#e8a800',
-  '#dc5454', '#8b5cf6', '#ec4899', '#14b8a6',
-  '#f97316', '#64748b',
+  '#6b7280', '#3b82f6', '#16a34a', '#f59e0b',
+  '#e5484d', '#8b5cf6', '#ec4899', '#14b8a6',
+  '#fc4c13', '#64748b',
 ];
 
 const form = reactive({ name: '', color: palette[0] });

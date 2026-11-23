@@ -154,7 +154,7 @@ const localForm = reactive<EmployeeFormData>({
   last_name: '',
   email: '',
   phone: '',
-  color: '#1976D2',
+  color: '#FC4C13',
   role: 'employee',
   category_ids: [],
   is_active: true,
@@ -180,7 +180,7 @@ watch(
       localForm.last_name = '';
       localForm.email = '';
       localForm.phone = '';
-      localForm.color = '#1976D2';
+      localForm.color = '#FC4C13';
       localForm.role = 'employee';
       localForm.category_ids = [];
       localForm.is_active = true;

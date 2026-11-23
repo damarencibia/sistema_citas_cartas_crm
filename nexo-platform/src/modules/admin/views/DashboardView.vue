@@ -32,7 +32,10 @@
       >
         <v-card class="dashboard-stat pa-4" :loading="loading">
           <div class="d-flex align-center ga-3">
-            <div class="dashboard-stat__icon" :style="{ backgroundColor: stat.bgColor }">
+            <div
+              class="dashboard-stat__icon"
+              :style="{ backgroundColor: `rgba(var(--v-theme-${stat.color}), 0.1)` }"
+            >
               <v-icon :color="stat.color" size="20">{{ stat.icon }}</v-icon>
             </div>
             <div>
@@ -116,10 +119,10 @@ const loading = ref(true);
 const loadError = ref(false);
 
 const stats = reactive([
-  { title: 'Citas Hoy', value: '0', icon: 'mdi-calendar-today', color: 'primary', bgColor: 'rgba(62, 207, 142, 0.1)' },
-  { title: 'Clientes', value: '0', icon: 'mdi-account-group-outline', color: 'info', bgColor: 'rgba(59, 130, 246, 0.1)' },
-  { title: 'Servicios', value: '0', icon: 'mdi-content-cut', color: 'warning', bgColor: 'rgba(232, 168, 0, 0.1)' },
-  { title: 'Empleados', value: '0', icon: 'mdi-account-hard-hat-outline', color: 'success', bgColor: 'rgba(62, 207, 142, 0.1)' },
+  { title: 'Citas Hoy', value: '0', icon: 'mdi-calendar-today', color: 'primary' },
+  { title: 'Clientes', value: '0', icon: 'mdi-account-group-outline', color: 'info' },
+  { title: 'Servicios', value: '0', icon: 'mdi-content-cut', color: 'warning' },
+  { title: 'Empleados', value: '0', icon: 'mdi-account-hard-hat-outline', color: 'success' },
 ]);
 
 interface UpcomingBooking {
@@ -197,21 +200,24 @@ async function loadDashboard() {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   flex-shrink: 0;
 }
 
 .dashboard-stat__value {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
-  line-height: 1.2;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
 .dashboard-stat__label {
   font-size: 12px;
   color: var(--text-muted);
-  font-weight: 450;
+  font-weight: 500;
 }
 </style>

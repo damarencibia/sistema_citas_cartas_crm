@@ -1,34 +1,52 @@
-// Border-first depth overrides (Supabase style)
-// Uses theme('colors.surface') via CSS custom properties set in main.scss
+// Premium neutral depth system — soft borders, layered shadows, tactile states.
 
 // --- Cards ---
 .v-card {
   border: 1px solid rgb(var(--v-border)) !important;
-  box-shadow: none !important;
-  background-color: rgb(var(--v-theme-surface)) !important;
-  transition: border-color 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .v-card:hover {
   border-color: rgb(var(--v-border-strong, var(--v-border))) !important;
 }
 
+.v-card.v-card--hover:hover,
+.v-card.v-card--link:hover {
+  box-shadow: 0 10px 28px var(--overlay-shadow) !important;
+}
+
 // --- Buttons ---
 .v-btn {
   text-transform: none !important;
   font-weight: 500 !important;
-  letter-spacing: 0 !important;
+  letter-spacing: 0.01em !important;
   box-shadow: none !important;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .v-btn--variant-flat {
   box-shadow: none !important;
 }
 
+.v-btn.bg-primary:hover {
+  box-shadow: 0 4px 14px rgba(var(--v-theme-primary), 0.3) !important;
+}
+
+.v-btn:active:not(.v-btn--disabled) {
+  transform: translateY(0.5px);
+}
+
 // --- Text Fields / Selects / Inputs ---
 .v-field {
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   border: 1px solid rgb(var(--v-border)) !important;
+  background-color: rgb(var(--v-theme-surface)) !important;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -37,15 +55,31 @@
 }
 
 .v-field.v-field--focused {
-  border-color: rgb(var(--v-primary)) !important;
-  box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.15) !important;
+  border-color: rgb(var(--v-theme-primary)) !important;
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.14) !important;
+}
+
+.v-field.v-field--error {
+  border-color: rgb(var(--v-theme-error)) !important;
+}
+
+.v-field.v-field--error.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-error), 0.14) !important;
 }
 
 // --- Tables ---
 .v-data-table {
   border: 1px solid rgb(var(--v-border)) !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
   overflow: hidden;
+  background-color: rgb(var(--v-theme-surface)) !important;
+}
+
+// Una tabla dentro de una card ya tiene marco: evitar doble borde.
+.v-card .v-data-table {
+  border: none !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
 }
 
 .v-data-table .v-data-table-header {
@@ -53,24 +87,26 @@
 }
 
 .v-data-table .v-data-table-header th {
-  font-weight: 500 !important;
-  font-size: 12px !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  color: rgb(var(--v-theme-secondary)) !important;
+  letter-spacing: 0.06em !important;
+  color: var(--text-muted) !important;
 }
 
 .v-data-table tbody tr {
-  transition: background-color 0.1s ease;
+  transition: background-color 0.12s ease;
 }
 
 .v-data-table tbody tr:hover {
-  background-color: rgb(var(--v-theme-surface-bright)) !important;
+  background-color: rgba(var(--v-theme-on-surface), 0.03) !important;
 }
 
 // --- Dialogs ---
 .v-dialog .v-card {
-  border: none !important;
+  border: 1px solid rgb(var(--v-border)) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 64px var(--overlay-shadow-strong) !important;
 }
 
 // --- Chips ---
@@ -82,16 +118,18 @@
 // --- Navigation Drawer ---
 .v-navigation-drawer {
   border-right: 1px solid rgb(var(--v-border)) !important;
+  background-color: rgb(var(--v-theme-surface)) !important;
 }
 
 // --- List Items ---
 .v-list-item--active {
-  background-color: rgba(var(--v-primary), 0.08) !important;
+  background-color: rgba(var(--v-theme-primary), 0.09) !important;
 }
 
 // --- Expansion Panels ---
 .v-expansion-panel {
   border: 1px solid rgb(var(--v-border)) !important;
+  border-radius: 12px !important;
 }
 
 // --- Dividers ---
@@ -126,6 +164,12 @@
   font-weight: 500 !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
+}
+
+// --- Menus / Overlays ---
+.v-menu > .v-overlay__content > .v-list {
+  border: 1px solid rgb(var(--v-border));
+  box-shadow: 0 16px 40px var(--overlay-shadow) !important;
 }
 
 // --- Dialogs: captura de Extras (lineas de ticket) ---

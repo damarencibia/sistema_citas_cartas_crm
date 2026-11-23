@@ -241,22 +241,22 @@ function onSubmit() {
    Tokens — todo el color vive aquí (sin hex inline fuera de este bloque)
    ============================================================ */
 .scene {
-  --ink: #1c1712;
-  --ink-soft: #4a3f33;
-  --muted: #8b7d6c;
-  --dark-card: #17130f;
+  --ink: #1d1d1d;
+  --ink-soft: #4a4a4a;
+  --muted: #808080;
+  --dark-card: #161616;
   --dark-soft: rgba(255, 255, 255, 0.72);
-  --glass-fill: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-fallback: rgba(255, 255, 255, 0.72);
+  --glass-fill: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-fallback: rgba(255, 255, 255, 0.96);
   --paper: #ffffff;
-  --cream: #f6e8d6;
-  --gold: #d9b36a;
-  --olive: #8c8a5e;
-  --glow-tint: rgba(255, 244, 228, 0.5);
-  --input-border: rgba(28, 23, 18, 0.12);
-  --chip-fill: rgba(28, 23, 18, 0.06);
-  --danger: #c2410c;
+  --cream: #2a2a2a;
+  --gold: #fc4c13;
+  --olive: #101010;
+  --glow-tint: rgba(252, 76, 19, 0.32);
+  --input-border: rgba(29, 29, 29, 0.12);
+  --chip-fill: rgba(29, 29, 29, 0.06);
+  --danger: #e5484d;
   --radius: 24px;
   --radius-pill: 999px;
   --shadow-float: 0 28px 60px -28px rgba(74, 48, 20, 0.35);
@@ -267,7 +267,7 @@ function onSubmit() {
   --field-h: var(--tap);
   --btn-h: var(--tap);
 
-  background: radial-gradient(120% 90% at 30% 12%, var(--cream) 0%, var(--gold) 55%, var(--olive) 100%);
+  background: radial-gradient(120% 90% at 30% 12%, #2b2b2b 0%, #1d1d1d 55%, #101010 100%);
   color: var(--ink);
   font-family: inherit;
 }
@@ -293,6 +293,7 @@ function onSubmit() {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: brightness(0.55) saturate(0.85);
 }
 
 .scene-glow {
@@ -326,7 +327,7 @@ function onSubmit() {
   z-index: 2;
   margin-top: 20px;
   font-size: 12px;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.55);
   text-align: center;
 }
 
@@ -446,7 +447,8 @@ function onSubmit() {
   transition: border-color var(--motion);
 
   &:focus-within {
-    border-color: var(--ink);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(252, 76, 19, 0.16);
   }
 
   &.is-error {
@@ -525,10 +527,10 @@ function onSubmit() {
   place-items: center;
   border: 0;
   border-radius: var(--radius-pill);
-  background: var(--ink);
+  background: var(--gold);
   color: var(--paper);
   cursor: pointer;
-  box-shadow: var(--shadow-float);
+  box-shadow: 0 12px 32px rgba(252, 76, 19, 0.35);
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
@@ -571,6 +573,8 @@ function onSubmit() {
 .promo-card {
   padding: 18px 20px;
   background: var(--dark-card);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
   color: var(--paper);
   display: flex;
   flex-direction: column;
@@ -612,7 +616,7 @@ function onSubmit() {
    Anillos de foco
    ============================================================ */
 .scene :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 

@@ -46,21 +46,18 @@
         <v-progress-circular indeterminate color="primary" />
       </div>
 
-      <div
+      <EmptyState
         v-else-if="eventStore.events.length === 0"
-        class="text-center pa-8"
+        icon="mdi-calendar-star"
+        title="No hay eventos configurados"
+        description="Crea tu primer evento para empezar a recibir reservas"
       >
-        <v-icon size="64" color="medium-emphasis">mdi-calendar-star</v-icon>
-        <p class="text-body-1 text-medium-emphasis mt-4">No hay eventos configurados</p>
-        <v-btn
-          color="primary"
-          variant="flat"
-          class="mt-4"
-          @click="openCreate"
-        >
-          Crear Primer Evento
-        </v-btn>
-      </div>
+        <template #actions>
+          <v-btn color="primary" variant="flat" @click="openCreate">
+            Crear Primer Evento
+          </v-btn>
+        </template>
+      </EmptyState>
 
       <v-row v-else>
         <v-col
@@ -72,7 +69,7 @@
           lg="3"
         >
           <v-card
-            class="rounded-xl h-100"
+            class="h-100"
             :variant="ev.is_active ? 'outlined' : 'tonal'"
             @click="openDetail(ev)"
           >
@@ -166,6 +163,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useEventStore } from '../stores/event.store';

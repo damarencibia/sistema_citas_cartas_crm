@@ -1,8 +1,11 @@
-// Design tokens
+// Design tokens — Nexo "Premium Neutral"
 $font-family: 'Inter', sans-serif;
+
+// Radii
 $border-radius-sm: 6px;
-$border-radius-md: 8px;
-$border-radius-lg: 12px;
+$border-radius-md: 10px;
+$border-radius-lg: 14px;
+$border-radius-xl: 20px;
 
 // Spacing (8px grid)
 $space-1: 4px;
@@ -21,17 +24,25 @@ $font-weight-medium: 500;
 $font-weight-semibold: 600;
 $font-weight-bold: 700;
 
-$font-size-xs: 12px;
-$font-size-sm: 13px;
-$font-size-base: 13px;
+$font-size-xs: 11px;
+$font-size-sm: 12px;
+$font-size-base: 14px;
 $font-size-md: 14px;
 $font-size-lg: 16px;
 $font-size-xl: 20px;
+$font-size-2xl: 24px;
+$font-size-3xl: 30px;
 
 // Layout
 $sidebar-width-expanded: 240px;
 $sidebar-width-collapsed: 60px;
-$topbar-height: 48px;
+$topbar-height: 56px;
+
+// Elevation (soft, layered)
+$shadow-xs: 0 1px 2px rgba(29, 29, 29, 0.04);
+$shadow-sm: 0 1px 3px rgba(29, 29, 29, 0.06), 0 1px 2px rgba(29, 29, 29, 0.04);
+$shadow-md: 0 8px 24px rgba(29, 29, 29, 0.08);
+$shadow-lg: 0 20px 48px rgba(29, 29, 29, 0.14);
 
 // Transitions
 $transition-fast: 150ms ease;

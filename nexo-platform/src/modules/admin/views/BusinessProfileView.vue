@@ -217,8 +217,8 @@ const form = reactive({
   address: '',
   description: '',
   logo_url: '',
-  primary_color: '#1976D2',
-  secondary_color: '#424242',
+  primary_color: '#FC4C13',
+  secondary_color: '#808080',
 });
 
 const previousLogoUrl = ref('');
@@ -254,8 +254,8 @@ onMounted(() => {
     form.address = tenant.value.address || '';
     form.description = tenant.value.description || '';
     form.logo_url = tenant.value.logo_url || '';
-    form.primary_color = tenant.value.primary_color || '#1976D2';
-    form.secondary_color = tenant.value.secondary_color || '#424242';
+    form.primary_color = tenant.value.primary_color || '#FC4C13';
+    form.secondary_color = tenant.value.secondary_color || '#808080';
     previousLogoUrl.value = form.logo_url;
   }
 });

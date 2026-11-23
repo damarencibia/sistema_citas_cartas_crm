@@ -13,6 +13,19 @@ interface TenantStoreState {
   isLoading: boolean;
 }
 
+/**
+ * Defaults de la paleta anterior al brand refresh de nov-2026.
+ * Los tenants que nunca personalizaron su marca deben heredar el tema nuevo;
+ * los colores personalizados se respetan. Puede eliminarse cuando la migración
+ * 20261112120000_brand_palette_refresh.sql esté aplicada en todos los entornos.
+ */
+const LEGACY_BRAND_COLORS = new Set(['#1976D2', '#424242', '#3ECF8E', '#6B7280']);
+
+function customBrandColor(color: string | null | undefined): string | undefined {
+  if (!color) return undefined;
+  return LEGACY_BRAND_COLORS.has(color.toUpperCase()) ? undefined : color;
+}
+
 export const useTenantStore = defineStore('tenant', {
   state: (): TenantStoreState => ({
     tenant: null,
@@ -37,8 +50,8 @@ export const useTenantStore = defineStore('tenant', {
       if (appointments) return 'appointments';
       return 'none';
     },
-    primaryColor: (state) => state.tenant?.primary_color ?? '#3ecf8e',
-    secondaryColor: (state) => state.tenant?.secondary_color ?? '#6b7280',
+    primaryColor: (state) => state.tenant?.primary_color ?? '#FC4C13',
+    secondaryColor: (state) => state.tenant?.secondary_color ?? '#808080',
   },
 
   actions: {
@@ -48,8 +61,8 @@ export const useTenantStore = defineStore('tenant', {
       if (data) {
         this.tenant = data as unknown as Tenant;
         applyTenantTheme({
-          primary: data.primary_color ?? undefined,
-          secondary: data.secondary_color ?? undefined,
+          primary: customBrandColor(data.primary_color),
+          secondary: customBrandColor(data.secondary_color),
         });
       }
       this.isLoading = false;
@@ -61,8 +74,8 @@ export const useTenantStore = defineStore('tenant', {
       if (data) {
         this.tenant = data as unknown as Tenant;
         applyTenantTheme({
-          primary: data.primary_color ?? undefined,
-          secondary: data.secondary_color ?? undefined,
+          primary: customBrandColor(data.primary_color),
+          secondary: customBrandColor(data.secondary_color),
         });
       }
       this.isLoading = false;

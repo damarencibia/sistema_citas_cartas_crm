@@ -17,18 +17,22 @@
       <v-row v-if="customers.length > 0" class="mb-2">
         <v-col cols="12" sm="6" md="3">
           <v-card class="pa-4 d-flex align-center ga-3">
-            <v-icon color="primary" size="24">mdi-account-group</v-icon>
+            <div class="customer-kpi__icon customer-kpi__icon--primary">
+              <v-icon color="primary" size="20">mdi-account-group</v-icon>
+            </div>
             <div>
-              <div class="text-h6 font-weight-bold">{{ customers.length }}</div>
+              <div class="customer-kpi__value">{{ customers.length }}</div>
               <div class="text-caption text-medium-emphasis">Clientes totales</div>
             </div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
           <v-card class="pa-4 d-flex align-center ga-3">
-            <v-icon color="success" size="24">mdi-account-check-outline</v-icon>
+            <div class="customer-kpi__icon customer-kpi__icon--success">
+              <v-icon color="success" size="20">mdi-account-check-outline</v-icon>
+            </div>
             <div>
-              <div class="text-h6 font-weight-bold">{{ activeCount }}</div>
+              <div class="customer-kpi__value">{{ activeCount }}</div>
               <div class="text-caption text-medium-emphasis">Con visitas recientes</div>
             </div>
           </v-card>
@@ -272,3 +276,32 @@ async function onDelete(customer: Customer) {
   }
 }
 </script>
+
+<style scoped>
+.customer-kpi__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.customer-kpi__icon--primary {
+  background-color: rgba(var(--v-theme-primary), 0.1);
+}
+
+.customer-kpi__icon--success {
+  background-color: rgba(var(--v-theme-success), 0.1);
+}
+
+.customer-kpi__value {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+</style>

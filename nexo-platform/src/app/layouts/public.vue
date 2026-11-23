@@ -11,7 +11,7 @@
         <div class="d-flex align-center w-100">
           <router-link
             :to="`/${tenantStore.tenant.slug}`"
-            class="d-flex align-center ga-2 text-decoration-none text-on-surface"
+            class="d-flex align-center ga-2 text-decoration-none text-high-emphasis"
           >
             <v-avatar
               v-if="tenantStore.tenant.logo_url"
@@ -40,8 +40,10 @@
           </template>
           <v-btn
             v-if="tenantStore.activeModules.appointments"
-            variant="text"
+            color="primary"
+            variant="flat"
             size="small"
+            class="ml-1"
             :to="`/${tenantStore.tenant.slug}/booking`"
           >
             Reservar

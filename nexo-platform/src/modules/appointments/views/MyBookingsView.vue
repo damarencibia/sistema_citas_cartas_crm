@@ -213,6 +213,8 @@ function formatTime(time: string): string {
 <style scoped>
 .public-layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background:
+    radial-gradient(80% 60% at 12% 0%, rgba(var(--v-theme-primary), 0.1), transparent 60%),
+    rgb(var(--v-theme-background));
 }
 </style>
