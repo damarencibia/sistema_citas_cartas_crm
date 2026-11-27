@@ -1,10 +1,12 @@
 <template>
   <div class="app-sidebar-root">
     <v-navigation-drawer
-      v-if="!isDesktop"
+      v-if="!isDesktop || overlay"
+      id="app-nav"
       v-model="uiStore.sidebar"
       temporary
       :scrim="true"
+      :width="overlay && isDesktop ? 340 : undefined"
       class="app-sidebar app-sidebar--mobile"
     >
       <template #prepend>
@@ -90,6 +92,52 @@
           />
         </v-list>
       </template>
+
+      <template #append>
+        <div class="sidebar-footer">
+          <v-divider />
+          <div v-if="workspaceStore.canSwitch" class="sidebar-footer__modes">
+            <v-btn-toggle
+              :model-value="workspaceStore.mode"
+              mandatory
+              density="compact"
+              rounded="lg"
+              color="primary"
+              class="w-100"
+              @update:model-value="onModeChange($event as WorkspaceMode)"
+            >
+              <v-btn value="work" size="small" class="text-none flex-grow-1">
+                <v-icon start size="14">mdi-account-hard-hat</v-icon>
+                Trabajo
+              </v-btn>
+              <v-btn value="admin" size="small" class="text-none flex-grow-1">
+                <v-icon start size="14">mdi-shield-crown-outline</v-icon>
+                Admin
+              </v-btn>
+            </v-btn-toggle>
+          </div>
+          <v-list density="compact" nav class="pa-2">
+            <v-list-item
+              :prepend-icon="uiStore.theme === 'light' ? 'mdi-weather-night' : 'mdi-weather-sunny'"
+              :title="uiStore.theme === 'light' ? 'Tema oscuro' : 'Tema claro'"
+              rounded="md"
+              @click="uiStore.toggleTheme()"
+            />
+            <v-list-item
+              prepend-icon="mdi-account-circle-outline"
+              title="Mi Cuenta"
+              to="/settings/account"
+              rounded="md"
+            />
+            <v-list-item
+              prepend-icon="mdi-logout"
+              title="Cerrar sesión"
+              rounded="md"
+              @click="handleLogout"
+            />
+          </v-list>
+        </div>
+      </template>
     </v-navigation-drawer>
 
     <div v-else class="desktop-nav">
@@ -164,12 +212,20 @@ import { useDisplay } from 'vuetify';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useUiStore } from '@/shared/stores/ui.store';
+import { useWorkspaceStore } from '@/shared/stores/workspace.store';
+import type { WorkspaceMode } from '@/shared/stores/workspace.store';
 import { useSidebarModules } from '@/shared/composables/useSidebarModules';
 import type { SidebarModule } from '@/shared/composables/useSidebarModules';
+
+const props = defineProps<{
+  /** Modo inmersivo: la navegación se muestra como drawer superpuesto en cualquier tamaño */
+  overlay?: boolean;
+}>();
 
 const authStore = useAuthStore();
 const tenantStore = useTenantStore();
 const uiStore = useUiStore();
+const workspaceStore = useWorkspaceStore();
 const route = useRoute();
 const router = useRouter();
 const { smAndDown } = useDisplay();
@@ -204,6 +260,30 @@ function onMobileModuleClick(mod: SidebarModule) {
     go(mod.to);
   }
 }
+
+function onModeChange(mode: WorkspaceMode) {
+  if (mode === workspaceStore.mode) return;
+  workspaceStore.setMode(mode);
+  uiStore.sidebar = false;
+  const required = route.meta.workspace as string | undefined;
+  if (required && required !== mode) {
+    router.push(
+      mode === 'work'
+        ? { path: '/appointments/agenda', query: { tab: 'reservas' } }
+        : { path: '/' },
+    );
+  }
+}
+
+async function handleLogout() {
+  await authStore.logout();
+  uiStore.sidebar = false;
+  router.push('/auth/login');
+}
+
+watch(() => route.fullPath, () => {
+  if (props.overlay) uiStore.sidebar = false;
+});
 
 watch(() => uiStore.sidebar, (open) => {
   if (!open) return;
@@ -399,5 +479,19 @@ watch(isDesktop, (val) => {
 
 .secondary-toggle .v-icon {
   color: var(--text-muted);
+}
+
+/* ═══ Footer del drawer (modo overlay / móvil) ═══ */
+.sidebar-footer {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: rgb(var(--v-theme-surface));
+}
+
+.sidebar-footer__modes {
+  padding: 10px 10px 0;
+}
+
+.sidebar-footer__modes :deep(.v-btn) {
+  min-height: 44px;
 }
 </style>

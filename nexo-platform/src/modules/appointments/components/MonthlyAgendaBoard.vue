@@ -1,289 +1,162 @@
 <template>
-  <div class="mab">
-    <!-- ═══ Calendario del mes ═══ -->
-    <section class="mab__cal">
-      <header class="mab__header">
-        <button
-          type="button"
-          class="mab__year"
-          :aria-label="`Ir al año ${prevYear}`"
-          @click="emit('prev-year')"
-        >
-          {{ prevYear }}
-        </button>
-        <h2 class="mab__title">{{ titleLabel }}</h2>
-        <button
-          type="button"
-          class="mab__year"
-          :aria-label="`Ir al año ${nextYear}`"
-          @click="emit('next-year')"
-        >
-          {{ nextYear }}
-        </button>
-      </header>
+  <section class="mab">
+    <header class="mab__header">
+      <button
+        type="button"
+        class="mab__year"
+        :aria-label="`Ir al año ${prevYear}`"
+        @click="emit('prev-year')"
+      >
+        {{ prevYear }}
+      </button>
+      <h2 class="mab__title">{{ titleLabel }}</h2>
+      <button
+        type="button"
+        class="mab__year"
+        :aria-label="`Ir al año ${nextYear}`"
+        @click="emit('next-year')"
+      >
+        {{ nextYear }}
+      </button>
+    </header>
 
-      <div class="mab__toolbar">
+    <div class="mab__toolbar">
+      <v-btn
+        v-if="!isCurrentMonth"
+        variant="text"
+        size="small"
+        class="mab__today text-none"
+        @click="emit('today')"
+      >
+        Hoy
+      </v-btn>
+      <v-spacer />
+      <div class="mab__nav-inline">
         <v-btn
-          v-if="!isCurrentMonth"
-          variant="text"
+          icon
           size="small"
-          class="mab__today text-none"
-          @click="emit('today')"
-        >
-          Hoy
-        </v-btn>
-        <v-spacer />
-        <div class="mab__nav-inline">
-          <v-btn
-            icon
-            size="small"
-            variant="text"
-            aria-label="Mes anterior"
-            @click="emit('prev-month')"
-          >
-            <v-icon size="18">mdi-chevron-left</v-icon>
-          </v-btn>
-          <v-btn
-            icon
-            size="small"
-            variant="text"
-            aria-label="Mes siguiente"
-            @click="emit('next-month')"
-          >
-            <v-icon size="18">mdi-chevron-right</v-icon>
-          </v-btn>
-        </div>
-        <v-menu
-          v-model="pickerMenu"
-          :close-on-content-click="false"
-          location="bottom end"
-          offset="6"
-        >
-          <template #activator="{ props: menuProps }">
-            <v-btn
-              v-bind="menuProps"
-              variant="outlined"
-              size="small"
-              rounded="md"
-              class="mab__pick-btn text-none"
-            >
-              <v-icon start size="16" color="primary">mdi-calendar-blank</v-icon>
-              Elegir fecha
-            </v-btn>
-          </template>
-          <div class="mab__picker">
-            <v-date-picker
-              :model-value="pickerValue"
-              color="primary"
-              first-day-of-week="1"
-              show-adjacent-months
-              hide-weekdays
-              @update:model-value="onPickerPick"
-            />
-          </div>
-        </v-menu>
-      </div>
-
-      <div class="mab__weekdays" aria-hidden="true">
-        <span v-for="label in WEEKDAYS" :key="label">{{ label }}</span>
-      </div>
-
-      <div v-if="loading" class="mab__grid mab__grid--skeleton" aria-busy="true">
-        <div v-for="i in 42" :key="`sk-${i}`" class="mab__skeleton" />
-      </div>
-
-      <div v-else class="mab__gridwrap">
-        <button
-          type="button"
-          class="mab__arrow mab__arrow--left"
+          variant="text"
           aria-label="Mes anterior"
           @click="emit('prev-month')"
         >
-          <v-icon size="20">mdi-chevron-left</v-icon>
-        </button>
-        <button
-          type="button"
-          class="mab__arrow mab__arrow--right"
+          <v-icon size="18">mdi-chevron-left</v-icon>
+        </v-btn>
+        <v-btn
+          icon
+          size="small"
+          variant="text"
           aria-label="Mes siguiente"
           @click="emit('next-month')"
         >
-          <v-icon size="20">mdi-chevron-right</v-icon>
-        </button>
-
-        <div class="mab__grid" role="grid" :aria-label="`Calendario de ${titleLabel}`">
-          <div
-            v-for="(week, w) in weeks"
-            :key="`w-${w}`"
-            class="mab__week"
-            role="row"
-          >
-            <div
-              v-for="day in week"
-              :key="day.date"
-              role="gridcell"
-              class="mab__cell"
-              :aria-selected="day.inMonth ? day.isSelected : undefined"
-            >
-              <button
-                type="button"
-                class="mab__day"
-                :class="{
-                  'mab__day--selected': day.isSelected,
-                  'mab__day--today': day.isToday && !day.isSelected,
-                  'mab__day--outside': !day.inMonth,
-                  'mab__day--marked': day.inMonth && day.total > 0,
-                }"
-                :disabled="!day.inMonth"
-                :aria-label="dayAria(day)"
-                @click="onPickDay(day)"
-              >
-                <span class="mab__daynum">{{ day.dayNumber }}</span>
-                <span v-if="day.inMonth && day.total > 0" class="mab__daymarks" aria-hidden="true">
-                  <span class="mab__daycount">{{ day.total }}</span>
-                  <v-icon v-if="day.isClosed" size="10" class="mab__mark mab__mark--closed">
-                    mdi-check-decagram
-                  </v-icon>
-                  <span v-else-if="day.pendingClosure" class="mab__mark mab__mark--pending" />
-                  <span v-if="day.pendingApproval > 0" class="mab__mark mab__mark--approval" />
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
+          <v-icon size="18">mdi-chevron-right</v-icon>
+        </v-btn>
       </div>
-    </section>
-
-    <!-- ═══ Panel del día: administración de reservas ═══ -->
-    <aside class="mab__panel" aria-label="Reservas del día seleccionado">
-      <template v-if="selectedDay">
-        <div class="mab__panel-head">
-          <span class="mab__panel-eyebrow">Día seleccionado</span>
-          <div class="mab__panel-title">{{ selectedDayLong }}</div>
-          <div class="mab__panel-meta">
-            {{ selectedDay.total }} {{ selectedDay.total === 1 ? 'reserva' : 'reservas' }}
-            · {{ selectedDay.attended }} {{ selectedDay.attended === 1 ? 'atendida' : 'atendidas' }}
-          </div>
-          <div class="mab__panel-seals">
-            <span v-if="selectedDay.isClosed" class="mab__seal mab__seal--success">
-              Cierre registrado
-            </span>
-            <span v-else-if="selectedDay.pendingClosure" class="mab__seal mab__seal--warning">
-              Pendiente de cierre
-            </span>
-            <span v-else-if="selectedDay.isFuture" class="mab__seal">Día futuro</span>
-          </div>
-        </div>
-
-        <div class="mab__panel-list">
-          <button
-            v-for="booking in selectedBookings"
-            :key="booking.id"
-            type="button"
-            class="mab__booking"
-            :class="{ 'mab__booking--cancelled': booking.status === 'cancelled' }"
-            @click="emit('open-booking', booking)"
-          >
-            <span class="mab__booking__time">{{ timeOf(booking) }}</span>
-            <span class="mab__booking__main">
-              <span class="mab__booking__name">{{ booking.customer_name || 'Cliente' }}</span>
-              <span class="mab__booking__meta">
-                {{ booking.service?.name || 'Servicio' }}
-                <template v-if="employeeOf(booking)"> · {{ employeeOf(booking) }}</template>
-              </span>
-            </span>
-            <span class="mab__chip" :class="`mab__chip--${toneOf(booking)}`">
-              {{ labelOf(booking) }}
-            </span>
-          </button>
-
-          <p v-if="selectedBookings.length === 0" class="mab__panel-empty">
-            Sin reservas para este día.
-          </p>
-
-          <div v-if="blockedSlots && blockedSlots.length > 0" class="mab__blocks">
-            <span class="mab__panel-eyebrow">Horarios bloqueados</span>
-            <div v-for="block in blockedSlots" :key="block.id" class="mab__block">
-              <v-icon size="14" class="mab__block__icon" aria-hidden="true">mdi-lock-outline</v-icon>
-              <span class="mab__block__time">
-                {{ block.start_time?.slice(0, 5) }}–{{ block.end_time?.slice(0, 5) }}
-              </span>
-              <span class="mab__block__reason">{{ block.reason || 'Bloqueo manual' }}</span>
-              <button
-                type="button"
-                class="mab__block__release"
-                :aria-label="`Liberar bloqueo de ${block.start_time?.slice(0, 5)}`"
-                @click="emit('open-block', block)"
-              >
-                Liberar
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mab__panel-actions">
-          <button
-            v-if="selectedDay.pendingClosure && canClose"
-            type="button"
-            class="mab__cta"
-            @click="emit('open-closure')"
-          >
-            <lord-icon
-              class="mab__cta-icon"
-              src="/animations/clipboard-text-reveal.json"
-              state="in-reveal"
-              trigger="loop(1500)"
-              speed="1.5"
-              loading="lazy"
-              current-color
-              @ready="onIconReady"
-            />
-            <span>Cerrar el día</span>
-          </button>
+      <v-menu
+        v-model="pickerMenu"
+        :close-on-content-click="false"
+        location="bottom end"
+        offset="6"
+      >
+        <template #activator="{ props: menuProps }">
           <v-btn
-            v-else-if="selectedDay.isClosed"
-            variant="tonal"
-            color="success"
+            v-bind="menuProps"
+            variant="outlined"
+            size="small"
             rounded="md"
-            block
-            class="mab__panel-btn"
-            @click="emit('open-closure')"
+            class="mab__pick-btn text-none"
           >
-            Ver el cierre
+            <v-icon start size="16">mdi-calendar-blank</v-icon>
+            Elegir fecha
           </v-btn>
-
-          <button
-            v-if="selectedDay.pendingApproval > 0"
-            type="button"
-            class="mab__approval"
-            @click="emit('go-approval')"
-          >
-            <v-icon size="14" aria-hidden="true">mdi-clock-alert-outline</v-icon>
-            <span class="mab__approval__text">
-              {{ selectedDay.pendingApproval }}
-              {{ selectedDay.pendingApproval === 1 ? 'pendiente' : 'pendientes' }} de aprobación
-            </span>
-            <v-icon size="14" aria-hidden="true">mdi-chevron-right</v-icon>
-          </button>
-
-          <p v-if="selectedDay.pendingClosure && !canClose" class="mab__panel-hint">
-            Seleccioná un empleado para operar el cierre.
-          </p>
+        </template>
+        <div class="mab__picker">
+          <v-date-picker
+            :model-value="pickerValue"
+            color="primary"
+            first-day-of-week="1"
+            show-adjacent-months
+            hide-weekdays
+            @update:model-value="onPickerPick"
+          />
         </div>
-      </template>
+      </v-menu>
+    </div>
 
-      <div v-else class="mab__panel-empty-state">
-        <v-icon size="36" aria-hidden="true">mdi-calendar-month-outline</v-icon>
-        <p class="mab__panel-empty">Elegí un día del calendario para ver sus reservas.</p>
+    <div class="mab__weekdays" aria-hidden="true">
+      <span v-for="label in WEEKDAYS" :key="label">{{ label }}</span>
+    </div>
+
+    <div v-if="loading" class="mab__grid mab__grid--skeleton" aria-busy="true">
+      <div v-for="i in 42" :key="`sk-${i}`" class="mab__skeleton" />
+    </div>
+
+    <div v-else class="mab__gridwrap">
+      <button
+        type="button"
+        class="mab__arrow mab__arrow--left"
+        aria-label="Mes anterior"
+        @click="emit('prev-month')"
+      >
+        <v-icon size="20">mdi-chevron-left</v-icon>
+      </button>
+      <button
+        type="button"
+        class="mab__arrow mab__arrow--right"
+        aria-label="Mes siguiente"
+        @click="emit('next-month')"
+      >
+        <v-icon size="20">mdi-chevron-right</v-icon>
+      </button>
+
+      <div class="mab__grid" role="grid" :aria-label="`Calendario de ${titleLabel}`">
+        <div
+          v-for="(week, w) in weeks"
+          :key="`w-${w}`"
+          class="mab__week"
+          role="row"
+        >
+          <div
+            v-for="day in week"
+            :key="day.date"
+            role="gridcell"
+            class="mab__cell"
+            :aria-selected="day.inMonth ? day.isSelected : undefined"
+          >
+            <button
+              type="button"
+              class="mab__day"
+              :class="{
+                'mab__day--selected': day.isSelected,
+                'mab__day--today': day.isToday && !day.isSelected,
+                'mab__day--outside': !day.inMonth,
+                'mab__day--marked': day.inMonth && day.total > 0,
+              }"
+              :disabled="!day.inMonth"
+              :aria-label="dayAria(day)"
+              @click="onPickDay(day)"
+            >
+              <span class="mab__daynum">{{ day.dayNumber }}</span>
+              <span v-if="day.inMonth && day.total > 0" class="mab__daymarks" aria-hidden="true">
+                <span class="mab__daycount">{{ day.total }}</span>
+                <v-icon v-if="day.isClosed" size="10" class="mab__mark mab__mark--closed">
+                  mdi-check-decagram
+                </v-icon>
+                <span v-else-if="day.pendingClosure" class="mab__mark mab__mark--pending" />
+                <span v-if="day.pendingApproval > 0" class="mab__mark mab__mark--approval" />
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
-    </aside>
-  </div>
+    </div>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { format as fmt } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Booking, BlockedSlot } from '../types/booking.types';
+import type { Booking } from '../types/booking.types';
 
 const WEEKDAYS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 const CLOSURE_CUTOFF_HOUR = 19;
@@ -298,12 +171,6 @@ const props = defineProps<{
   closedDates?: string[];
   selectedDate: string | null;
   loading: boolean;
-  /** Nombres por id de empleado (para la meta de cada reserva) */
-  employeeNames?: Record<string, string>;
-  /** Bloqueos de horario del día seleccionado (ya cargados por AgendaView) */
-  blockedSlots?: BlockedSlot[];
-  /** Hay empleado seleccionado: se puede operar el cierre */
-  canClose?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -313,10 +180,6 @@ const emit = defineEmits<{
   'prev-year': [];
   'next-year': [];
   today: [];
-  'open-booking': [booking: Booking];
-  'open-block': [block: BlockedSlot];
-  'open-closure': [];
-  'go-approval': [];
 }>();
 
 const pickerMenu = ref(false);
@@ -398,24 +261,6 @@ const weeks = computed(() => {
   return chunks;
 });
 
-const selectedDay = computed(
-  () => days.value.find((d) => d.date === props.selectedDate) ?? null,
-);
-
-const selectedBookings = computed(() => {
-  const date = props.selectedDate;
-  if (!date) return [];
-  return [...(bookingsByDate.value[date] ?? [])].sort((a, b) =>
-    (a.start_time ?? '').localeCompare(b.start_time ?? ''),
-  );
-});
-
-const selectedDayLong = computed(() => {
-  if (!props.selectedDate) return '';
-  const label = fmt(toIsoDateWithTime(props.selectedDate), "EEEE d 'de' MMMM", { locale: es });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-});
-
 function dayAria(day: (typeof days.value)[number]) {
   const base = fmt(toIsoDateWithTime(day.date), "EEEE d 'de' MMMM", { locale: es });
   const parts = [base];
@@ -431,41 +276,6 @@ function onPickDay(day: (typeof days.value)[number]) {
   emit('select-date', day.date);
 }
 
-// ─── Presentación de reservas ───────────────────────────────
-function timeOf(booking: Booking) {
-  return booking.start_time?.slice(0, 5) ?? '—';
-}
-
-function employeeOf(booking: Booking) {
-  return booking.employee_id ? props.employeeNames?.[booking.employee_id] : null;
-}
-
-const STATUS_TONE: Record<string, string> = {
-  confirmed: 'success',
-  in_progress: 'info',
-  completed: 'neutral',
-  no_show: 'error',
-  cancelled: 'error',
-  pending_approval: 'warning',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  confirmed: 'Confirmada',
-  in_progress: 'En curso',
-  completed: 'Atendida',
-  no_show: 'No asistió',
-  cancelled: 'Cancelada',
-  pending_approval: 'Por aprobar',
-};
-
-function toneOf(booking: Booking) {
-  return STATUS_TONE[booking.status ?? ''] ?? 'neutral';
-}
-
-function labelOf(booking: Booking) {
-  return STATUS_LABEL[booking.status ?? ''] ?? booking.status ?? '';
-}
-
 // ─── Date picker ────────────────────────────────────────────
 const pickerValue = computed(() =>
   props.selectedDate ? toIsoDateWithTime(props.selectedDate) : new Date(),
@@ -477,65 +287,35 @@ function onPickerPick(value: unknown) {
   const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   emit('select-date', iso);
 }
-
-watch(() => props.monthAnchor, () => {
-  pickerMenu.value = false;
-});
-
-// ─── Lordicon del CTA de cierre (mismo player que el calendario) ──
-let ensureLordiconOnce: Promise<void> | null = null;
-function ensureLordicon(): Promise<void> {
-  ensureLordiconOnce ??= import('@lordicon/element').then((m) => m.defineElement());
-  return ensureLordiconOnce;
-}
-
-void ensureLordicon();
-
-/** Con movimiento reducido el loop deja el icono en el frame 0: fijarlo al final */
-function onIconReady(event: Event) {
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const icon = event.currentTarget as (HTMLElement & { seek?: (target: string) => void }) | null;
-  try {
-    icon?.seek?.('end');
-  } catch {
-    /* noop */
-  }
-}
 </script>
 
 <style scoped>
 .mab {
   --hairline: rgb(var(--v-theme-on-surface), 0.12);
   display: flex;
-  align-items: stretch;
-  min-height: 460px;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 20px 44px 22px;
   border: 1px solid var(--hairline);
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 12px;
   background: rgb(var(--v-theme-surface));
 }
 
-/* ═══ Calendario ═══ */
-.mab__cal {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 22px 52px 24px;
-}
-
+/* ═══ Cabecera ═══ */
 .mab__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .mab__year {
-  min-height: 32px;
+  min-height: 44px;
   padding: 4px 8px;
   border: 0;
+  border-radius: 4px;
   background: transparent;
   color: rgb(var(--v-theme-primary));
   font-size: 12px;
@@ -543,7 +323,6 @@ function onIconReady(event: Event) {
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  border-radius: 4px;
 }
 
 .mab__year:not(:disabled):active {
@@ -565,10 +344,11 @@ function onIconReady(event: Event) {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .mab__today.v-btn {
+  min-height: 44px;
   color: rgb(var(--v-theme-on-surface), 0.65);
 }
 
@@ -576,15 +356,22 @@ function onIconReady(event: Event) {
   display: none;
 }
 
+.mab__nav-inline :deep(.v-btn) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .mab__pick-btn.v-btn {
-  min-height: 36px;
+  min-height: 44px;
+  color: rgb(var(--v-theme-on-surface));
+  border-color: rgb(var(--v-theme-on-surface), 0.2);
 }
 
 .mab__weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   text-align: center;
 }
 
@@ -599,16 +386,17 @@ function onIconReady(event: Event) {
 .mab__gridwrap {
   position: relative;
   flex: 1 1 auto;
+  min-height: 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
 }
 
 .mab__grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(48px, 1fr);
   gap: 6px 8px;
   width: 100%;
-  align-content: center;
 }
 
 .mab__week {
@@ -617,8 +405,9 @@ function onIconReady(event: Event) {
 
 .mab__cell {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
+  min-height: 0;
 }
 
 .mab__day {
@@ -627,12 +416,13 @@ function onIconReady(event: Event) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 2px;
   width: 100%;
-  min-height: 50px;
+  height: 100%;
+  min-height: 48px;
   padding: 4px 2px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: rgb(var(--v-theme-on-surface));
   cursor: pointer;
@@ -729,7 +519,7 @@ function onIconReady(event: Event) {
   background: rgb(var(--v-theme-info));
 }
 
-/* Flechas circulares */
+/* Flechas circulares (navegación principal del calendario: acento del tenant) */
 .mab__arrow {
   position: absolute;
   top: 50%;
@@ -749,11 +539,11 @@ function onIconReady(event: Event) {
 }
 
 .mab__arrow--left {
-  left: 0;
+  left: -18px;
 }
 
 .mab__arrow--right {
-  right: 0;
+  right: -18px;
 }
 
 .mab__arrow:not(:disabled):active {
@@ -763,12 +553,12 @@ function onIconReady(event: Event) {
 /* Skeleton */
 .mab__grid--skeleton {
   flex: 1 1 auto;
-  align-content: center;
+  align-content: stretch;
 }
 
 .mab__skeleton {
-  height: 44px;
-  border-radius: 6px;
+  min-height: 44px;
+  border-radius: 8px;
   background: rgb(var(--v-theme-on-surface), 0.06);
 }
 
@@ -778,380 +568,20 @@ function onIconReady(event: Event) {
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: rgb(var(--v-theme-surface));
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
-}
-
-/* ═══ Panel del día ═══ */
-.mab__panel {
-  --panel-hairline: rgb(var(--v-theme-surface), 0.14);
-  --panel-soft: rgb(var(--v-theme-surface), 0.62);
-  --panel-faint: rgb(var(--v-theme-surface), 0.4);
-  --panel-hover: rgb(var(--v-theme-surface), 0.07);
-  flex: 0 0 285px;
-  width: 285px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  padding: 24px 20px 18px;
-  border-left: 1px solid rgb(var(--v-theme-on-surface), 0.12);
-  background: rgb(var(--v-theme-on-surface));
-  color: rgb(var(--v-theme-surface));
-}
-
-.v-theme--dark .mab__panel {
-  --panel-hairline: rgb(var(--v-theme-on-surface), 0.14);
-  --panel-soft: rgb(var(--v-theme-on-surface), 0.62);
-  --panel-faint: rgb(var(--v-theme-on-surface), 0.42);
-  --panel-hover: rgb(var(--v-theme-on-surface), 0.07);
-  border-left-color: rgb(var(--v-theme-on-surface), 0.1);
-  background: rgb(var(--v-theme-surface-variant));
-  color: rgb(var(--v-theme-on-surface));
-}
-
-.mab__panel-head {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--panel-hairline);
-}
-
-.mab__panel-eyebrow {
-  font-size: 9px;
-  line-height: 1.4;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--panel-faint);
-}
-
-.mab__panel-title {
-  font-size: 15px;
-  line-height: 1.3;
-  font-weight: 700;
-  color: currentColor;
-}
-
-.mab__panel-meta {
-  font-size: 11px;
-  line-height: 1.4;
-  font-variant-numeric: tabular-nums;
-  color: var(--panel-soft);
-}
-
-.mab__panel-seals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 4px;
-}
-
-.mab__seal {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border: 1px solid var(--panel-hairline);
-  border-radius: 4px;
-  font-size: 9px;
-  line-height: 1.4;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--panel-soft);
-}
-
-.mab__seal--success {
-  border-color: rgb(var(--v-theme-success), 0.5);
-  background: rgb(var(--v-theme-success), 0.12);
-  color: rgb(var(--v-theme-success));
-}
-
-.mab__seal--warning {
-  border-color: rgb(var(--v-theme-warning), 0.5);
-  background: rgb(var(--v-theme-warning), 0.12);
-  color: rgb(var(--v-theme-warning));
-}
-
-.mab__panel-list {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-  padding: 4px 0;
-}
-
-.mab__panel-list::-webkit-scrollbar {
-  display: none;
-}
-
-/* Reserva: fila táctil */
-.mab__booking {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-  min-height: 44px;
-  padding: 9px 8px;
-  border: 0;
-  border-bottom: 1px solid var(--panel-hairline);
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.15s ease;
-}
-
-.mab__booking:last-child {
-  border-bottom: 0;
-}
-
-.mab__booking:active {
-  background: var(--panel-hover);
-}
-
-.mab__booking--cancelled {
-  opacity: 0.5;
-}
-
-.mab__booking__time {
-  flex-shrink: 0;
-  padding-top: 1px;
-  font-size: 11px;
-  line-height: 1.4;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: currentColor;
-}
-
-.mab__booking__main {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.mab__booking__name {
-  font-size: 12px;
-  line-height: 1.35;
-  font-weight: 600;
-  color: currentColor;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mab__booking__meta {
-  font-size: 10px;
-  line-height: 1.4;
-  color: var(--panel-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mab__chip {
-  flex-shrink: 0;
-  padding: 1px 6px;
-  border: 1px solid var(--panel-hairline);
-  border-radius: 3px;
-  font-size: 8.5px;
-  line-height: 1.5;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--panel-soft);
-}
-
-.mab__chip--success {
-  border-color: rgb(var(--v-theme-success), 0.5);
-  color: rgb(var(--v-theme-success));
-}
-
-.mab__chip--info {
-  border-color: rgb(var(--v-theme-info), 0.5);
-  color: rgb(var(--v-theme-info));
-}
-
-.mab__chip--warning {
-  border-color: rgb(var(--v-theme-warning), 0.5);
-  color: rgb(var(--v-theme-warning));
-}
-
-.mab__chip--error {
-  border-color: rgb(var(--v-theme-error), 0.5);
-  color: rgb(var(--v-theme-error));
-}
-
-.mab__panel-empty {
-  margin: 0;
-  padding: 18px 4px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--panel-soft);
-}
-
-/* Bloqueos del día: liberación directa */
-.mab__blocks {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 0 4px;
-  border-top: 1px solid var(--panel-hairline);
-  margin-top: 6px;
-}
-
-.mab__block {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  font-size: 10px;
-  line-height: 1.4;
-  color: var(--panel-soft);
-}
-
-.mab__block__icon {
-  flex-shrink: 0;
-  color: var(--panel-faint);
-}
-
-.mab__block__time {
-  flex-shrink: 0;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: currentColor;
-}
-
-.mab__block__reason {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mab__block__release {
-  flex-shrink: 0;
-  min-height: 32px;
-  padding: 4px 8px;
-  border: 1px solid var(--panel-hairline);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--panel-soft);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.mab__block__release:active {
-  background: var(--panel-hover);
-}
-
-.mab__panel-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--panel-hairline);
-}
-
-/* CTA de cierre: cápsula tonal success de 52px */
-.mab__cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 52px;
-  padding: 0 16px;
-  border: 1px solid rgb(var(--v-theme-success), 0.45);
-  border-radius: 999px;
-  background: rgb(var(--v-theme-success), 0.12);
-  color: rgb(var(--v-theme-success));
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.mab__cta:active {
-  background: rgb(var(--v-theme-success), 0.2);
-}
-
-.mab__cta-icon {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-}
-
-.mab__panel-btn.v-btn {
-  min-height: 44px;
-}
-
-.mab__approval {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 6px 8px;
-  border: 1px dashed rgb(var(--v-theme-warning), 0.5);
-  border-radius: 4px;
-  background: transparent;
-  color: rgb(var(--v-theme-warning));
-  font-size: 11px;
-  line-height: 1.4;
-  text-align: left;
-  cursor: pointer;
-}
-
-.mab__approval__text {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.mab__panel-hint {
-  margin: 0;
-  font-size: 10px;
-  line-height: 1.45;
-  color: var(--panel-faint);
-}
-
-.mab__panel-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex: 1 1 auto;
-  text-align: center;
-  color: var(--panel-soft);
-}
-
-.mab__panel-empty-state .mab__panel-empty {
-  max-width: 200px;
-  padding: 0;
+  box-shadow: 0 8px 24px rgb(var(--v-theme-on-surface), 0.16);
 }
 
 /* ═══ Responsive ═══ */
-@media (max-width: 900px) {
+@media (max-width: 1279px) {
   .mab {
-    flex-direction: column;
-    min-height: 0;
+    padding: 16px 32px 18px;
   }
+}
 
-  .mab__cal {
-    padding: 18px 16px 20px;
-  }
-
-  .mab__gridwrap {
-    padding: 0 2px;
+@media (max-width: 899px) {
+  .mab {
+    padding: 14px 14px 16px;
+    border-radius: 10px;
   }
 
   .mab__arrow {
@@ -1162,27 +592,18 @@ function onIconReady(event: Event) {
     display: inline-flex;
   }
 
-  .mab__panel {
-    flex: 0 0 auto;
-    width: 100%;
-    min-height: 220px;
-    border-left: 0;
-    border-top: 1px solid rgb(var(--v-theme-on-surface), 0.12);
-    border-radius: 0 0 8px 8px;
-  }
-
-  .mab__panel-list {
-    max-height: 280px;
+  .mab__grid {
+    grid-auto-rows: minmax(44px, 1fr);
   }
 }
 
-@media (max-width: 699px) {
-  .mab__cal {
-    padding: 14px 10px 16px;
+@media (max-width: 599px) {
+  .mab {
+    padding: 12px 8px 14px;
   }
 
   .mab__title {
-    font-size: 16px;
+    font-size: 15px;
     letter-spacing: 0.04em;
   }
 
@@ -1195,25 +616,34 @@ function onIconReady(event: Event) {
   }
 
   .mab__day {
-    min-height: 44px;
+    min-height: 40px;
     padding: 2px 0;
   }
 
   .mab__daynum {
     min-width: 26px;
     height: 26px;
+    font-size: 12px;
   }
 
   .mab__daycount {
     font-size: 8px;
   }
+
+  .mab__pick-btn.v-btn {
+    font-size: 0;
+    min-width: 44px;
+    padding: 0 8px;
+  }
+
+  .mab__pick-btn.v-btn :deep(.v-btn__prepend) {
+    margin-inline-end: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mab__day,
-  .mab__booking,
-  .mab__arrow,
-  .mab__cta {
+  .mab__arrow {
     transition: none;
   }
 

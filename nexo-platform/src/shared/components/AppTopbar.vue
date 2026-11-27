@@ -42,57 +42,13 @@
       size="x-small"
       variant="text"
       class="mr-1"
+      aria-label="Cambiar tema"
       @click="uiStore.toggleTheme()"
     >
       <v-icon size="18">{{ uiStore.theme === 'light' ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
     </v-btn>
 
-    <v-menu offset-y="4" :close-on-content-click="true">
-      <template #activator="{ props }">
-        <v-btn
-          v-bind="props"
-          icon
-          size="x-small"
-          variant="text"
-        >
-          <v-avatar size="28" color="primary" variant="flat">
-            <span class="text-white font-weight-medium" style="font-size: 11px;">{{ initials }}</span>
-          </v-avatar>
-        </v-btn>
-      </template>
-      <v-list
-        density="compact"
-        nav
-        class="py-1"
-        style="min-width: 200px;"
-      >
-        <v-list-item class="px-3 py-2">
-          <div class="text-body-2 font-weight-medium">{{ authStore.userName }}</div>
-          <div class="text-caption" style="color: var(--text-muted);">{{ authStore.user?.email }}</div>
-        </v-list-item>
-        <v-divider class="my-1" />
-        <v-list-item
-          prepend-icon="mdi-account-circle-outline"
-          title="Mi Cuenta"
-          subtitle="Cambiar contraseña"
-          to="/settings/account"
-          class="px-3"
-        />
-        <v-list-item
-          v-if="authStore.isAdmin"
-          prepend-icon="mdi-cog-outline"
-          title="Configuración"
-          to="/settings/business"
-          class="px-3"
-        />
-        <v-list-item
-          prepend-icon="mdi-logout"
-          title="Cerrar Sesión"
-          class="px-3"
-          @click="handleLogout"
-        />
-      </v-list>
-    </v-menu>
+    <AccountMenu />
 
     <v-btn
       icon
@@ -110,17 +66,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '@/shared/stores/auth.store';
 import { useTenantStore } from '@/shared/stores/tenant.store';
 import { useUiStore } from '@/shared/stores/ui.store';
 import { useWorkspaceStore } from '@/shared/stores/workspace.store';
 import type { WorkspaceMode } from '@/shared/stores/workspace.store';
 import NotificationCenter from '@/modules/notifications/components/NotificationCenter.vue';
 import AppBreadcrumbs from '@/shared/components/AppBreadcrumbs.vue';
+import AccountMenu from '@/shared/components/AccountMenu.vue';
 
 const router = useRouter();
 const route = useRoute();
-const authStore = useAuthStore();
 const tenantStore = useTenantStore();
 const uiStore = useUiStore();
 const workspaceStore = useWorkspaceStore();
@@ -143,17 +98,6 @@ const tenantInitial = computed(() => {
   const name = tenantStore.tenant?.name?.trim();
   return name ? name.charAt(0).toUpperCase() : 'N';
 });
-
-const initials = computed(() => {
-  const user = authStore.user;
-  if (!user) return 'N';
-  return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
-});
-
-async function handleLogout() {
-  await authStore.logout();
-  router.push('/auth/login');
-}
 </script>
 
 <style scoped>

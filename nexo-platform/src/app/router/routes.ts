@@ -20,7 +20,7 @@ export const routes: RouteRecordRaw[] = [
             path: 'agenda',
             name: 'agenda',
             component: () => import('@/modules/appointments/views/AgendaView.vue'),
-            meta: { title: 'Agenda' },
+            meta: { title: 'Agenda', immersive: true },
           },
           {
             path: 'categories',
@@ -58,7 +58,7 @@ export const routes: RouteRecordRaw[] = [
             path: 'schedules',
             name: 'schedules',
             component: () => import('@/modules/appointments/views/SchedulesView.vue'),
-            meta: { title: 'Horarios' },
+            meta: { title: 'Horarios', immersive: true },
           },
           {
             path: 'bookings',

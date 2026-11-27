@@ -7,6 +7,7 @@
     :label="label"
     :rules="rules"
     :loading="loading"
+    color="on-surface"
     clearable
     @update:model-value="emit('update:modelValue', $event)"
   >

@@ -396,3 +396,169 @@
 .closure-select-menu .v-list-item-title {
   font-size: 14px;
 }
+
+/* ============================================================
+   Workspace editorial primitives
+   Monochrome tools/surfaces shared by Agenda, Mi Horario and Espera.
+   ============================================================ */
+.ws-eyebrow {
+  display: inline-block;
+  font-size: 9px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(var(--v-theme-on-surface), 0.45);
+}
+
+.ws-section-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.ws-section-sub {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgb(var(--v-theme-on-surface), 0.55);
+}
+
+.ws-hairline {
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.12);
+}
+
+.ws-surface {
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.12);
+  border-radius: 12px;
+  background: rgb(var(--v-theme-surface));
+}
+
+.ws-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--v-theme-on-surface), 0.62);
+}
+
+.ws-dot {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgb(var(--v-theme-on-surface), 0.35);
+}
+
+.ws-dot--success { background: rgb(var(--v-theme-success)); }
+.ws-dot--warning { background: rgb(var(--v-theme-warning)); }
+.ws-dot--info { background: rgb(var(--v-theme-info)); }
+.ws-dot--error { background: rgb(var(--v-theme-error)); }
+
+.ws-cta.v-btn {
+  height: 44px !important;
+  padding-inline: 20px !important;
+  border-radius: 999px !important;
+  background: rgb(var(--v-theme-on-surface)) !important;
+  color: rgb(var(--v-theme-surface)) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  box-shadow: none !important;
+}
+
+.ws-cta.v-btn:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+.ws-secondary.v-btn {
+  height: 44px !important;
+  padding-inline: 16px !important;
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.18) !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  box-shadow: none !important;
+}
+
+.ws-secondary.v-btn:not(:disabled):active {
+  background: rgb(var(--v-theme-on-surface), 0.06) !important;
+}
+
+.ws-field .v-field__outline {
+  color: rgb(var(--v-theme-on-surface), 0.16) !important;
+}
+
+.ws-field .v-field--focused .v-field__outline {
+  color: rgb(var(--v-theme-on-surface), 0.65) !important;
+}
+
+.ws-field .v-field.v-field--focused {
+  border-color: rgb(var(--v-theme-on-surface), 0.55) !important;
+  box-shadow: 0 0 0 2px rgb(var(--v-theme-on-surface), 0.08) !important;
+}
+
+.ws-field .v-label {
+  color: rgb(var(--v-theme-on-surface), 0.55) !important;
+}
+
+.ws-field .v-field__input,
+.ws-field .v-select__selection {
+  color: rgb(var(--v-theme-on-surface), 0.9) !important;
+}
+
+.ws-switch .v-switch__track {
+  opacity: 0.35;
+}
+
+.ws-switch.v-switch--selected .v-switch__track {
+  opacity: 0.75;
+}
+
+.ws-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 18px;
+}
+
+.ws-dialog-footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.12);
+}
+
+.ws-muted {
+  color: rgb(var(--v-theme-on-surface), 0.55);
+}
+
+@media (max-width: 599px) {
+  .ws-dialog-footer {
+    flex-direction: column-reverse;
+  }
+
+  .ws-dialog-footer > .v-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-cta.v-btn:not(:disabled):active {
+    transform: none;
+  }
+}

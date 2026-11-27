@@ -110,6 +110,13 @@ function onUpdate(value: unknown) {
   flex: 1 1 auto;
 }
 
+.detail-dialog__head > .v-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .detail-dialog__title {
   margin: 0;
   font-size: 12px;

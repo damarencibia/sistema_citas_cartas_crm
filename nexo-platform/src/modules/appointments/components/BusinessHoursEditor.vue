@@ -1,196 +1,173 @@
 <template>
-  <v-card variant="flat" border>
-    <v-card-text>
-      <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
-        <div>
-          <h3 class="text-subtitle-1 font-weight-medium">
-            <v-icon size="18" class="mr-1" color="primary">mdi-domain</v-icon>
-            Horario del Negocio
-          </h3>
-          <div class="text-caption text-medium-emphasis">
-            Marco global: días laborables y apertura/cierre. Los trabajadores configuran
-            sus turnos dentro de este marco.
-          </div>
+  <div class="business-hours">
+    <section class="bh">
+      <header class="bh__head">
+        <div class="bh__headings">
+          <span class="ws-eyebrow">Marco del negocio</span>
+          <h2 class="ws-section-title">Horario de atención</h2>
+          <p class="ws-section-sub">
+            Días laborables y apertura/cierre. El equipo configura sus turnos dentro de este marco.
+          </p>
         </div>
-        <v-chip v-if="dirty" color="warning" size="small">
-          <v-icon start size="16">mdi-alert-outline</v-icon>
+        <span v-if="dirty" class="ws-status">
+          <span class="ws-dot ws-dot--warning" aria-hidden="true" />
           Sin guardar
-        </v-chip>
-      </div>
+        </span>
+      </header>
 
-      <div v-if="loading" class="text-center pa-8">
-        <v-progress-circular indeterminate color="primary" />
+      <div v-if="loading" class="bh__loading">
+        <v-progress-circular indeterminate size="24" color="on-surface" />
       </div>
 
       <template v-else>
-        <v-row dense>
-          <v-col
+        <div class="bh__days">
+          <div
             v-for="day in days"
             :key="day.value"
-            cols="12"
-            sm="6"
-            md="4"
+            class="bh__day"
+            :class="{ 'bh__day--active': day.active }"
           >
-            <v-card
-              variant="outlined"
-              rounded="lg"
-              :class="day.active ? 'business-day--active' : ''"
-            >
-              <v-card-text class="pa-3">
-                <v-switch
-                  :model-value="day.active"
-                  color="primary"
-                  density="compact"
-                  hide-details
-                  class="mt-0"
-                  @update:model-value="(v: boolean | null) => onDayToggle(day, !!v)"
-                >
-                  <template #label>
-                    <span class="text-body-2 font-weight-medium">{{ day.label }}</span>
-                  </template>
-                </v-switch>
+            <div class="bh__day-head">
+              <div class="bh__name">
+                <span class="bh__label">{{ day.label }}</span>
+                <span class="bh__summary">
+                  {{ day.active ? `${format12(day.open)} a ${format12(day.close)}` : 'Cerrado' }}
+                </span>
+              </div>
+              <v-switch
+                :model-value="day.active"
+                :aria-label="`Activar ${day.label}`"
+                color="on-surface"
+                density="compact"
+                hide-details
+                class="ws-switch bh__switch"
+                @update:model-value="(v: boolean | null) => onDayToggle(day, !!v)"
+              />
+            </div>
 
-                <div v-if="day.active" class="d-flex align-center ga-2 mt-2">
-                  <v-text-field
-                    v-model="day.open"
-                    type="time"
-                    label="Apertura"
-                    density="compact"
-                    hide-details
-                    style="max-width: 130px;"
-                    @update:model-value="dirty = true"
-                  />
-                  <span class="text-caption text-medium-emphasis">—</span>
-                  <v-text-field
-                    v-model="day.close"
-                    type="time"
-                    label="Cierre"
-                    density="compact"
-                    hide-details
-                    style="max-width: 130px;"
-                    @update:model-value="dirty = true"
-                  />
-                </div>
-                <div v-else class="text-caption text-medium-emphasis mt-1">
-                  El negocio no trabaja este día
-                </div>
-                <div v-if="day.error" class="text-caption text-error mt-1">
-                  {{ day.error }}
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+            <div v-if="day.active" class="bh__times">
+              <span class="bh__time-label">Desde</span>
+              <TimeRangeField
+                v-model="day.open"
+                :aria-label="`Apertura del ${day.label}`"
+                :invalid="!!day.error"
+                @update:model-value="dirty = true"
+              />
+              <span class="bh__time-label">A</span>
+              <TimeRangeField
+                v-model="day.close"
+                :aria-label="`Cierre del ${day.label}`"
+                :invalid="!!day.error"
+                @update:model-value="dirty = true"
+              />
+            </div>
 
-        <div class="d-flex mt-4 ga-2 justify-end">
-          <v-btn
-            v-if="dirty"
-            variant="text"
-            color="error"
-            @click="discard"
-          >
-            Descartar
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            :loading="saving"
-            @click="onSave"
-          >
-            <v-icon start>mdi-content-save</v-icon>
-            {{ dirty ? 'Guardar cambios' : 'Guardar' }}
-          </v-btn>
-        </div>
-      </template>
-    </v-card-text>
-  </v-card>
-
-  <!-- Feriados del negocio -->
-  <v-card variant="flat" border class="mt-6">
-    <v-card-text>
-      <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
-        <div>
-          <h3 class="text-subtitle-1 font-weight-medium">
-            <v-icon size="18" class="mr-1" color="error">mdi-calendar-remove-outline</v-icon>
-            Feriados del Negocio
-          </h3>
-          <div class="text-caption text-medium-emphasis">
-            Días en los que el negocio está cerrado para todos los trabajadores
+            <p v-if="day.error" class="bh__error">
+              <v-icon size="12" aria-hidden="true">mdi-alert-circle-outline</v-icon>
+              {{ day.error }}
+            </p>
           </div>
         </div>
-        <v-btn
-          size="small"
-          variant="tonal"
-          color="error"
-          prepend-icon="mdi-plus"
-          @click="showHolidayDialog = true"
-        >
+
+        <footer class="bh__footer">
+          <span class="bh__footer-label">
+            {{ dirty ? 'Tenés cambios sin guardar' : 'Marco sincronizado' }}
+          </span>
+          <div class="bh__footer-actions">
+            <v-btn
+              v-if="dirty"
+              variant="text"
+              class="ws-secondary"
+              @click="discard"
+            >
+              Descartar
+            </v-btn>
+            <v-btn class="ws-cta" :loading="saving" @click="onSave">
+              <v-icon start size="16">mdi-content-save</v-icon>
+              {{ dirty ? 'Guardar cambios' : 'Guardar' }}
+            </v-btn>
+          </div>
+        </footer>
+      </template>
+    </section>
+
+    <section class="bh">
+      <header class="bh__head">
+        <div class="bh__headings">
+          <span class="ws-eyebrow">Cierres globales</span>
+          <h2 class="ws-section-title">Feriados del negocio</h2>
+          <p class="ws-section-sub">
+            Días en los que el negocio está cerrado para todo el equipo.
+          </p>
+        </div>
+        <v-btn class="ws-secondary bh__add-holiday" variant="text" @click="showHolidayDialog = true">
+          <v-icon start size="16">mdi-plus</v-icon>
           Agregar feriado
         </v-btn>
+      </header>
+
+      <div v-if="holidays.length" class="bh__holidays">
+        <div v-for="h in holidays" :key="h.id" class="bh__holiday">
+          <div class="bh__holiday-main">
+            <span class="bh__holiday-date">{{ formatDate(h.date) }}</span>
+            <span class="bh__holiday-reason">{{ holidaySubtitle(h) }}</span>
+          </div>
+          <v-btn
+            icon
+            size="small"
+            variant="text"
+            aria-label="Eliminar feriado"
+            class="bh__remove"
+            @click="onDeleteHoliday(h)"
+          >
+            <v-icon size="18">mdi-delete-outline</v-icon>
+          </v-btn>
+        </div>
       </div>
 
-      <v-list density="compact">
-        <v-list-item
-          v-for="h in holidays"
-          :key="h.id"
-          :title="formatDate(h.date)"
-          :subtitle="holidaySubtitle(h)"
-        >
-          <template #append>
-            <v-btn
-              size="small"
-              icon="mdi-delete-outline"
-              variant="text"
-              color="error"
-              title="Eliminar feriado"
-              @click="onDeleteHoliday(h)"
-            />
-          </template>
-        </v-list-item>
-      </v-list>
-
-      <div v-if="holidays.length === 0" class="text-center text-medium-emphasis pa-4">
-        No hay feriados registrados
+      <div v-else class="bh__empty">
+        <v-icon size="18" aria-hidden="true">mdi-calendar-blank-outline</v-icon>
+        No hay feriados registrados.
       </div>
-    </v-card-text>
-  </v-card>
+    </section>
 
-  <v-dialog
-    :model-value="showHolidayDialog"
-    max-width="420"
-    @update:model-value="showHolidayDialog = false"
-  >
-    <v-card>
-      <v-card-title class="text-h6">Nuevo feriado del negocio</v-card-title>
-      <v-card-text>
+    <DetailDialog
+      :visible="showHolidayDialog"
+      title="Nuevo feriado"
+      meta="El negocio quedará cerrado para todo el equipo"
+      :width="440"
+      @close="showHolidayDialog = false"
+    >
+      <div class="ws-dialog-body">
         <v-text-field
           v-model="holidayForm.date"
           type="date"
           label="Fecha"
           density="compact"
-          class="mb-2"
+          class="ws-field"
         />
         <v-text-field
           v-model="holidayForm.reason"
           label="Motivo (opcional)"
           density="compact"
+          class="ws-field mt-3"
         />
-      </v-card-text>
-      <v-card-actions class="pa-4 pt-0">
-        <v-spacer />
-        <v-btn variant="text" @click="showHolidayDialog = false">Cancelar</v-btn>
+      </div>
+      <div class="ws-dialog-footer">
+        <v-btn variant="text" class="ws-secondary" @click="showHolidayDialog = false">
+          Cancelar
+        </v-btn>
         <v-btn
-          color="primary"
-          variant="flat"
+          class="ws-cta"
           :loading="holidaySaving"
           :disabled="!holidayForm.date"
           @click="onCreateHoliday"
         >
-          Crear
+          Crear feriado
         </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+      </div>
+    </DetailDialog>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -199,6 +176,8 @@ import { scheduleRepository } from '../repositories/schedule.repository';
 import { useNotification } from '@/shared/composables/useNotification';
 import { useConfirm } from '@/shared/composables/useConfirm';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import TimeRangeField from './TimeRangeField.vue';
+import DetailDialog from './DetailDialog.vue';
 import type { CreateScheduleDTO, HolidayException } from '../types/schedule.types';
 
 const authStore = useAuthStore();
@@ -247,7 +226,7 @@ async function loadDays() {
   }
   for (const row of rows) {
     if (!row.is_active) continue;
-    let day = days.find((d) => d.value === row.day_of_week);
+    const day = days.find((d) => d.value === row.day_of_week);
     if (!day) continue;
     if (!day.active) {
       day.active = true;
@@ -263,7 +242,6 @@ async function loadDays() {
       }
     }
   }
-  days.sort((a, b) => a.value - b.value);
 }
 
 function onDayToggle(day: BusinessDay, v: boolean) {
@@ -287,7 +265,7 @@ function validateDays(): boolean {
 
 async function onSave() {
   if (!validateDays()) {
-    notification.error('Revisa las horas de los días marcados');
+    notification.error('Revisá las horas de los días marcados');
     return;
   }
   saving.value = true;
@@ -350,7 +328,7 @@ async function onCreateHoliday() {
 }
 
 async function onDeleteHoliday(h: HolidayException) {
-  const ok = await confirm(`¿Eliminar el feriado del ${formatDate(h.date)}?`, 'Eliminar Feriado', {
+  const ok = await confirm(`¿Eliminar el feriado del ${formatDate(h.date)}?`, 'Eliminar feriado', {
     danger: true,
     confirmText: 'Eliminar',
   });
@@ -373,13 +351,251 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function format12(time: string): string {
+  const [h, m] = (time || '').split(':').map(Number);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${String(m || 0).padStart(2, '0')} ${suffix}`;
+}
+
 function holidaySubtitle(h: HolidayException): string {
   return h.reason || 'Todo el día cerrado';
 }
 </script>
 
 <style scoped>
-.business-day--active {
-  border-color: rgb(var(--v-theme-primary)) !important;
+.business-hours {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bh {
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.12);
+  border-radius: 12px;
+  background: rgb(var(--v-theme-surface));
+  overflow: hidden;
+}
+
+.bh__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px 12px;
+}
+
+.bh__headings {
+  min-width: 0;
+}
+
+.bh__loading {
+  display: flex;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.bh__days {
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.1);
+}
+
+.bh__day {
+  padding: 8px 16px 10px 20px;
+}
+
+.bh__day + .bh__day {
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.08);
+}
+
+.bh__day-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.bh__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bh__label {
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.bh__summary {
+  font-size: 11px;
+  line-height: 1.35;
+  color: rgb(var(--v-theme-on-surface), 0.52);
+}
+
+.bh__switch {
+  flex-shrink: 0;
+}
+
+.bh__times {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 0 2px 1px;
+}
+
+.bh__time-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(var(--v-theme-on-surface), 0.45);
+}
+
+.bh__error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgb(var(--v-theme-on-surface), 0.62);
+}
+
+.bh__error .v-icon {
+  color: rgb(var(--v-theme-error));
+}
+
+.bh__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  padding: 12px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.1);
+}
+
+.bh__footer-label {
+  font-size: 11px;
+  color: rgb(var(--v-theme-on-surface), 0.5);
+}
+
+.bh__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bh__add-holiday.v-btn {
+  flex-shrink: 0;
+  min-height: 44px;
+}
+
+.bh__holidays {
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.1);
+}
+
+.bh__holiday {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 6px 12px 6px 20px;
+}
+
+.bh__holiday + .bh__holiday {
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.08);
+}
+
+.bh__holiday-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bh__holiday-date {
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.bh__holiday-reason {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: rgb(var(--v-theme-on-surface), 0.52);
+}
+
+.bh__remove {
+  color: rgb(var(--v-theme-on-surface), 0.5);
+}
+
+.bh__remove.v-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.bh__remove.v-btn:not(:disabled):active {
+  background: rgb(var(--v-theme-on-surface), 0.08);
+}
+
+.bh__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 28px 20px;
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.1);
+  font-size: 12px;
+  color: rgb(var(--v-theme-on-surface), 0.5);
+}
+
+@media (max-width: 699px) {
+  .bh__head {
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 14px 10px;
+  }
+
+  .bh__day {
+    padding-left: 14px;
+    padding-right: 10px;
+  }
+
+  .bh__holiday {
+    padding-left: 14px;
+    padding-right: 8px;
+  }
+
+  .bh__footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .bh__footer-actions {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 479px) {
+  .bh__footer-actions {
+    flex-direction: column-reverse;
+  }
+
+  .bh__footer-actions .v-btn {
+    width: 100%;
+  }
 }
 </style>

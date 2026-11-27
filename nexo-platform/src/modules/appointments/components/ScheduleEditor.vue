@@ -1,210 +1,188 @@
 <template>
   <div class="schedule-editor">
-    <v-card variant="flat" border>
-      <v-card-text>
-        <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
-          <div>
-            <h3 class="text-subtitle-1 font-weight-medium">Turnos Semanales</h3>
-            <div class="text-caption text-medium-emphasis">Horario recurrente de citas</div>
-          </div>
-          <div class="d-flex align-center ga-2">
-            <v-chip
-              v-if="isEmployeeView"
-              color="primary"
-              variant="tonal"
-              size="small"
-            >
-              <v-icon start size="16">mdi-account-badge-outline</v-icon>
-              Configurando tu horario
-            </v-chip>
-            <v-chip v-if="dirty" color="warning" size="small">
-              <v-icon start size="16">mdi-alert-outline</v-icon>
-              Sin guardar
-            </v-chip>
-          </div>
+    <section class="se">
+      <header class="se__head">
+        <div class="se__headings">
+          <span class="ws-eyebrow">Horario semanal</span>
+          <h2 class="ws-section-title">Turnos semanales</h2>
+          <p class="ws-section-sub">
+            Activá los días que trabajás y definí uno o varios turnos por día.
+          </p>
         </div>
 
-        <div class="d-flex align-center flex-wrap ga-2 mb-4">
-          <EmployeeSelect
-            :model-value="selectedEmployeeId"
-            label="Turnos de"
-            class="flex-grow-1"
-            :style="{ maxWidth: '420px' }"
-            :allowed-ids="allowedIds"
-            :include-default="false"
-            :disabled="isEmployeeView"
-            @update:model-value="onEmployeeChange"
-          />
-          <v-btn
-            v-if="!isEmployeeView && selectedEmployeeId"
-            size="small"
-            variant="tonal"
-            prepend-icon="mdi-content-copy"
-            @click="openCopyDialog"
-          >
-            Copiar a empleado
-          </v-btn>
+        <div class="se__badges">
+          <span v-if="isEmployeeView" class="se__badge">Configurando tu horario</span>
+          <span v-if="dirty" class="ws-status">
+            <span class="ws-dot ws-dot--warning" aria-hidden="true" />
+            Sin guardar
+          </span>
         </div>
+      </header>
 
-        <div v-if="!selectedEmployeeId" class="text-center text-medium-emphasis pa-8">
-          <template v-if="isEmployeeView && !myEmployeeId">
-            No hay un perfil de empleado vinculado a tu cuenta. Contacta a un administrador.
-          </template>
-          <template v-else>
-            Selecciona un empleado para configurar sus turnos
-          </template>
-        </div>
+      <div v-if="!isEmployeeView" class="se__employee-row">
+        <EmployeeSelect
+          :model-value="selectedEmployeeId"
+          label="Turnos de"
+          class="se__employee ws-field"
+          :allowed-ids="allowedIds"
+          :include-default="false"
+          :disabled="isEmployeeView"
+          @update:model-value="onEmployeeChange"
+        />
+        <v-btn
+          v-if="!isEmployeeView && selectedEmployeeId"
+          variant="text"
+          class="ws-secondary se__copy-btn"
+          prepend-icon="mdi-content-copy"
+          @click="openCopyDialog"
+        >
+          Copiar a empleado
+        </v-btn>
+      </div>
 
+      <div v-if="!selectedEmployeeId" class="se__empty">
+        <template v-if="isEmployeeView && !myEmployeeId">
+          No hay un perfil de empleado vinculado a tu cuenta. Contactá a un administrador.
+        </template>
+        <template v-else-if="!isEmployeeView && employeeStore.activeEmployees.length === 0">
+          No hay empleados activos. Creá o activá un empleado para configurar sus turnos.
+        </template>
         <template v-else>
-          <div class="d-flex ga-2 mb-3 flex-wrap">
-            <v-chip variant="tonal" size="small" prepend-icon="mdi-calendar-week">
-              {{ summary.days }} días activos
-            </v-chip>
-            <v-chip variant="tonal" size="small" prepend-icon="mdi-clock-outline">
-              {{ summary.hours }} semanales
-            </v-chip>
+          Seleccioná un empleado para configurar sus turnos.
+        </template>
+      </div>
+
+      <template v-else>
+        <div class="se__summary">
+          <span class="se__stat">
+            <span class="se__stat-value">{{ summary.days }}</span>
+            {{ summary.days === 1 ? 'día activo' : 'días activos' }}
+          </span>
+          <span class="se__stat-sep" aria-hidden="true">·</span>
+          <span class="se__stat">
+            <span class="se__stat-value">{{ summary.hours }}</span>
+            semanales
+          </span>
+        </div>
+
+        <div v-if="framesLoaded && !hasBusinessFrame" class="se__note">
+          <v-icon size="14" aria-hidden="true">mdi-domain</v-icon>
+          <span v-if="isEmployeeView">
+            El negocio aún no definió su horario global. Podés configurar tus turnos, pero cuando
+            lo definan deberán quedar dentro de ese marco.
+          </span>
+          <span v-else>
+            Aún no definiste el horario del negocio. Mientras no exista un marco global, el equipo
+            puede configurar cualquier día y hora.
+          </span>
+        </div>
+
+        <section v-if="isEmployeeView" class="se__policy">
+          <div class="se__policy-head">
+            <v-icon size="15" aria-hidden="true">mdi-calendar-clock-outline</v-icon>
+            <span>Políticas de reserva</span>
           </div>
+          <p class="se__policy-sub">
+            Aplican a todos tus turnos y cuentan desde hoy hasta el día de la cita.
+          </p>
+          <div class="se__policy-grid">
+            <v-text-field
+              v-model.number="policy.advance_booking_days"
+              label="Días máx. anticipación"
+              type="number"
+              :min="1"
+              :max="365"
+              density="compact"
+              hide-details
+              hint="Cuántos días adelante pueden reservar contigo"
+              persistent-hint
+              class="ws-field"
+            />
+            <v-text-field
+              v-model.number="policy.min_advance_minutes"
+              label="Mín. anticipación (min)"
+              type="number"
+              :min="0"
+              :max="4320"
+              density="compact"
+              hide-details
+              hint="Tiempo mínimo antes de la cita para reservar"
+              persistent-hint
+              class="ws-field"
+            />
+          </div>
+        </section>
 
-          <v-alert
-            v-if="framesLoaded && !hasBusinessFrame"
-            type="info"
-            variant="tonal"
-            density="compact"
-            class="mb-3"
-            icon="mdi-domain"
-          >
-            <template v-if="isEmployeeView">
-              El negocio aún no ha definido su horario global. Puedes configurar tus turnos,
-              pero cuando lo definan deberán quedar dentro de ese marco.
-            </template>
-            <template v-else>
-              Aún no has definido el horario del negocio (bloque superior). Mientras no exista
-              un marco global, los empleados pueden configurar cualquier día y hora.
-            </template>
-          </v-alert>
+        <WeekScheduleAccordion
+          :days="daysOfWeek"
+          :shifts="localShifts"
+          :enabled="dayEnabled"
+          :frames="businessFrames"
+          @toggle-day="onToggleDay"
+          @add-shift="onAddShift"
+          @remove-shift="removeShift"
+          @update-shift="onUpdateShift"
+          @copy-day="copyDayToWeek"
+        />
 
-          <!-- Política de reserva del empleado (autogestionada) -->
-          <v-card
-            v-if="isEmployeeView"
-            variant="tonal"
-            border
-            class="mb-4 pa-4"
-          >
-            <div class="text-subtitle-2 mb-1 d-flex align-center ga-1">
-              <v-icon size="16">mdi-calendar-clock-outline</v-icon>
-              Políticas de reserva
-            </div>
-            <div class="text-caption text-medium-emphasis mb-3">
-              Aplican a todos tus turnos. Cuentan desde hoy hasta el día de la cita.
-            </div>
-            <v-row dense>
-              <v-col cols="12" sm="6">
-                <v-text-field
-                  v-model.number="policy.advance_booking_days"
-                  label="Días máx. anticipación"
-                  type="number"
-                  :min="1"
-                  :max="365"
-                  density="compact"
-                  hide-details
-                  hint="Cuántos días adelante pueden reservar contigo"
-                  persistent-hint
-                />
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-text-field
-                  v-model.number="policy.min_advance_minutes"
-                  label="Mín. anticipación (min)"
-                  type="number"
-                  :min="0"
-                  :max="4320"
-                  density="compact"
-                  hide-details
-                  hint="Tiempo mínimo antes de la cita para reservar"
-                  persistent-hint
-                />
-              </v-col>
-            </v-row>
-          </v-card>
-
-          <WeekScheduleGrid
-            :days="daysOfWeek"
-            :shifts="localShifts"
-            :frames="businessFrames"
-            @toggle-day="onToggleDay"
-            @add-shift="openShiftDialog"
-            @edit-shift="editShift"
-            @remove-shift="removeShift"
-            @copy-day="copyDayToWeek"
-          />
-
-          <div class="d-flex mt-4 ga-2" :class="$vuetify.display.xs ? 'flex-column' : 'justify-end'">
+        <footer class="se__footer" :class="{ 'se__footer--dirty': dirty }">
+          <span class="se__footer-label">
+            {{ dirty ? 'Tenés cambios sin guardar' : 'Horario sincronizado' }}
+          </span>
+          <div class="se__footer-actions">
             <v-btn
               v-if="dirty"
               variant="text"
-              color="error"
-              :block="$vuetify.display.xs"
+              class="ws-secondary"
               @click="onDiscard"
             >
               Descartar
             </v-btn>
             <v-btn
-              color="primary"
-              variant="flat"
+              class="ws-cta"
               :loading="saving"
-              :block="$vuetify.display.xs"
               @click="onSave"
             >
-              <v-icon start>mdi-content-save</v-icon>
+              <v-icon start size="16">mdi-content-save</v-icon>
               {{ dirty ? 'Guardar cambios' : 'Guardar' }}
             </v-btn>
           </div>
-        </template>
-      </v-card-text>
-    </v-card>
+        </footer>
+      </template>
+    </section>
 
-    <ShiftDialog
-      :visible="showShiftDialog"
-      :day-label="currentDayLabel"
-      :start_time="editingShift?.start_time"
-      :end_time="editingShift?.end_time"
-      :existing-shifts="currentDayShiftsForValidation"
-      :frame-start="currentDayFrame?.start_time"
-      :frame-end="currentDayFrame?.end_time"
-      @close="closeShiftDialog"
-      @save="onShiftSave"
-    />
-
-    <v-dialog v-model="showCopyDialog" max-width="440">
-      <v-card>
-        <v-card-title class="text-h6">Copiar horario a otro empleado</v-card-title>
-        <v-card-text>
-          <p class="text-body-2 text-medium-emphasis mb-3">
-            El horario actual se copiará como cambios sin guardar para el empleado
-            seleccionado. Revisa y pulsa Guardar para aplicarlo.
-          </p>
-          <EmployeeSelect
-            v-model="copyTargetId"
-            label="Copiar a"
-            :allowed-ids="allowedIds"
-            :exclude-ids="copyExcludeIds"
-            :include-default="false"
-          />
-        </v-card-text>
-        <v-card-actions class="pa-4 pt-0">
-          <v-spacer />
-          <v-btn variant="text" @click="showCopyDialog = false">Cancelar</v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            :disabled="!copyTargetId"
-            @click="onCopyConfirm"
-          >
-            Copiar
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <DetailDialog
+      :visible="showCopyDialog"
+      title="Copiar horario"
+      meta="Se copiará como borrador para el empleado seleccionado"
+      :width="480"
+      @close="showCopyDialog = false"
+    >
+      <div class="ws-dialog-body">
+        <p class="se__dialog-copy">
+          El horario actual se copiará como cambios sin guardar. Revisá y pulsá Guardar para
+          aplicarlo.
+        </p>
+        <EmployeeSelect
+          v-model="copyTargetId"
+          label="Copiar a"
+          :allowed-ids="allowedIds"
+          :exclude-ids="copyExcludeIds"
+          :include-default="false"
+          class="ws-field"
+        />
+      </div>
+      <div class="ws-dialog-footer">
+        <v-btn variant="text" class="ws-secondary" @click="showCopyDialog = false">Cancelar</v-btn>
+        <v-btn
+          class="ws-cta"
+          :disabled="!copyTargetId"
+          @click="onCopyConfirm"
+        >
+          Copiar
+        </v-btn>
+      </div>
+    </DetailDialog>
   </div>
 </template>
 
@@ -219,8 +197,8 @@ import { useEmployeeStore } from '../stores/employee.store';
 import { scheduleRepository } from '../repositories/schedule.repository';
 import { employeeRepository } from '../repositories/employee.repository';
 import EmployeeSelect from './EmployeeSelect.vue';
-import ShiftDialog from './ShiftDialog.vue';
-import WeekScheduleGrid from './WeekScheduleGrid.vue';
+import WeekScheduleAccordion from './WeekScheduleAccordion.vue';
+import DetailDialog from './DetailDialog.vue';
 import { DEFAULT_SCHEDULE_ID } from '../types/schedule.types';
 import type {
   BusinessDayFrame,
@@ -245,8 +223,6 @@ const saving = ref(false);
 const dirty = ref(false);
 const suppressWatch = ref(false);
 
-// Vista "propia": Modo Trabajo (cualquier rol con perfil de trabajador)
-// o un empleado puro — el selector queda fijado a su perfil.
 const isEmployeeView = computed(() => workspaceStore.isWorkMode || authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
 
@@ -267,13 +243,11 @@ onMounted(async () => {
       (e) => e.user_id === userId || e.supabase_user_id === userId,
     );
     myEmployeeId.value = match?.id ?? null;
+    selectedEmployeeId.value = myEmployeeId.value;
     if (myEmployeeId.value) {
-      selectedEmployeeId.value = myEmployeeId.value;
       loadPolicyFromEmployee();
     }
   } else {
-    // El marco del negocio lo edita BusinessHoursEditor: el selector
-    // siempre apunta a un empleado concreto.
     selectedEmployeeId.value = employeeStore.activeEmployees[0]?.id ?? null;
   }
 });
@@ -302,8 +276,6 @@ function savePolicy() {
 
 // --- Marco global del negocio (filas employee_id NULL) ---
 
-// Día de la semana -> apertura/cierre del negocio. Si el tenant tiene varias
-// filas globales en un día (datos legados) el marco es min(apertura)/max(cierre).
 const businessFrames = reactive(new Map<number, BusinessDayFrame>());
 const framesLoaded = ref(false);
 const hasBusinessFrame = computed(() => businessFrames.size > 0);
@@ -333,25 +305,15 @@ function t5(t?: string): string {
   return (t ?? '').slice(0, 5);
 }
 
-function dayLabelOf(day: number): string {
-  return daysOfWeek.find((d) => d.value === day)?.label ?? `día ${day}`;
+function format12(value?: string | null): string {
+  const match = /^(\d{1,2}):(\d{2})/.exec(value ?? '');
+  if (!match) return '—';
+  const hour = Number(match[1]);
+  return `${hour % 12 || 12}:${match[2]} ${hour >= 12 ? 'PM' : 'AM'}`;
 }
 
-function validateAgainstFrame(): string | null {
-  if (businessFrames.size === 0) return null;
-  for (const [day, shifts] of localShifts) {
-    if (!shifts.length) continue;
-    const frame = businessFrames.get(day);
-    if (!frame) {
-      return `El negocio no trabaja el ${dayLabelOf(day)}. Elimina esos turnos para guardar.`;
-    }
-    for (const s of shifts) {
-      if (t5(s.start_time) < t5(frame.start_time) || t5(s.end_time) > t5(frame.end_time)) {
-        return `El turno del ${dayLabelOf(day)} (${t5(s.start_time)} – ${t5(s.end_time)}) está fuera del horario del negocio (${t5(frame.start_time)} – ${t5(frame.end_time)}).`;
-      }
-    }
-  }
-  return null;
+function dayLabelOf(day: number): string {
+  return daysOfWeek.find((d) => d.value === day)?.label ?? `día ${day}`;
 }
 
 function resolveEmployeeId(id: string | null): string | null {
@@ -359,6 +321,7 @@ function resolveEmployeeId(id: string | null): string | null {
 }
 
 const localShifts = reactive<Map<number, ScheduleShiftInput[]>>(new Map());
+const dayEnabled = reactive<Map<number, boolean>>(new Map());
 
 const daysOfWeek = [
   { value: 1, label: 'Lunes' },
@@ -373,31 +336,39 @@ const daysOfWeek = [
 function defaultShift(day: number): ScheduleShiftInput {
   const frame = businessFrames.get(day);
   return {
-    start_time: frame?.start_time ?? '09:00',
-    end_time: frame?.end_time ?? '17:00',
+    start_time: t5(frame?.start_time ?? '09:00'),
+    end_time: t5(frame?.end_time ?? '17:00'),
   };
+}
+
+function addMinutes(time: string, minutes: number): string {
+  const [h, m] = t5(time).split(':').map(Number);
+  const total = Math.min(h * 60 + m + minutes, 23 * 60 + 59);
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
 function initLocalShifts() {
   localShifts.clear();
+  dayEnabled.clear();
   for (const day of daysOfWeek) {
     const daySchedules = scheduleStore.schedules.filter(
       (s) => s.day_of_week === day.value && s.is_active,
     );
-    localShifts.set(
-      day.value,
-      daySchedules.map((s) => ({
-        start_time: s.start_time,
-        end_time: s.end_time,
-      })),
-    );
+    const shifts = daySchedules.map((s) => ({
+      start_time: t5(s.start_time),
+      end_time: t5(s.end_time),
+    }));
+    localShifts.set(day.value, shifts);
+    dayEnabled.set(day.value, shifts.length > 0);
   }
 }
 
 const summary = computed(() => {
   let days = 0;
   let minutes = 0;
-  for (const [, shifts] of localShifts) {
+  for (const day of daysOfWeek) {
+    if (!dayEnabled.get(day.value)) continue;
+    const shifts = localShifts.get(day.value) ?? [];
     if (shifts.length) days += 1;
     for (const s of shifts) {
       const [sh, sm] = s.start_time.split(':').map(Number);
@@ -410,81 +381,58 @@ const summary = computed(() => {
   return { days, hours: `${h} h${m ? ` ${m} min` : ''}` };
 });
 
-function onToggleDay(day: number) {
-  if (businessFrames.size > 0 && !businessFrames.has(day)) {
+function onToggleDay(day: number, enabled: boolean) {
+  if (enabled && businessFrames.size > 0 && !businessFrames.has(day)) {
     notification.error(`El negocio no trabaja el ${dayLabelOf(day)}`);
     return;
   }
-  if ((localShifts.get(day) ?? []).length > 0) {
-    localShifts.set(day, []);
-  } else {
-    localShifts.set(day, [defaultShift(day)]);
+
+  dayEnabled.set(day, enabled);
+  if (enabled) {
+    const shifts = localShifts.get(day) ?? [];
+    if (!shifts.length) {
+      localShifts.set(day, [defaultShift(day)]);
+    }
   }
   dirty.value = true;
 }
 
-const showShiftDialog = ref(false);
-const currentEditDay = ref<number>(0);
-const editingShiftIndex = ref<number>(-1);
-
-const editingShift = computed(() => {
-  if (editingShiftIndex.value < 0) return null;
-  const shifts = localShifts.get(currentEditDay.value) ?? [];
-  return shifts[editingShiftIndex.value] ?? null;
-});
-
-const currentDayLabel = computed(() => {
-  return daysOfWeek.find((d) => d.value === currentEditDay.value)?.label ?? '';
-});
-
-const currentDayFrame = computed(() => businessFrames.get(currentEditDay.value));
-
-const currentDayShiftsForValidation = computed(() => {
-  const shifts = localShifts.get(currentEditDay.value) ?? [];
-  return shifts
-    .filter((_, i) => i !== editingShiftIndex.value)
-    .map((s) => ({ start_time: s.start_time, end_time: s.end_time }));
-});
-
-function openShiftDialog(day: number) {
-  currentEditDay.value = day;
-  editingShiftIndex.value = -1;
-  showShiftDialog.value = true;
-}
-
-function editShift(day: number, index: number) {
-  currentEditDay.value = day;
-  editingShiftIndex.value = index;
-  showShiftDialog.value = true;
-}
-
-function closeShiftDialog() {
-  showShiftDialog.value = false;
-  editingShiftIndex.value = -1;
-}
-
-function onShiftSave(data: ScheduleShiftInput) {
-  const shifts = localShifts.get(currentEditDay.value);
-  if (!shifts) return;
-
-  const shiftData: ScheduleShiftInput = {
-    start_time: data.start_time,
-    end_time: data.end_time,
-  };
-
-  if (editingShiftIndex.value >= 0) {
-    shifts[editingShiftIndex.value] = shiftData;
-  } else {
-    shifts.push(shiftData);
+function onAddShift(day: number) {
+  const frame = businessFrames.get(day);
+  const shifts = [...(localShifts.get(day) ?? [])];
+  const previous = shifts[shifts.length - 1];
+  const start = t5(previous?.end_time ?? frame?.start_time ?? '09:00');
+  if (frame && start >= t5(frame.end_time)) {
+    notification.info(`No queda espacio en el marco del ${dayLabelOf(day)}`);
+    return;
   }
+  let end = addMinutes(start, 60);
+  if (frame && end > t5(frame.end_time)) end = t5(frame.end_time);
+  if (end <= start) {
+    end = t5(frame?.end_time ?? '17:00');
+  }
+  if (end <= start) {
+    notification.info(`No queda espacio en el marco del ${dayLabelOf(day)}`);
+    return;
+  }
+  shifts.push({ start_time: start, end_time: end });
+  localShifts.set(day, shifts);
   dirty.value = true;
-  closeShiftDialog();
+}
+
+function onUpdateShift(day: number, index: number, shift: ScheduleShiftInput) {
+  const shifts = [...(localShifts.get(day) ?? [])];
+  if (!shifts[index]) return;
+  shifts[index] = shift;
+  localShifts.set(day, shifts);
+  dirty.value = true;
 }
 
 function removeShift(day: number, index: number) {
-  const shifts = localShifts.get(day);
-  if (!shifts) return;
+  const shifts = [...(localShifts.get(day) ?? [])];
+  if (!shifts[index]) return;
   shifts.splice(index, 1);
+  localShifts.set(day, shifts);
   dirty.value = true;
 }
 
@@ -493,18 +441,46 @@ function copyDayToWeek(day: number) {
   let skipped = 0;
   for (const d of daysOfWeek) {
     if (businessFrames.size > 0 && !businessFrames.has(d.value)) {
-      if ((localShifts.get(d.value) ?? []).length === 0) skipped += 1;
+      if (!dayEnabled.get(d.value)) skipped += 1;
       continue;
     }
     localShifts.set(d.value, source.map((s) => ({ ...s })));
+    if (source.length) dayEnabled.set(d.value, true);
   }
   dirty.value = true;
-  const note = skipped ? ` (${skipped} días cerrados omitidos)` : '';
-  notification.info(`Horario del ${currentDayLabelFor(day)} copiado a los días laborables${note}`);
+  const note = skipped ? ` (${skipped} días no laborables omitidos)` : '';
+  notification.info(`Horario del ${dayLabelOf(day)} copiado a los días laborables${note}`);
 }
 
-function currentDayLabelFor(day: number): string {
-  return daysOfWeek.find((d) => d.value === day)?.label ?? '';
+function validateLocalShifts(): string | null {
+  for (const day of daysOfWeek) {
+    if (!dayEnabled.get(day.value)) continue;
+    const shifts = localShifts.get(day.value) ?? [];
+    const frame = businessFrames.get(day.value);
+
+    if (businessFrames.size > 0 && !businessFrames.has(day.value)) {
+      return `El negocio no trabaja el ${day.label}. Desactivalo para guardar.`;
+    }
+
+    for (let i = 0; i < shifts.length; i += 1) {
+      const shift = shifts[i];
+      const start = t5(shift.start_time);
+      const end = t5(shift.end_time);
+      if (!start || !end || start >= end) {
+        return `Revisá el turno ${i + 1} del ${day.label}: la hora de fin debe ser posterior al inicio.`;
+      }
+      if (frame && (start < t5(frame.start_time) || end > t5(frame.end_time))) {
+        return `El turno ${i + 1} del ${day.label} está fuera del horario del negocio (${format12(frame.start_time)}–${format12(frame.end_time)}).`;
+      }
+      for (let j = i + 1; j < shifts.length; j += 1) {
+        const other = shifts[j];
+        if (start < t5(other.end_time) && end > t5(other.start_time)) {
+          return `Los turnos ${i + 1} y ${j + 1} del ${day.label} se superponen.`;
+        }
+      }
+    }
+  }
+  return null;
 }
 
 const showCopyDialog = ref(false);
@@ -521,6 +497,7 @@ async function onCopyConfirm() {
   for (const [day, shifts] of localShifts) {
     source.set(day, shifts.map((s) => ({ ...s })));
   }
+  const sourceEnabled = new Map(dayEnabled);
   const target = copyTargetId.value;
   showCopyDialog.value = false;
 
@@ -531,15 +508,19 @@ async function onCopyConfirm() {
   for (const [day, shifts] of source) {
     localShifts.set(day, shifts);
   }
+  for (const [day, enabled] of sourceEnabled) {
+    dayEnabled.set(day, enabled);
+  }
   dirty.value = true;
-  notification.success('Horario copiado. Revisa y pulsa Guardar.');
+  notification.success('Horario copiado. Revisá y pulsá Guardar.');
 }
 
 function buildPayload(): CreateScheduleDTO[] {
   const out: CreateScheduleDTO[] = [];
-  for (const [day, shifts] of localShifts) {
-    for (const s of shifts) {
-      out.push({ day_of_week: day, ...s });
+  for (const day of daysOfWeek) {
+    if (!dayEnabled.get(day.value)) continue;
+    for (const shift of localShifts.get(day.value) ?? []) {
+      out.push({ day_of_week: day.value, ...shift });
     }
   }
   return out;
@@ -555,9 +536,9 @@ function errorMessage(e: unknown): string {
 
 async function onSave() {
   if (!selectedEmployeeId.value) return;
-  const frameError = validateAgainstFrame();
-  if (frameError) {
-    notification.error(frameError);
+  const localError = validateLocalShifts();
+  if (localError) {
+    notification.error(localError);
     return;
   }
   saving.value = true;
@@ -578,10 +559,10 @@ async function onSave() {
       notification.error(`El negocio no trabaja el ${dayLabelOf(Number(closed[1]))}`);
     } else if (outOfFrame) {
       notification.error(
-        `El turno del ${dayLabelOf(Number(outOfFrame[1]))} está fuera del horario del negocio (${outOfFrame[2]} – ${outOfFrame[3]})`,
+        `El turno del ${dayLabelOf(Number(outOfFrame[1]))} está fuera del horario del negocio (${format12(outOfFrame[2])} – ${format12(outOfFrame[3])})`,
       );
     } else if (msg.includes('Not authorized') || msg.includes('no autorizado') || msg.includes('authorized')) {
-      notification.error('No tienes permiso para editar este horario');
+      notification.error('No tenés permiso para editar este horario');
     } else {
       notification.error('Error al guardar turnos');
     }
@@ -604,7 +585,7 @@ function onDiscard() {
 async function onEmployeeChange(id: string | null) {
   if (id === selectedEmployeeId.value) return;
   if (dirty.value) {
-    const ok = await confirm('Tienes cambios sin guardar. ¿Descartarlos?');
+    const ok = await confirm('Tenés cambios sin guardar. ¿Descartarlos?');
     if (!ok) return;
   }
   selectedEmployeeId.value = id;
@@ -617,6 +598,7 @@ watch(selectedEmployeeId, async (id) => {
   }
   if (!id) {
     localShifts.clear();
+    dayEnabled.clear();
     dirty.value = false;
     return;
   }
@@ -625,3 +607,247 @@ watch(selectedEmployeeId, async (id) => {
   dirty.value = false;
 });
 </script>
+
+<style scoped>
+.schedule-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.se {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.12);
+  border-radius: 12px;
+  background: rgb(var(--v-theme-surface));
+  overflow: hidden;
+}
+
+.se__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 12px;
+}
+
+.se__headings {
+  min-width: 0;
+}
+
+.se__badges {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.se__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.14);
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--v-theme-on-surface), 0.6);
+}
+
+.se__employee-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 20px 14px;
+  border-bottom: 1px solid rgb(var(--v-theme-on-surface), 0.1);
+}
+
+.se__employee {
+  flex: 0 1 320px;
+  max-width: 420px;
+}
+
+.se__copy-btn.v-btn {
+  min-height: 44px;
+}
+
+.se__empty {
+  padding: 34px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: rgb(var(--v-theme-on-surface), 0.55);
+}
+
+.se__summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 12px 20px 0;
+  font-size: 11px;
+  color: rgb(var(--v-theme-on-surface), 0.55);
+}
+
+.se__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.se__stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.se__stat-sep {
+  color: rgb(var(--v-theme-on-surface), 0.3);
+}
+
+.se__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 12px 20px 0;
+  padding: 9px 10px;
+  border: 1px dashed rgb(var(--v-theme-on-surface), 0.16);
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgb(var(--v-theme-on-surface), 0.6);
+}
+
+.se__note .v-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.se__policy {
+  margin: 14px 20px 0;
+  padding: 12px 14px;
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.1);
+  border-radius: 8px;
+  background: rgb(var(--v-theme-on-surface), 0.018);
+}
+
+.se__policy-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.se__policy-sub {
+  margin: 3px 0 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgb(var(--v-theme-on-surface), 0.55);
+}
+
+.se__policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.schedule-editor :deep(.wsa) {
+  margin: 14px 20px 0;
+}
+
+.se__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgb(var(--v-theme-on-surface), 0.1);
+  background: rgb(var(--v-theme-surface));
+}
+
+.se__footer--dirty {
+  background: rgb(var(--v-theme-on-surface), 0.025);
+}
+
+.se__footer-label {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgb(var(--v-theme-on-surface), 0.5);
+}
+
+.se__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.se__dialog-copy {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgb(var(--v-theme-on-surface), 0.6);
+}
+
+@media (max-width: 699px) {
+  .se__head {
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 14px 10px;
+  }
+
+  .se__badges {
+    justify-content: flex-start;
+  }
+
+  .se__employee-row,
+  .se__summary,
+  .se__policy {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .se__note {
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+
+  .schedule-editor :deep(.wsa) {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .se__policy-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .se__footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .se__footer-actions {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 479px) {
+  .se__footer-actions {
+    flex-direction: column-reverse;
+  }
+
+  .se__footer-actions .v-btn {
+    width: 100%;
+  }
+}
+</style>

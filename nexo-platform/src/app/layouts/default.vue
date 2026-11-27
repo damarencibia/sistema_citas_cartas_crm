@@ -1,14 +1,14 @@
 <template>
-  <v-layout>
-    <AppSidebar />
-    <AppTopbar />
+  <v-layout :class="{ 'app-layout--immersive': immersive }">
+    <AppSidebar :overlay="immersive" />
+    <AppTopbar v-if="!immersive" />
     <NotificationDrawer />
-    <PushOptInBanner />
-    <PwaInstallBanner />
-    <v-main :style="mainStyle" class="app-main">
-      <div class="main-content py-6 px-4 px-md-8">
+    <PushOptInBanner v-if="!immersive" />
+    <PwaInstallBanner v-if="!immersive" />
+    <v-main :style="mainStyle" :class="['app-main', { 'app-main--immersive': immersive }]">
+      <div :class="['main-content', immersive ? 'main-content--immersive' : 'py-6 px-4 px-md-8']">
         <v-alert
-          v-if="authStore.user?.initial_password_pending"
+          v-if="!immersive && authStore.user?.initial_password_pending"
           type="info"
           variant="tonal"
           density="comfortable"
@@ -40,8 +40,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useDisplay } from 'vuetify';
+import { useRoute } from 'vue-router';
 import AppSidebar from '@/shared/components/AppSidebar.vue';
 import AppTopbar from '@/shared/components/AppTopbar.vue';
 import NotificationDrawer from '@/modules/notifications/components/NotificationDrawer.vue';
@@ -54,12 +55,18 @@ import { useAuthStore } from '@/shared/stores/auth.store';
 
 const uiStore = useUiStore();
 const authStore = useAuthStore();
+const route = useRoute();
 const { smAndDown } = useDisplay();
 
 const isDesktop = computed(() => !smAndDown.value);
+const immersive = computed(() => route.meta.immersive === true);
+
+watch(immersive, (active) => {
+  if (active) uiStore.sidebar = false;
+});
 
 const mainStyle = computed(() => {
-  if (!isDesktop.value) return {};
+  if (!isDesktop.value || immersive.value) return {};
   const secondaryWidth = uiStore.secondarySidebarCollapsed ? 0 : 240;
   const toggleSpace = 14 + 40; // margin-left 14px + tamaño del botón de colapso (40px)
   return { paddingLeft: `${60 + secondaryWidth + toggleSpace}px` };
@@ -78,9 +85,33 @@ const { visible, title, message, danger: dialogDanger, confirmText: dialogConfir
   margin: 0 auto;
 }
 
+/* ═══ Modo inmersivo (Agenda) ═══ */
+.app-layout--immersive {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-main--immersive {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 0 !important;
+}
+
+.main-content--immersive {
+  max-width: none;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .main-content {
     padding: 16px !important;
+  }
+
+  .main-content--immersive {
+    padding: 0 !important;
   }
 }
 </style>
