@@ -137,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import TimeRangeField from './TimeRangeField.vue';
 import type { BusinessDayFrame, ScheduleShiftInput } from '../types/schedule.types';
 
@@ -146,8 +146,10 @@ const props = withDefaults(defineProps<{
   shifts: Map<number, ScheduleShiftInput[]>;
   enabled: Map<number, boolean>;
   frames?: Map<number, BusinessDayFrame>;
+  revision?: number;
 }>(), {
   frames: () => new Map<number, BusinessDayFrame>(),
+  revision: 0,
 });
 
 const emit = defineEmits<{
@@ -159,6 +161,19 @@ const emit = defineEmits<{
 }>();
 
 const expanded = ref<Set<number>>(new Set());
+
+function seedExpanded() {
+  const next = new Set<number>();
+  for (const day of props.days) {
+    const hasShifts = (props.shifts.get(day.value)?.length ?? 0) > 0;
+    if (hasShifts && (props.enabled.get(day.value) ?? false)) {
+      next.add(day.value);
+    }
+  }
+  expanded.value = next;
+}
+
+watch(() => props.revision, seedExpanded, { immediate: true });
 
 function isEnabled(day: number): boolean {
   return props.enabled.get(day) ?? false;

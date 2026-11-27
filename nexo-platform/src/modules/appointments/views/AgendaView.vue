@@ -1,7 +1,5 @@
 <template>
   <div class="agenda">
-    <ImmersiveNavButton />
-
     <div class="agenda__body">
       <AgendaWorkspacePanel
         v-if="showWorkspacePanel"
@@ -21,6 +19,7 @@
       <div class="agenda__main">
         <div class="agenda__toolbar">
           <div class="agenda__toolbar-left">
+            <ImmersiveNavButton />
             <h1 class="agenda__title">{{ submoduleTitle }}</h1>
 
             <v-select
@@ -966,7 +965,7 @@ async function onRemoveExtra(extra: DailyExtra) {
 @media (max-width: 899px) {
   .agenda__toolbar {
     min-height: 56px;
-    padding: 6px 14px 8px 66px;
+    padding: 6px 14px 8px;
     flex-wrap: wrap;
     row-gap: 6px;
   }
@@ -1000,7 +999,7 @@ async function onRemoveExtra(extra: DailyExtra) {
 
 @media (max-width: 599px) {
   .agenda__toolbar {
-    padding: 6px 10px 8px 64px;
+    padding: 6px 10px 8px;
   }
 
   .agenda__mode :deep(.v-btn) {

@@ -8,7 +8,8 @@
     :aria-expanded="uiStore.sidebar"
     @click="uiStore.sidebar = true"
   >
-    <v-icon size="22" aria-hidden="true">mdi-menu</v-icon>
+    <v-icon size="20" aria-hidden="true">mdi-menu</v-icon>
+    <span class="nav-trigger__label">Menú</span>
   </button>
 </template>
 
@@ -20,32 +21,58 @@ const uiStore = useUiStore();
 
 <style scoped>
 .nav-trigger {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 1100;
-  width: 44px;
-  height: 44px;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgb(var(--v-theme-on-surface), 0.14);
+  gap: 8px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.12);
   border-radius: 12px;
-  background: rgb(var(--v-theme-surface));
-  color: rgb(var(--v-theme-on-surface));
-  box-shadow: 0 2px 10px rgb(var(--v-theme-on-surface), 0.1);
+  background: transparent;
+  color: rgb(var(--v-theme-on-surface), 0.78);
   cursor: pointer;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.nav-trigger:hover {
+  background: rgb(var(--v-theme-on-surface), 0.06);
+  border-color: rgb(var(--v-theme-on-surface), 0.2);
+  color: rgb(var(--v-theme-on-surface), 0.94);
 }
 
 .nav-trigger:not(:disabled):active {
-  transform: scale(0.94);
+  transform: scale(0.97);
   background: rgb(var(--v-theme-surface-variant));
 }
 
 .nav-trigger:focus-visible {
   outline: 2px solid rgb(var(--v-theme-on-surface));
   outline-offset: 2px;
+}
+
+.nav-trigger__label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+@media (max-width: 1279px) {
+  .nav-trigger {
+    padding: 0;
+  }
+
+  .nav-trigger__label {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

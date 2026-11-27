@@ -1,12 +1,14 @@
 <template>
   <div class="schedules">
-    <ImmersiveNavButton />
-
     <div class="schedules__main">
       <WorkspaceToolbar
         :title="isWork ? 'Mi Horario' : 'Horarios'"
         :meta="isWork ? 'Tus turnos y excepciones' : 'Marco del negocio y horarios del equipo'"
-      />
+      >
+        <template #leading>
+          <ImmersiveNavButton />
+        </template>
+      </WorkspaceToolbar>
 
       <div class="schedules__content">
         <div class="schedules__scroll">

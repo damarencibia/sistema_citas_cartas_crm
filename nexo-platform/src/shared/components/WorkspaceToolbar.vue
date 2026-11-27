@@ -1,6 +1,7 @@
 <template>
   <header class="wtoolbar">
     <div class="wtoolbar__left">
+      <slot name="leading" />
       <h1 class="wtoolbar__title">{{ title }}</h1>
       <span v-if="meta" class="wtoolbar__meta">{{ meta }}</span>
       <slot />
@@ -111,7 +112,7 @@ const uiStore = useUiStore();
 @media (max-width: 899px) {
   .wtoolbar {
     min-height: 56px;
-    padding: 6px 14px 8px 66px;
+    padding: 6px 14px 8px;
     flex-wrap: wrap;
     row-gap: 6px;
   }
@@ -127,7 +128,7 @@ const uiStore = useUiStore();
 
 @media (max-width: 599px) {
   .wtoolbar {
-    padding: 6px 10px 8px 64px;
+    padding: 6px 10px 8px;
   }
 }
 

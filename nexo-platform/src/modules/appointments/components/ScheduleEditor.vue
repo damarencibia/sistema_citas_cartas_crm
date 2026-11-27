@@ -118,6 +118,7 @@
           :shifts="localShifts"
           :enabled="dayEnabled"
           :frames="businessFrames"
+          :revision="dataRevision"
           @toggle-day="onToggleDay"
           @add-shift="onAddShift"
           @remove-shift="removeShift"
@@ -222,6 +223,7 @@ const selectedEmployeeId = computed<string | null>({
 const saving = ref(false);
 const dirty = ref(false);
 const suppressWatch = ref(false);
+const dataRevision = ref(0);
 
 const isEmployeeView = computed(() => workspaceStore.isWorkMode || authStore.userRole === 'employee');
 const myEmployeeId = ref<string | null>(null);
@@ -237,6 +239,7 @@ const copyExcludeIds = computed(() => {
 
 onMounted(async () => {
   await Promise.all([employeeStore.fetchEmployeesWithRoles(), loadBusinessFrames()]);
+  const previousId = selectedEmployeeId.value;
   if (isEmployeeView.value) {
     const userId = authStore.user?.id;
     const match = employeeStore.employees.find(
@@ -249,6 +252,12 @@ onMounted(async () => {
     }
   } else {
     selectedEmployeeId.value = employeeStore.activeEmployees[0]?.id ?? null;
+  }
+
+  // Si el empleado ya estaba seleccionado, el watcher no se dispara al montar.
+  // Cargamos su horario explícitamente para que el acordeón tenga datos.
+  if (selectedEmployeeId.value && selectedEmployeeId.value === previousId) {
+    await loadScheduleFor(selectedEmployeeId.value);
   }
 });
 
@@ -361,6 +370,7 @@ function initLocalShifts() {
     localShifts.set(day.value, shifts);
     dayEnabled.set(day.value, shifts.length > 0);
   }
+  dataRevision.value += 1;
 }
 
 const summary = computed(() => {
@@ -448,6 +458,7 @@ function copyDayToWeek(day: number) {
     if (source.length) dayEnabled.set(d.value, true);
   }
   dirty.value = true;
+  dataRevision.value += 1;
   const note = skipped ? ` (${skipped} días no laborables omitidos)` : '';
   notification.info(`Horario del ${dayLabelOf(day)} copiado a los días laborables${note}`);
 }
@@ -511,6 +522,7 @@ async function onCopyConfirm() {
   for (const [day, enabled] of sourceEnabled) {
     dayEnabled.set(day, enabled);
   }
+  dataRevision.value += 1;
   dirty.value = true;
   notification.success('Horario copiado. Revisá y pulsá Guardar.');
 }
@@ -591,20 +603,25 @@ async function onEmployeeChange(id: string | null) {
   selectedEmployeeId.value = id;
 }
 
-watch(selectedEmployeeId, async (id) => {
-  if (suppressWatch.value) {
-    suppressWatch.value = false;
-    return;
-  }
+async function loadScheduleFor(id: string | null) {
   if (!id) {
     localShifts.clear();
     dayEnabled.clear();
+    dataRevision.value += 1;
     dirty.value = false;
     return;
   }
   await scheduleStore.fetchSchedules(resolveEmployeeId(id));
   initLocalShifts();
   dirty.value = false;
+}
+
+watch(selectedEmployeeId, async (id) => {
+  if (suppressWatch.value) {
+    suppressWatch.value = false;
+    return;
+  }
+  await loadScheduleFor(id);
 });
 </script>
 
