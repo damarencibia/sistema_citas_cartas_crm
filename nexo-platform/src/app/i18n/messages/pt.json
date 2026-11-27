@@ -35,7 +35,7 @@
         "password": "Senha"
       },
       "placeholders": {
-        "email": "voce@email.com",
+        "email": "voce{'@'}email.com",
         "password": "••••••••"
       },
       "forgot": "Esqueceu?",
@@ -68,7 +68,7 @@
         "businessName": "Meu Negócio LTDA",
         "firstName": "Ana",
         "lastName": "Silva",
-        "email": "voce@email.com",
+        "email": "voce{'@'}email.com",
         "phone": "5 123 4567 · 8 dígitos",
         "password": "Mínimo 8 caracteres",
         "confirmPassword": "Repita a senha"

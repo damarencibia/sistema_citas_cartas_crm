@@ -35,7 +35,7 @@
         "password": "Password"
       },
       "placeholders": {
-        "email": "you@email.com",
+        "email": "you{'@'}email.com",
         "password": "••••••••"
       },
       "forgot": "Forgot it?",
@@ -68,7 +68,7 @@
         "businessName": "My Business LLC",
         "firstName": "Lucy",
         "lastName": "Smith",
-        "email": "you@email.com",
+        "email": "you{'@'}email.com",
         "phone": "5 123 4567 · 8 digits",
         "password": "At least 8 characters",
         "confirmPassword": "Repeat the password"

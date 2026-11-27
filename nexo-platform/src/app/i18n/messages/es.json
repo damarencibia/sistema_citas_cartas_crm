@@ -35,7 +35,7 @@
         "password": "Contraseña"
       },
       "placeholders": {
-        "email": "tu@correo.com",
+        "email": "tu{'@'}correo.com",
         "password": "••••••••"
       },
       "forgot": "¿La olvidé?",
@@ -68,7 +68,7 @@
         "businessName": "Mi Negocio S.A.",
         "firstName": "Lucía",
         "lastName": "Pérez",
-        "email": "tu@correo.com",
+        "email": "tu{'@'}correo.com",
         "phone": "5 123 4567 · 8 dígitos",
         "password": "Mínimo 8 caracteres",
         "confirmPassword": "Repite la contraseña"
